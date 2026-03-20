@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  report-service:
+    build: .
+    container_name: report-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      REPORT_API_TOKEN: change-me
+      REPORT_BASE_URL: http://localhost:8000
+      REPORT_STORAGE_DIR: /app/output
+      REPORT_TEMPLATES_DIR: /app/templates
+      GOTENBERG_URL: http://gotenberg:3000
+      ENABLE_PDF: "true"
+      ENABLE_XLSX: "true"
+      CLEANUP_AFTER_HOURS: "24"
+    volumes:
+      - ./templates:/app/templates
+      - ./output:/app/output
+    depends_on:
+      - gotenberg
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    container_name: gotenberg
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5

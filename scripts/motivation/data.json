@@ -1,0 +1,57 @@
+{
+  "attempt_id": "att_1001",
+  "test_code": "motivation_learning",
+  "student": {
+    "id": "stu_501",
+    "full_name": "Иванов Иван",
+    "age": 14,
+    "class_name": "8А",
+    "gender": "male"
+  },
+  "submitted_at": "2026-03-20T10:30:00Z",
+  "answers": [
+    { "question_number": 1, "value": 3 },
+    { "question_number": 2, "value": 4 },
+    { "question_number": 3, "value": 2 },
+    { "question_number": 4, "value": 3 },
+    { "question_number": 5, "value": 2 },
+    { "question_number": 6, "value": 4 },
+    { "question_number": 7, "value": 1 },
+    { "question_number": 8, "value": 4 },
+    { "question_number": 9, "value": 2 },
+    { "question_number": 10, "value": 4 },
+
+    { "question_number": 11, "value": 2 },
+    { "question_number": 12, "value": 3 },
+    { "question_number": 13, "value": 2 },
+    { "question_number": 14, "value": 2 },
+    { "question_number": 15, "value": 1 },
+    { "question_number": 16, "value": 4 },
+    { "question_number": 17, "value": 2 },
+    { "question_number": 18, "value": 4 },
+    { "question_number": 19, "value": 1 },
+    { "question_number": 20, "value": 2 },
+
+    { "question_number": 21, "value": 3 },
+    { "question_number": 22, "value": 4 },
+    { "question_number": 23, "value": 1 },
+    { "question_number": 24, "value": 4 },
+    { "question_number": 25, "value": 3 },
+    { "question_number": 26, "value": 4 },
+    { "question_number": 27, "value": 1 },
+    { "question_number": 28, "value": 2 },
+    { "question_number": 29, "value": 2 },
+    { "question_number": 30, "value": 2 },
+
+    { "question_number": 31, "value": 3 },
+    { "question_number": 32, "value": 4 },
+    { "question_number": 33, "value": 3 },
+    { "question_number": 34, "value": 4 },
+    { "question_number": 35, "value": 1 },
+    { "question_number": 36, "value": 4 },
+    { "question_number": 37, "value": 1 },
+    { "question_number": 38, "value": 2 },
+    { "question_number": 39, "value": 1 },
+    { "question_number": 40, "value": 4 }
+  ]
+}

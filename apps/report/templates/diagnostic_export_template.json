@@ -1,0 +1,22 @@
+{
+  "sheet_title": "Diagnostic Report",
+  "title": "Diagnostic Summary",
+  "fields": [
+    {"label": "Student", "key": "student.full_name"},
+    {"label": "Class", "key": "student.class_name"},
+    {"label": "Total score", "key": "result.total_score"},
+    {"label": "Level", "key": "result.level"},
+    {"label": "Interpretation", "key": "result.interpretation"}
+  ],
+  "tables": [
+    {
+      "title": "Scales",
+      "key": "scales",
+      "columns": [
+        {"label": "Scale", "key": "title"},
+        {"label": "Value", "key": "value"},
+        {"label": "Level", "key": "level"}
+      ]
+    }
+  ]
+}
