@@ -1,0 +1,10 @@
+__pycache__
+media
+
+.env
+.env.prod
+.idea
+.python-version
+.mypy_cache
+.vscode
+.DS_Store
