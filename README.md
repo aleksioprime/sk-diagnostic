@@ -69,7 +69,7 @@ docker compose -f docker-compose.prod.yaml up -d
 По умолчанию используется:
 
 ```text
-ghcr.io/aleksioprime/sk-diagnostics-frontend:${FRONTEND_IMAGE_TAG}
+ghcr.io/aleksioprime/sk-diagnostic-frontend:${FRONTEND_IMAGE_TAG}
 ```
 
 Контейнер подключается к внешней сети `apps_net`, как и в образце.
