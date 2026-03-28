@@ -1,0 +1,96 @@
+name: Build Diagnostics to GHCR
+
+run-name: "Build and push Diagnostics image for ${{ github.ref_name }} by ${{ github.actor }}"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - 'docker-compose.yaml'
+      - 'docker-compose.prod.yaml'
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/app/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend/app
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend/app
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build and push Diagnostics image
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_LOGGING: ${{ vars.VITE_LOGGING }}
+        run: |
+          docker build --target prod \
+            --build-arg VITE_LOGGING="${VITE_LOGGING:-0}" \
+            --build-arg VITE_API_URL="${VITE_API_URL:-https://flow.skeducator.ru}" \
+            -t ${IMAGE}-frontend:latest \
+            -t ${IMAGE}-frontend:${{ github.sha }} \
+            ./frontend
+
+          docker push ${IMAGE}-frontend:latest
+          docker push ${IMAGE}-frontend:${{ github.sha }}
+
+      - name: Set FRONTEND_IMAGE_TAG in Coolify
+        if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        env:
+          COOLIFY_API: ${{ secrets.COOLIFY_API }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_APP: ${{ secrets.COOLIFY_APP }}
+        run: |
+          if [ -z "$COOLIFY_API" ] || [ -z "$COOLIFY_TOKEN" ] || [ -z "$COOLIFY_APP" ]; then
+            echo "::warning::COOLIFY_API/COOLIFY_TOKEN/COOLIFY_APP not configured. Skipping FRONTEND_IMAGE_TAG update."
+            exit 0
+          fi
+
+          curl -sS -X PATCH \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            "$COOLIFY_API/applications/$COOLIFY_APP/envs/bulk" \
+            -d "{\"data\":[{\"key\":\"FRONTEND_IMAGE_TAG\",\"value\":\"${{ github.sha }}\"}]}" \
+          || echo "::warning::Coolify FRONTEND_IMAGE_TAG update failed"
