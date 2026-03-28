@@ -1,4 +1,4 @@
-# SK Diagnostics
+# SK Diagnostic
 
 Frontend для прохождения диагностик и просмотра результатов, работающий поверх NocoBase.
 

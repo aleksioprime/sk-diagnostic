@@ -49,8 +49,8 @@ async function logout() {
             </svg>
           </div>
           <div class="min-w-0">
-            <p class="truncate text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">SK Diagnostics</p>
-            <p class="truncate text-base font-semibold text-slate-900">{{ props.appTitle }}</p>
+            <p class="truncate text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">{{ props.appTitle }}</p>
+            <p class="truncate text-xs text-slate-500">Сервис психологического тестирования</p>
           </div>
         </router-link>
 

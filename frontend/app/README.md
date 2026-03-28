@@ -1,4 +1,4 @@
-# SK Diagnostics Frontend
+# SK Diagnostic Frontend
 
 Frontend для NocoBase-коллекций диагностики.
 
