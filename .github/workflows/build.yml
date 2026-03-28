@@ -1,6 +1,6 @@
-name: Build Diagnostics to GHCR
+name: Build Diagnostic to GHCR
 
-run-name: "Build and push Diagnostics image for ${{ github.ref_name }} by ${{ github.actor }}"
+run-name: "Build and push Diagnostic image for ${{ github.ref_name }} by ${{ github.actor }}"
 
 on:
   push:
@@ -59,7 +59,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Build and push Diagnostics image
+      - name: Build and push Diagnostic image
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
           VITE_LOGGING: ${{ vars.VITE_LOGGING }}
