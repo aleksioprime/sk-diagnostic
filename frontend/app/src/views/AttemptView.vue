@@ -1,10 +1,9 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import api from '../api'
 import { get, list, create, update, destroy, normalizeId, toFilter, dedupe } from '../utils/nocobase'
 import { formatDateTime, formatDuration, getAttemptStatusMeta, isNil, stringifyValue } from '../utils/format'
-import logger from '../utils/logger'
 
 const props = defineProps({
   attemptId: {
@@ -13,10 +12,15 @@ const props = defineProps({
   },
 })
 
+const route = useRoute()
+const router = useRouter()
+
 const loading = ref(true)
+const starting = ref(false)
 const submitting = ref(false)
 const error = ref('')
 const globalNotice = ref('')
+const elapsedSeconds = ref(null)
 
 const attempt = ref(null)
 const questions = ref([])
@@ -30,10 +34,9 @@ const textDrafts = reactive({})
 const numberDrafts = reactive({})
 const savingState = reactive({})
 
-const answersByQuestionId = computed(() => {
-  return Object.fromEntries(answers.value.map((answer) => [answer.question_id, answer]))
-})
+let timerHandle = null
 
+const answersByQuestionId = computed(() => Object.fromEntries(answers.value.map((answer) => [answer.question_id, answer])))
 const optionsByQuestionId = computed(() => {
   return options.value.reduce((map, option) => {
     if (!map[option.question_id]) map[option.question_id] = []
@@ -41,9 +44,7 @@ const optionsByQuestionId = computed(() => {
     return map
   }, {})
 })
-
 const scalesById = computed(() => Object.fromEntries(scales.value.map((scale) => [scale.id, scale])))
-
 const scaleOptionsByScaleId = computed(() => {
   return scaleOptions.value.reduce((map, option) => {
     if (!map[option.scale_id]) map[option.scale_id] = []
@@ -51,7 +52,6 @@ const scaleOptionsByScaleId = computed(() => {
     return map
   }, {})
 })
-
 const rankingByAnswerId = computed(() => {
   return rankingItems.value.reduce((map, item) => {
     if (!map[item.answer_id]) map[item.answer_id] = []
@@ -63,32 +63,60 @@ const rankingByAnswerId = computed(() => {
 const normalizedQuestions = computed(() => {
   return questions.value.map((question) => {
     const answer = answersByQuestionId.value[question.id] || null
-    const questionOptions = optionsByQuestionId.value[question.id] || []
-    const scale = scalesById.value[question.scale_id] || null
-    const questionScaleOptions = scaleOptionsByScaleId.value[question.scale_id] || []
-    const questionRanking = answer ? rankingByAnswerId.value[answer.id] || [] : []
-
     return {
       ...question,
       answer,
-      options: questionOptions,
-      scale,
-      scaleOptions: questionScaleOptions,
-      rankingItems: questionRanking,
+      options: optionsByQuestionId.value[question.id] || [],
+      scale: scalesById.value[question.scale_id] || null,
+      scaleOptions: scaleOptionsByScaleId.value[question.scale_id] || [],
+      rankingItems: answer ? rankingByAnswerId.value[answer.id] || [] : [],
     }
   })
 })
 
-const completedRequiredCount = computed(() => {
-  return normalizedQuestions.value.filter((question) => !question.is_required || isQuestionAnswered(question)).length
-})
-
-const canSubmit = computed(() => {
-  return normalizedQuestions.value.every((question) => !question.is_required || isQuestionAnswered(question))
-})
-
+const completedRequiredCount = computed(() => normalizedQuestions.value.filter((question) => !question.is_required || isQuestionAnswered(question)).length)
+const canSubmit = computed(() => normalizedQuestions.value.every((question) => !question.is_required || isQuestionAnswered(question)))
 const attemptStatus = computed(() => getAttemptStatusMeta(attempt.value?.status))
 const isReadOnly = computed(() => ['submitted', 'completed'].includes(attempt.value?.status))
+const showIntro = computed(() => attempt.value?.status === 'assigned')
+const displayDuration = computed(() => formatDuration(elapsedSeconds.value ?? attempt.value?.duration))
+
+const currentStep = ref(0)
+const isSequential = computed(() => Boolean(attempt.value?.test?.is_sequential))
+const showUnansweredWarning = ref(false)
+
+const unansweredQuestions = computed(() => {
+  return normalizedQuestions.value
+    .map((q, i) => ({ question: q, index: i }))
+    .filter(({ question }) => !isQuestionAnswered(question) && !question.answer?.is_skipped)
+})
+
+function goToStep(index) {
+  currentStep.value = Math.max(0, Math.min(index, normalizedQuestions.value.length - 1))
+  showUnansweredWarning.value = false
+}
+
+function nextStep() {
+  if (currentStep.value < normalizedQuestions.value.length - 1) currentStep.value++
+}
+
+function prevStep() {
+  if (currentStep.value > 0) currentStep.value--
+}
+
+function jumpToFirstUnanswered() {
+  if (!isSequential.value) return
+  const index = normalizedQuestions.value.findIndex((q) => !isQuestionAnswered(q) && !q.answer?.is_skipped)
+  if (index !== -1) currentStep.value = index
+}
+
+function scrollToQuestion(index) {
+  if (isSequential.value) {
+    goToStep(index)
+  } else {
+    document.getElementById(`question-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+}
 
 function initDrafts() {
   normalizedQuestions.value.forEach((question) => {
@@ -97,6 +125,40 @@ function initDrafts() {
       numberDrafts[question.answer.id] = question.answer.number ?? ''
     }
   })
+}
+
+function stopTimer() {
+  if (timerHandle) {
+    window.clearInterval(timerHandle)
+    timerHandle = null
+  }
+}
+
+function refreshElapsed() {
+  if (!attempt.value?.started_at) {
+    elapsedSeconds.value = attempt.value?.duration ?? null
+    return
+  }
+  const startedAt = new Date(attempt.value.started_at).getTime()
+  if (Number.isNaN(startedAt)) {
+    elapsedSeconds.value = attempt.value?.duration ?? null
+    return
+  }
+  elapsedSeconds.value = Math.max(0, Math.round((Date.now() - startedAt) / 1000))
+}
+
+function syncTimer() {
+  stopTimer()
+  if (!attempt.value) {
+    elapsedSeconds.value = null
+    return
+  }
+  if (attempt.value.started_at && !isReadOnly.value) {
+    refreshElapsed()
+    timerHandle = window.setInterval(refreshElapsed, 1000)
+    return
+  }
+  elapsedSeconds.value = attempt.value.duration ?? null
 }
 
 function isQuestionAnswered(question) {
@@ -118,12 +180,10 @@ function answerSelectedOptions(answer) {
 }
 
 async function saveAnswerValue(answerId, payload) {
-  logger.log('saveAnswerValue', { answerId, payload })
   return update('answers', answerId, payload)
 }
 
 async function saveMultipleChoice(answerId, optionIds) {
-  logger.log('saveMultipleChoice', { answerId, optionIds })
   const ids = dedupe(optionIds.map((value) => normalizeId(value)))
   const strategies = [
     () => update('answers', answerId, { options: ids, is_skipped: false }),
@@ -145,7 +205,6 @@ async function saveMultipleChoice(answerId, optionIds) {
 }
 
 async function saveRanking(answerId, rankedOptionIds) {
-  logger.log('saveRanking', { answerId, rankedOptionIds })
   const existingItems = await list('answer_ranking_items', {
     filter: toFilter({ answer_id: normalizeId(answerId) }),
     sort: 'rank,id',
@@ -188,13 +247,38 @@ async function withSaving(questionId, action) {
 }
 
 function patchAnswer(answerId, patch) {
-  answers.value = answers.value.map((answer) => {
-    return answer.id === answerId ? { ...answer, ...patch } : answer
-  })
+  answers.value = answers.value.map((answer) => (answer.id === answerId ? { ...answer, ...patch } : answer))
+}
+
+async function startAttempt({ silent = false } = {}) {
+  if (!attempt.value || attempt.value.status !== 'assigned') return
+  starting.value = true
+  error.value = ''
+
+  try {
+    const startedAt = new Date().toISOString()
+    const updatedAttempt = await update('attempts', attempt.value.id, {
+      status: 'in_progress',
+      started_at: startedAt,
+    })
+    attempt.value = {
+      ...attempt.value,
+      ...updatedAttempt,
+      status: 'in_progress',
+      started_at: updatedAttempt?.started_at || startedAt,
+    }
+    if (!silent) globalNotice.value = 'Попытка началась'
+    syncTimer()
+  } catch {
+    error.value = 'Не удалось начать попытку'
+    throw new Error('start_failed')
+  } finally {
+    starting.value = false
+  }
 }
 
 async function saveSingleChoice(question, optionId) {
-  if (!question.answer || isReadOnly.value) return
+  if (!question.answer || isReadOnly.value || showIntro.value) return
   await withSaving(question.id, async () => {
     const updated = await saveAnswerValue(question.answer.id, {
       option_id: optionId,
@@ -209,7 +293,7 @@ async function saveSingleChoice(question, optionId) {
 }
 
 async function saveScaleOption(question, scaleOptionId) {
-  if (!question.answer || isReadOnly.value) return
+  if (!question.answer || isReadOnly.value || showIntro.value) return
   await withSaving(question.id, async () => {
     const updated = await saveAnswerValue(question.answer.id, {
       scale_option_id: scaleOptionId,
@@ -224,7 +308,7 @@ async function saveScaleOption(question, scaleOptionId) {
 }
 
 async function saveScaleNumber(question) {
-  if (!question.answer || isReadOnly.value) return
+  if (!question.answer || isReadOnly.value || showIntro.value) return
   await withSaving(question.id, async () => {
     const raw = numberDrafts[question.answer.id]
     const value = raw === '' ? null : Number(raw)
@@ -241,7 +325,7 @@ async function saveScaleNumber(question) {
 }
 
 async function saveBoolean(question, value) {
-  if (!question.answer || isReadOnly.value) return
+  if (!question.answer || isReadOnly.value || showIntro.value) return
   await withSaving(question.id, async () => {
     const updated = await saveAnswerValue(question.answer.id, {
       boolean: value,
@@ -256,7 +340,7 @@ async function saveBoolean(question, value) {
 }
 
 async function saveNumber(question) {
-  if (!question.answer || isReadOnly.value) return
+  if (!question.answer || isReadOnly.value || showIntro.value) return
   await withSaving(question.id, async () => {
     const raw = numberDrafts[question.answer.id]
     const value = raw === '' ? null : Number(raw)
@@ -273,7 +357,7 @@ async function saveNumber(question) {
 }
 
 async function saveText(question) {
-  if (!question.answer || isReadOnly.value) return
+  if (!question.answer || isReadOnly.value || showIntro.value) return
   await withSaving(question.id, async () => {
     const value = textDrafts[question.answer.id] || null
     const updated = await saveAnswerValue(question.answer.id, {
@@ -289,12 +373,10 @@ async function saveText(question) {
 }
 
 async function toggleMultiple(question, optionId) {
-  if (!question.answer || isReadOnly.value) return
+  if (!question.answer || isReadOnly.value || showIntro.value) return
   const selectedIds = answerSelectedOptions(question.answer)
   const isSelected = selectedIds.includes(optionId)
-  const nextIds = isSelected
-    ? selectedIds.filter((id) => id !== optionId)
-    : [...selectedIds, optionId]
+  const nextIds = isSelected ? selectedIds.filter((id) => id !== optionId) : [...selectedIds, optionId]
 
   if (question.max_selections && nextIds.length > Number(question.max_selections)) {
     savingState[question.id] = { pending: false, error: `Можно выбрать не больше ${question.max_selections}` }
@@ -309,7 +391,7 @@ async function toggleMultiple(question, optionId) {
 }
 
 async function moveRanking(question, optionId, direction) {
-  if (!question.answer || isReadOnly.value) return
+  if (!question.answer || isReadOnly.value || showIntro.value) return
   const currentOrder = question.rankingItems.length
     ? question.rankingItems.map((item) => item.option_id)
     : question.options.map((option) => option.id)
@@ -331,9 +413,16 @@ async function moveRanking(question, optionId, direction) {
 }
 
 async function toggleSkip(question) {
-  if (!question.answer || isReadOnly.value || question.is_required) return
+  if (!question.answer || isReadOnly.value || showIntro.value || question.is_required) return
   const nextValue = !question.answer.is_skipped
   await withSaving(question.id, async () => {
+    if (answerSelectedOptions(question.answer).length) {
+      await saveMultipleChoice(question.answer.id, [])
+    }
+    if (question.rankingItems.length) {
+      await saveRanking(question.answer.id, [])
+    }
+
     const updated = await saveAnswerValue(question.answer.id, {
       option_id: null,
       scale_option_id: null,
@@ -360,21 +449,39 @@ async function toggleSkip(question) {
 }
 
 async function handleSubmit() {
-  if (!attempt.value || isReadOnly.value || !canSubmit.value) return
+  if (!attempt.value || isReadOnly.value || showIntro.value) return
+
+  if (unansweredQuestions.value.length && !showUnansweredWarning.value) {
+    showUnansweredWarning.value = true
+    return
+  }
+
+  if (!canSubmit.value) {
+    showUnansweredWarning.value = true
+    return
+  }
+
   submitting.value = true
   error.value = ''
+  showUnansweredWarning.value = false
 
   try {
     const submittedAt = new Date().toISOString()
-    const startedAt = attempt.value.started_at ? new Date(attempt.value.started_at).getTime() : null
-    const duration = startedAt ? Math.max(0, Math.round((Date.now() - startedAt) / 1000)) : attempt.value.duration
-
-    attempt.value = await update('attempts', attempt.value.id, {
+    const duration = elapsedSeconds.value ?? attempt.value.duration
+    const updatedAttempt = await update('attempts', attempt.value.id, {
       status: 'submitted',
       submitted_at: submittedAt,
       duration,
     })
-    globalNotice.value = 'Попытка отправлена'
+    attempt.value = {
+      ...attempt.value,
+      ...updatedAttempt,
+      status: 'submitted',
+      submitted_at: updatedAttempt?.submitted_at || submittedAt,
+      duration,
+    }
+    stopTimer()
+    router.push({ name: 'assigned-tests' })
   } catch {
     error.value = 'Не удалось отправить попытку'
   } finally {
@@ -413,10 +520,12 @@ async function loadData() {
   error.value = ''
 
   try {
-    logger.log('loadData: fetchAttemptQuestionBundle', { attemptId: props.attemptId })
     const loadedAttempt = await get('attempts', props.attemptId, { appends: 'test,person' })
-    const testId = loadedAttempt?.test_id ?? loadedAttempt?.test?.id
+    if (!loadedAttempt || loadedAttempt.is_archived) {
+      throw new Error('archived')
+    }
 
+    const testId = loadedAttempt.test_id ?? loadedAttempt.test?.id
     const [loadedQuestions, loadedAnswers] = await Promise.all([
       list('questions', {
         filter: toFilter({ test_id: testId, is_active: true }),
@@ -429,8 +538,8 @@ async function loadData() {
       }),
     ])
 
-    const questionIds = loadedQuestions.map((q) => q.id)
-    const scaleIds = dedupe(loadedQuestions.map((q) => q.scale_id))
+    const questionIds = loadedQuestions.map((question) => question.id)
+    const scaleIds = dedupe(loadedQuestions.map((question) => question.scale_id))
 
     const [loadedOptions, loadedScales, loadedScaleOptions, loadedRankingItems] = await Promise.all([
       questionIds.length ? list('options', {
@@ -446,7 +555,7 @@ async function loadData() {
         sort: 'order,id',
       }) : Promise.resolve([]),
       loadedAnswers.length ? list('answer_ranking_items', {
-        filter: toFilter({ answer_id: { $in: loadedAnswers.map((a) => a.id) } }),
+        filter: toFilter({ answer_id: { $in: loadedAnswers.map((answer) => answer.id) } }),
         appends: 'option',
         sort: 'rank,id',
       }) : Promise.resolve([]),
@@ -460,6 +569,13 @@ async function loadData() {
     scaleOptions.value = loadedScaleOptions
     rankingItems.value = loadedRankingItems
     initDrafts()
+    syncTimer()
+    jumpToFirstUnanswered()
+
+    if (loadedAttempt.status === 'assigned' && route.query.start === '1') {
+      await startAttempt({ silent: true })
+      router.replace({ name: 'attempt', params: { attemptId: props.attemptId } })
+    }
   } catch {
     error.value = 'Не удалось загрузить тест'
   } finally {
@@ -468,54 +584,83 @@ async function loadData() {
 }
 
 onMounted(loadData)
+onBeforeUnmount(stopTimer)
 </script>
 
 <template>
   <section class="w-full">
     <div class="mb-5 flex flex-wrap items-center gap-3">
-      <RouterLink :to="{ name: 'assigned-tests' }" class="ghost-button no-underline">
-        ← К списку попыток
-      </RouterLink>
+      <RouterLink :to="{ name: 'assigned-tests' }" class="ghost-button no-underline">← К списку попыток</RouterLink>
       <span v-if="attempt" class="badge" :class="attemptStatus.className">{{ attemptStatus.label }}</span>
+      <span v-if="attempt?.started_at && !showIntro" class="badge bg-slate-100 text-slate-700">Таймер: {{ displayDuration }}</span>
       <span v-if="globalNotice" class="badge bg-emerald-100 text-emerald-700">{{ globalNotice }}</span>
     </div>
 
     <div v-if="loading" class="glass-panel p-10 text-center text-sm text-slate-500">Загрузка теста…</div>
     <div v-else-if="error" class="glass-panel p-10 text-center text-sm text-red-700">{{ error }}</div>
+
+    <div v-else-if="attempt && showIntro" class="flex justify-center py-4 sm:py-10">
+      <div class="glass-panel w-full max-w-3xl p-6 sm:p-8">
+        <h1 class="text-3xl font-semibold tracking-tight text-slate-900">{{ attempt.test?.title || `Тест #${attempt.test_id}` }}</h1>
+
+        <div class="mt-6 grid gap-3 sm:grid-cols-3">
+          <div class="rounded-[24px] bg-slate-50/90 p-4">
+            <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Вопросов</div>
+            <div class="mt-2 text-2xl font-semibold text-slate-900">{{ normalizedQuestions.length }}</div>
+          </div>
+          <div class="rounded-[24px] bg-slate-50/90 p-4">
+            <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Формат</div>
+            <div class="mt-2 text-sm font-medium text-slate-900">Ответы сохраняются автоматически</div>
+          </div>
+          <div class="rounded-[24px] bg-slate-50/90 p-4">
+            <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Важно</div>
+            <div class="mt-2 text-sm font-medium text-slate-900">Время начнёт идти после старта</div>
+          </div>
+        </div>
+
+        <p class="mt-6 text-sm leading-6 text-slate-600">
+          После начала прохождения будет зафиксировано время старта, и откроется страница с вопросами.
+        </p>
+
+        <div class="mt-6 flex flex-wrap justify-end gap-3">
+          <RouterLink :to="{ name: 'assigned-tests' }" class="ghost-button no-underline">Вернуться</RouterLink>
+          <button class="primary-button" :disabled="starting" @click="startAttempt()">
+            {{ starting ? 'Запускаем…' : 'Начать прохождение' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div v-else-if="attempt" class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_21rem]">
       <div class="grid gap-5">
         <div class="glass-panel p-6 sm:p-7">
-          <p class="mb-2 text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">{{ attempt.test?.code || 'test' }}</p>
           <h1 class="text-3xl font-semibold tracking-tight text-slate-900">{{ attempt.test?.title || `Тест #${attempt.test_id}` }}</h1>
-          <p v-if="attempt.test?.description" class="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-            {{ attempt.test.description }}
-          </p>
           <div class="mt-5 flex flex-wrap gap-3 text-sm text-slate-500">
             <span>Начало: {{ formatDateTime(attempt.started_at) }}</span>
-            <span>Длительность: {{ formatDuration(attempt.duration) }}</span>
+            <span>Таймер: {{ displayDuration }}</span>
             <span>Вопросов: {{ normalizedQuestions.length }}</span>
           </div>
         </div>
 
-        <div
-          v-for="(question, index) in normalizedQuestions"
-          :key="question.id"
-          class="glass-panel overflow-hidden p-5 sm:p-6"
-        >
+        <template v-for="(question, index) in normalizedQuestions" :key="question.id">
+          <div
+            v-show="!isSequential || index === currentStep"
+            :id="`question-${index}`"
+            class="glass-panel overflow-hidden p-5 sm:p-6 transition-colors"
+            :class="{
+              'ring-2 ring-emerald-300/60': !isReadOnly && isQuestionAnswered(question),
+              'ring-2 ring-orange-300/60': !isReadOnly && !isQuestionAnswered(question) && question.is_required && !question.answer?.is_skipped,
+            }"
+          >
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Вопрос {{ index + 1 }}</p>
               <h2 class="mt-2 text-xl font-semibold text-slate-900">{{ question.text }}</h2>
               <p v-if="question.description" class="mt-2 text-sm leading-6 text-slate-500">{{ question.description }}</p>
             </div>
-
             <div class="flex flex-wrap items-center gap-2">
               <span v-if="question.is_required" class="badge bg-orange-100 text-orange-700">Обязательный</span>
-              <button
-                v-if="!question.is_required && !isReadOnly"
-                class="ghost-button"
-                @click="toggleSkip(question)"
-              >
+              <button v-if="!question.is_required && !isReadOnly" class="ghost-button" @click="toggleSkip(question)">
                 {{ question.answer?.is_skipped ? 'Вернуть вопрос' : 'Пропустить' }}
               </button>
             </div>
@@ -532,13 +677,7 @@ onMounted(loadData)
 
           <div v-else class="mt-5">
             <div v-if="question.question_type === 'single_choice'" class="grid gap-3">
-              <button
-                v-for="option in question.options"
-                :key="option.id"
-                class="cursor-pointer rounded-[24px] border px-4 py-4 text-left transition"
-                :class="question.answer?.option_id === option.id ? 'border-primary bg-primary/8 text-slate-900 shadow-sm' : 'border-slate-200/80 bg-white/80 text-slate-700 hover:border-primary/40'"
-                @click="saveSingleChoice(question, option.id)"
-              >
+              <button v-for="option in question.options" :key="option.id" class="cursor-pointer rounded-[24px] border px-4 py-4 text-left transition" :class="question.answer?.option_id === option.id ? 'border-primary bg-primary/8 text-slate-900 shadow-sm' : 'border-slate-200/80 bg-white/80 text-slate-700 hover:border-primary/40'" @click="saveSingleChoice(question, option.id)">
                 <div class="font-medium">{{ option.label }}</div>
                 <div v-if="option.description" class="mt-1 text-sm text-slate-500">{{ option.description }}</div>
               </button>
@@ -548,13 +687,7 @@ onMounted(loadData)
               <div class="rounded-[24px] bg-slate-50/80 px-4 py-3 text-sm text-slate-600">
                 Выбрано {{ answerSelectedOptions(question.answer).length }}<span v-if="question.max_selections"> из максимум {{ question.max_selections }}</span>
               </div>
-              <button
-                v-for="option in question.options"
-                :key="option.id"
-                class="cursor-pointer rounded-[24px] border px-4 py-4 text-left transition"
-                :class="answerSelectedOptions(question.answer).includes(option.id) ? 'border-primary bg-primary/8 text-slate-900 shadow-sm' : 'border-slate-200/80 bg-white/80 text-slate-700 hover:border-primary/40'"
-                @click="toggleMultiple(question, option.id)"
-              >
+              <button v-for="option in question.options" :key="option.id" class="cursor-pointer rounded-[24px] border px-4 py-4 text-left transition" :class="answerSelectedOptions(question.answer).includes(option.id) ? 'border-primary bg-primary/8 text-slate-900 shadow-sm' : 'border-slate-200/80 bg-white/80 text-slate-700 hover:border-primary/40'" @click="toggleMultiple(question, option.id)">
                 <div class="flex items-start justify-between gap-3">
                   <div>
                     <div class="font-medium">{{ option.label }}</div>
@@ -568,13 +701,7 @@ onMounted(loadData)
             </div>
 
             <div v-else-if="question.question_type === 'scale' && question.scaleOptions.length" class="grid gap-3">
-              <button
-                v-for="option in question.scaleOptions"
-                :key="option.id"
-                class="cursor-pointer rounded-[24px] border px-4 py-4 text-left transition"
-                :class="question.answer?.scale_option_id === option.id ? 'border-primary bg-primary/8 text-slate-900 shadow-sm' : 'border-slate-200/80 bg-white/80 text-slate-700 hover:border-primary/40'"
-                @click="saveScaleOption(question, option.id)"
-              >
+              <button v-for="option in question.scaleOptions" :key="option.id" class="cursor-pointer rounded-[24px] border px-4 py-4 text-left transition" :class="question.answer?.scale_option_id === option.id ? 'border-primary bg-primary/8 text-slate-900 shadow-sm' : 'border-slate-200/80 bg-white/80 text-slate-700 hover:border-primary/40'" @click="saveScaleOption(question, option.id)">
                 <div class="flex items-center justify-between gap-3">
                   <div>
                     <div class="font-medium">{{ option.label }}</div>
@@ -592,22 +719,12 @@ onMounted(loadData)
                     <div class="text-sm font-semibold text-slate-900">Шкала</div>
                     <div class="mt-1 text-sm text-slate-500">
                       {{ question.scale?.title || 'Числовая шкала' }}
-                      <span v-if="question.scale?.min_value != null && question.scale?.max_value != null">
-                        · {{ question.scale.min_value }}–{{ question.scale.max_value }}
-                      </span>
+                      <span v-if="question.scale?.min_value != null && question.scale?.max_value != null">· {{ question.scale.min_value }}–{{ question.scale.max_value }}</span>
                     </div>
                   </div>
                   <span class="badge bg-slate-100 text-slate-600">{{ numberDrafts[question.answer?.id] || '—' }}</span>
                 </div>
-                <input
-                  v-model="numberDrafts[question.answer?.id]"
-                  class="w-full accent-primary"
-                  type="range"
-                  :min="question.scale?.min_value ?? 0"
-                  :max="question.scale?.max_value ?? 10"
-                  :step="question.scale?.step ?? 1"
-                  @change="saveScaleNumber(question)"
-                />
+                <input v-model="numberDrafts[question.answer?.id]" class="w-full accent-primary" type="range" :min="question.scale?.min_value ?? 0" :max="question.scale?.max_value ?? 10" :step="question.scale?.step ?? 1" @change="saveScaleNumber(question)" />
                 <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
                   <span>{{ question.scale?.min_value ?? 0 }}</span>
                   <span>{{ question.scale?.max_value ?? 10 }}</span>
@@ -616,51 +733,28 @@ onMounted(loadData)
             </div>
 
             <div v-else-if="question.question_type === 'yes_no'" class="grid gap-3 sm:grid-cols-2">
-              <button
-                class="cursor-pointer rounded-[24px] border px-4 py-5 text-left transition"
-                :class="question.answer?.boolean === true ? 'border-primary bg-primary/8 text-slate-900 shadow-sm' : 'border-slate-200/80 bg-white/80 text-slate-700 hover:border-primary/40'"
-                @click="saveBoolean(question, true)"
-              >
+              <button class="cursor-pointer rounded-[24px] border px-4 py-5 text-left transition" :class="question.answer?.boolean === true ? 'border-primary bg-primary/8 text-slate-900 shadow-sm' : 'border-slate-200/80 bg-white/80 text-slate-700 hover:border-primary/40'" @click="saveBoolean(question, true)">
                 <div class="text-lg font-semibold">Да</div>
                 <div class="mt-1 text-sm text-slate-500">Утверждение подходит</div>
               </button>
-              <button
-                class="cursor-pointer rounded-[24px] border px-4 py-5 text-left transition"
-                :class="question.answer?.boolean === false ? 'border-primary bg-primary/8 text-slate-900 shadow-sm' : 'border-slate-200/80 bg-white/80 text-slate-700 hover:border-primary/40'"
-                @click="saveBoolean(question, false)"
-              >
+              <button class="cursor-pointer rounded-[24px] border px-4 py-5 text-left transition" :class="question.answer?.boolean === false ? 'border-primary bg-primary/8 text-slate-900 shadow-sm' : 'border-slate-200/80 bg-white/80 text-slate-700 hover:border-primary/40'" @click="saveBoolean(question, false)">
                 <div class="text-lg font-semibold">Нет</div>
                 <div class="mt-1 text-sm text-slate-500">Утверждение не подходит</div>
               </button>
             </div>
 
             <div v-else-if="question.question_type === 'text'">
-              <textarea
-                v-model="textDrafts[question.answer?.id]"
-                class="field-input min-h-36 resize-y"
-                placeholder="Введите ответ"
-                @blur="saveText(question)"
-              ></textarea>
+              <textarea v-model="textDrafts[question.answer?.id]" class="field-input min-h-36 resize-y" placeholder="Введите ответ" @blur="saveText(question)"></textarea>
               <p class="mt-2 text-xs text-slate-400">Ответ сохраняется при потере фокуса.</p>
             </div>
 
             <div v-else-if="question.question_type === 'number'">
-              <input
-                v-model="numberDrafts[question.answer?.id]"
-                class="field-input max-w-xs"
-                type="number"
-                placeholder="Введите число"
-                @blur="saveNumber(question)"
-              />
+              <input v-model="numberDrafts[question.answer?.id]" class="field-input max-w-xs" type="number" placeholder="Введите число" @blur="saveNumber(question)" />
               <p class="mt-2 text-xs text-slate-400">Ответ сохраняется при потере фокуса.</p>
             </div>
 
             <div v-else-if="question.question_type === 'ranking'" class="grid gap-3">
-              <div
-                v-for="(item, position) in (question.rankingItems.length ? question.rankingItems : question.options.map((option, index) => ({ option_id: option.id, option, rank: index + 1 })))"
-                :key="item.option_id"
-                class="flex items-center justify-between gap-4 rounded-[24px] border border-slate-200/80 bg-white/85 px-4 py-4"
-              >
+              <div v-for="(item, position) in (question.rankingItems.length ? question.rankingItems : question.options.map((option, index) => ({ option_id: option.id, option, rank: index + 1 })))" :key="item.option_id" class="flex items-center justify-between gap-4 rounded-[24px] border border-slate-200/80 bg-white/85 px-4 py-4">
                 <div class="flex items-center gap-3">
                   <span class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">{{ position + 1 }}</span>
                   <div>
@@ -678,10 +772,15 @@ onMounted(loadData)
               <p class="text-xs text-slate-400">Меняйте порядок кнопками вверх/вниз. Каждое действие сохраняется сразу.</p>
             </div>
 
-            <div v-else class="rounded-[24px] bg-red-50 px-4 py-3 text-sm text-red-700">
-              Тип вопроса <code>{{ question.question_type }}</code> пока не поддержан во фронтенде.
-            </div>
+            <div v-else class="rounded-[24px] bg-red-50 px-4 py-3 text-sm text-red-700">Тип вопроса <code>{{ question.question_type }}</code> пока не поддержан во фронтенде.</div>
           </div>
+        </div>
+        </template>
+
+        <div v-if="isSequential && !isReadOnly && normalizedQuestions.length > 1" class="flex items-center justify-between gap-3">
+          <button class="ghost-button" :disabled="currentStep === 0" @click="prevStep">← Назад</button>
+          <span class="text-sm text-slate-500">{{ currentStep + 1 }} из {{ normalizedQuestions.length }}</span>
+          <button class="ghost-button" :disabled="currentStep >= normalizedQuestions.length - 1" @click="nextStep">Вперёд →</button>
         </div>
       </div>
 
@@ -689,20 +788,47 @@ onMounted(loadData)
         <div class="glass-panel p-5">
           <div class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Статус прохождения</div>
           <div class="mt-4 text-4xl font-semibold text-slate-900">{{ completedRequiredCount }} / {{ normalizedQuestions.length }}</div>
-          <p class="mt-2 text-sm leading-6 text-slate-500">
-            Для отправки должны быть заполнены все обязательные вопросы.
-          </p>
+          <p class="mt-2 text-sm leading-6 text-slate-500">Для отправки должны быть заполнены все обязательные вопросы.</p>
+          <div class="mt-3 text-sm font-medium text-slate-700">Таймер: {{ displayDuration }}</div>
 
           <div class="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
             <div class="h-full rounded-full bg-primary" :style="{ width: `${normalizedQuestions.length ? Math.round((completedRequiredCount / normalizedQuestions.length) * 100) : 0}%` }"></div>
           </div>
 
-          <button
-            v-if="!isReadOnly"
-            class="primary-button mt-6 w-full"
-            :disabled="submitting || !canSubmit"
-            @click="handleSubmit"
-          >
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <button
+              v-for="(question, index) in normalizedQuestions"
+              :key="question.id"
+              class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition"
+              :class="{
+                'bg-emerald-100 text-emerald-700': isQuestionAnswered(question),
+                'bg-orange-100 text-orange-700': !isQuestionAnswered(question) && question.is_required && !question.answer?.is_skipped,
+                'bg-slate-100 text-slate-500': !isQuestionAnswered(question) && !question.is_required && !question.answer?.is_skipped,
+                'bg-slate-200 text-slate-400 line-through': question.answer?.is_skipped,
+                'ring-2 ring-primary': isSequential && index === currentStep,
+              }"
+              @click="scrollToQuestion(index)"
+            >
+              {{ index + 1 }}
+            </button>
+          </div>
+
+          <div v-if="showUnansweredWarning && unansweredQuestions.length" class="mt-4 rounded-2xl bg-amber-50 p-4">
+            <div class="text-sm font-semibold text-amber-800">Есть неотвеченные вопросы:</div>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              <button
+                v-for="item in unansweredQuestions"
+                :key="item.index"
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-200 text-xs font-semibold text-amber-800 transition hover:bg-amber-300"
+                @click="scrollToQuestion(item.index)"
+              >
+                {{ item.index + 1 }}
+              </button>
+            </div>
+            <p class="mt-2 text-xs text-amber-700">Нажмите на номер для перехода. Нажмите «Завершить» ещё раз для отправки.</p>
+          </div>
+
+          <button v-if="!isReadOnly" class="primary-button mt-6 w-full" :disabled="submitting" @click="handleSubmit">
             {{ submitting ? 'Отправляем…' : 'Завершить попытку' }}
           </button>
 

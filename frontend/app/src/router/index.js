@@ -4,6 +4,7 @@ import LoginView from '../views/LoginView.vue'
 import AssignedTestsView from '../views/AssignedTestsView.vue'
 import AttemptView from '../views/AttemptView.vue'
 import ResultsListView from '../views/ResultsListView.vue'
+import TestResultsView from '../views/TestResultsView.vue'
 import ResultDetailView from '../views/ResultDetailView.vue'
 import AnonAttemptView from '../views/AnonAttemptView.vue'
 
@@ -26,7 +27,8 @@ const routes = [
   { path: '/', name: 'assigned-tests', component: AssignedTestsView },
   { path: '/attempts/:attemptId', name: 'attempt', component: AttemptView, props: true },
   { path: '/results', name: 'results', component: ResultsListView, meta: { requiresPsycho: true } },
-  { path: '/results/:attemptId', name: 'result-detail', component: ResultDetailView, props: true, meta: { requiresPsycho: true } },
+  { path: '/results/tests/:testId', name: 'results-test', component: TestResultsView, props: true, meta: { requiresPsycho: true } },
+  { path: '/results/tests/:testId/attempts/:attemptId', name: 'result-detail', component: ResultDetailView, props: true, meta: { requiresPsycho: true } },
 ]
 
 const router = createRouter({

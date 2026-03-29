@@ -3,12 +3,15 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import JsonResultTable from '../components/results/JsonResultTable.vue'
 import ResultSections from '../components/results/ResultSections.vue'
-import { get, list, normalizeId, toFilter, dedupe } from '../utils/nocobase'
+import { get, list, normalizeId, toFilter } from '../utils/nocobase'
 import { formatDateTime, formatDuration, getAttemptStatusMeta, getResultStatusMeta, personDisplayName } from '../utils/format'
 import { resolveResultTemplate } from '../utils/resultTemplates'
-import logger from '../utils/logger'
 
 const props = defineProps({
+  testId: {
+    type: [String, Number],
+    required: true,
+  },
   attemptId: {
     type: [String, Number],
     required: true,
@@ -21,7 +24,6 @@ const attempt = ref(null)
 const resultRecord = ref(null)
 const questions = ref([])
 const answers = ref([])
-const options = ref([])
 const rankingItems = ref([])
 
 const answersByQuestionId = computed(() => Object.fromEntries(answers.value.map((answer) => [answer.question_id, answer])))
@@ -84,14 +86,17 @@ async function loadData() {
   error.value = ''
 
   try {
-    logger.log('loadData: fetchResultDetail', { attemptId: props.attemptId })
-
     const loadedAttempt = await get('attempts', props.attemptId, { appends: 'test,person' })
-    const testId = loadedAttempt?.test_id ?? loadedAttempt?.test?.id
+    if (!loadedAttempt || loadedAttempt.is_archived) {
+      throw new Error('archived')
+    }
+    if (String(loadedAttempt.test_id) !== String(props.testId)) {
+      throw new Error('wrong_test')
+    }
 
     const [loadedQuestions, loadedAnswers, resultRecords] = await Promise.all([
       list('questions', {
-        filter: toFilter({ test_id: testId, is_active: true }),
+        filter: toFilter({ test_id: normalizeId(props.testId), is_active: true }),
         sort: 'order,id',
       }),
       list('answers', {
@@ -105,7 +110,7 @@ async function loadData() {
       }),
     ])
 
-    const answerIds = loadedAnswers.map((a) => a.id)
+    const answerIds = loadedAnswers.map((answer) => answer.id)
     const loadedRankingItems = answerIds.length
       ? await list('answer_ranking_items', {
         filter: toFilter({ answer_id: { $in: answerIds } }),
@@ -118,7 +123,6 @@ async function loadData() {
     resultRecord.value = resultRecords[0] || null
     questions.value = loadedQuestions
     answers.value = loadedAnswers
-    options.value = []
     rankingItems.value = loadedRankingItems
   } catch {
     error.value = 'Не удалось загрузить результат'
@@ -133,7 +137,7 @@ onMounted(loadData)
 <template>
   <section class="w-full">
     <div class="mb-5 flex flex-wrap items-center gap-3">
-      <RouterLink :to="{ name: 'results' }" class="ghost-button no-underline">← К таблице результатов</RouterLink>
+      <RouterLink :to="{ name: 'results-test', params: { testId: props.testId } }" class="ghost-button no-underline">← К попыткам по тесту</RouterLink>
       <span v-if="attempt" class="badge" :class="attemptStatus.className">{{ attemptStatus.label }}</span>
       <span v-if="resultRecord" class="badge" :class="resultStatus.className">{{ resultStatus.label }}</span>
     </div>

@@ -1,11 +1,25 @@
 services:
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - ./.env
+    volumes:
+      - ./backend/src:/usr/src/app/src
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
       target: dev
       args:
-        - VITE_LOGGING=${VITE_LOGGING:-1}
-        - VITE_API_URL=${VITE_API_URL:-https://flow.skeducator.ru}
+        - VITE_LOGGING=${VITE_LOGGING}
+        - VITE_API_URL=${VITE_API_URL}
+        - VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL}
+    depends_on:
+      - backend
     volumes:
       - ./frontend/app/src:/usr/src/app/src
     ports:

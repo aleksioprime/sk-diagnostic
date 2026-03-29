@@ -1,18 +1,19 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { list, normalizeId, toFilter, dedupe } from '../utils/nocobase'
 import { formatDateTime, getAttemptStatusMeta, getResultStatusMeta, isNil } from '../utils/format'
-import logger from '../utils/logger'
 
 const auth = useAuthStore()
+const router = useRouter()
 
 const loading = ref(true)
 const error = ref('')
 const attempts = ref([])
 const answers = ref([])
 const results = ref([])
+const startCandidate = ref(null)
 
 const answersByAttemptId = computed(() => {
   const map = {}
@@ -23,9 +24,7 @@ const answersByAttemptId = computed(() => {
   return map
 })
 
-const resultByAttemptId = computed(() => {
-  return Object.fromEntries(results.value.map((result) => [result.attempt_id, result]))
-})
+const resultByAttemptId = computed(() => Object.fromEntries(results.value.map((result) => [result.attempt_id, result])))
 
 function hasAnswerValue(answer) {
   return Boolean(
@@ -42,7 +41,6 @@ const decoratedAttempts = computed(() => {
   return attempts.value.map((attempt) => {
     const relatedAnswers = answersByAttemptId.value[attempt.id] || []
     const answeredCount = relatedAnswers.filter(hasAnswerValue).length
-
     const totalCount = relatedAnswers.length
     const progress = totalCount ? Math.round((answeredCount / totalCount) * 100) : 0
     const attemptStatus = getAttemptStatusMeta(attempt.status)
@@ -61,23 +59,24 @@ const decoratedAttempts = computed(() => {
   })
 })
 
-const activeAttempts = computed(() => {
-  return decoratedAttempts.value.filter((attempt) => !['submitted', 'completed'].includes(attempt.status))
-})
-
-const archivedAttempts = computed(() => {
-  return decoratedAttempts.value.filter((attempt) => ['submitted', 'completed'].includes(attempt.status))
-})
+const activeAttempts = computed(() => decoratedAttempts.value.filter((attempt) => !['submitted', 'completed'].includes(attempt.status)))
+const archivedAttempts = computed(() => decoratedAttempts.value.filter((attempt) => ['submitted', 'completed'].includes(attempt.status)))
 
 async function loadData() {
   loading.value = true
   error.value = ''
 
   try {
-    logger.log('loadData: listAssignedAttempts', { personId: auth.personId })
+    const personId = normalizeId(auth.personId)
+    const filter = { is_archived: { $ne: true } }
+
+    if (personId != null) {
+      filter.person_id = personId
+    }
+
     const loadedAttempts = await list('attempts', {
-      filter: toFilter({ person_id: normalizeId(auth.personId) }),
-      appends: 'test',
+      filter: toFilter(filter),
+      appends: 'test,person',
       sort: '-submitted_at,-started_at,-id',
     })
 
@@ -88,7 +87,7 @@ async function loadData() {
       return
     }
 
-    const attemptIds = loadedAttempts.map((a) => a.id)
+    const attemptIds = dedupe(loadedAttempts.map((attempt) => attempt.id))
     const [loadedAnswers, loadedResults] = await Promise.all([
       list('answers', {
         filter: toFilter({ attempt_id: { $in: attemptIds } }),
@@ -108,6 +107,25 @@ async function loadData() {
   } finally {
     loading.value = false
   }
+}
+
+function openAttempt(attempt) {
+  if (attempt.status === 'assigned') {
+    startCandidate.value = attempt
+    return
+  }
+  router.push({ name: 'attempt', params: { attemptId: attempt.id } })
+}
+
+function closeStartModal() {
+  startCandidate.value = null
+}
+
+function confirmStart() {
+  const attempt = startCandidate.value
+  if (!attempt) return
+  startCandidate.value = null
+  router.push({ name: 'attempt', params: { attemptId: attempt.id }, query: { start: '1' } })
 }
 
 onMounted(loadData)
@@ -142,21 +160,17 @@ onMounted(loadData)
 
         <div v-if="!activeAttempts.length" class="glass-panel p-8 text-sm text-slate-500">Активных тестов нет.</div>
         <div v-else class="grid gap-4 lg:grid-cols-2">
-          <RouterLink
+          <button
             v-for="attempt in activeAttempts"
             :key="attempt.id"
-            :to="{ name: 'attempt', params: { attemptId: attempt.id } }"
-            class="glass-panel block overflow-hidden p-5 no-underline transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(15,23,42,0.12)]"
+            type="button"
+            class="glass-panel block cursor-pointer overflow-hidden p-5 text-left transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(15,23,42,0.12)]"
+            @click="openAttempt(attempt)"
           >
             <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{{ attempt.test?.code || 'test' }}</p>
-                <h3 class="mt-2 text-xl font-semibold text-slate-900">{{ attempt.test?.title || `Тест #${attempt.test_id}` }}</h3>
-              </div>
+              <h3 class="text-xl font-semibold text-slate-900">{{ attempt.test?.title || `Тест #${attempt.test_id}` }}</h3>
               <span class="badge" :class="attempt.attemptStatus.className">{{ attempt.attemptStatus.label }}</span>
             </div>
-
-            <p v-if="attempt.test?.description" class="mt-3 text-sm leading-6 text-slate-500">{{ attempt.test.description }}</p>
 
             <div class="mt-5 rounded-[24px] bg-slate-50/90 p-4">
               <div class="mb-2 flex items-center justify-between text-sm">
@@ -169,10 +183,12 @@ onMounted(loadData)
             </div>
 
             <div class="mt-4 flex items-center justify-between text-sm text-slate-500">
-              <span>Начало: {{ formatDateTime(attempt.started_at) }}</span>
-              <span class="font-medium text-primary">Открыть</span>
+              <span>
+                {{ attempt.status === 'assigned' ? 'Время начнётся после подтверждения' : `Начало: ${formatDateTime(attempt.started_at)}` }}
+              </span>
+              <span class="font-medium text-primary">{{ attempt.status === 'assigned' ? 'Начать' : 'Открыть' }}</span>
             </div>
-          </RouterLink>
+          </button>
         </div>
       </div>
 
@@ -190,8 +206,7 @@ onMounted(loadData)
             class="glass-panel flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between"
           >
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{{ attempt.test?.code || 'test' }}</p>
-              <h3 class="mt-2 text-lg font-semibold text-slate-900">{{ attempt.test?.title || `Тест #${attempt.test_id}` }}</h3>
+              <h3 class="text-lg font-semibold text-slate-900">{{ attempt.test?.title || `Тест #${attempt.test_id}` }}</h3>
               <p class="mt-2 text-sm text-slate-500">Отправлен: {{ formatDateTime(attempt.submitted_at) }}</p>
             </div>
 
@@ -205,6 +220,24 @@ onMounted(loadData)
               </RouterLink>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="startCandidate" class="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm">
+      <div class="glass-panel w-full max-w-xl p-6 sm:p-7">
+        <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">Подтверждение</p>
+        <h2 class="mt-3 text-2xl font-semibold text-slate-900">Начать прохождение</h2>
+        <p class="mt-3 text-sm leading-6 text-slate-600">
+          После подтверждения для этой попытки будет зафиксировано время старта и запустится таймер.
+        </p>
+        <div class="mt-5 rounded-[24px] bg-slate-50/90 p-4">
+          <div class="text-sm font-semibold text-slate-900">{{ startCandidate.test?.title || `Тест #${startCandidate.test_id}` }}</div>
+          <div class="mt-1 text-sm text-slate-500">{{ startCandidate.test?.description || 'Открыть вопросы и начать прохождение.' }}</div>
+        </div>
+        <div class="mt-6 flex flex-wrap justify-end gap-3">
+          <button class="ghost-button" @click="closeStartModal">Отмена</button>
+          <button class="primary-button" @click="confirmStart">Подтвердить старт</button>
         </div>
       </div>
     </div>

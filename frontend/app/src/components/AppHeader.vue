@@ -26,7 +26,7 @@ const navItems = computed(() => {
 function isActive(item) {
   const targetName = item.to.name
   if (targetName === 'assigned-tests' && route.name === 'attempt') return true
-  if (targetName === 'results' && route.name === 'result-detail') return true
+  if (targetName === 'results' && ['results-test', 'result-detail'].includes(route.name)) return true
   return route.name === targetName
 }
 

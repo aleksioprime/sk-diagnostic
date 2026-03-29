@@ -6,6 +6,31 @@ import logger from '../utils/logger'
 const PSYCHO_ROLE = 'psycho'
 const ADMIN_ROLE = 'admin'
 
+async function tryLoadPersonByUserId(userId) {
+  const filters = [
+    { user_id: userId },
+    { user: userId },
+    { user: { id: userId } },
+  ]
+
+  for (const filter of filters) {
+    try {
+      const { data } = await api.get('/persons:list', {
+        params: {
+          filter: JSON.stringify(filter),
+          pageSize: 1,
+        },
+      })
+      const list = data.data || []
+      if (list.length) return list[0]
+    } catch (error) {
+      logger.debug('fetchPerson skipped filter', filter, error.response?.status)
+    }
+  }
+
+  return null
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || '')
   const user = ref(null)
@@ -50,14 +75,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchPerson() {
     if (!user.value?.id) return
     try {
-      const { data } = await api.get('/persons:list', {
-        params: {
-          filter: JSON.stringify({ user_id: user.value.id }),
-          pageSize: 1,
-        },
-      })
-      const list = data.data || []
-      person.value = list[0] || null
+      person.value = await tryLoadPersonByUserId(user.value.id)
       logger.debug('person →', person.value?.id, person.value?.short_name)
     } catch (error) {
       logger.error('fetchPerson failed', error.response?.status, error.response?.data)
