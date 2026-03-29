@@ -77,17 +77,10 @@ const displayDuration = computed(() => formatDuration(elapsedSeconds.value ?? at
 
 const currentStep = ref(0)
 const isSequential = computed(() => Boolean(attempt.value?.test?.is_sequential))
-const showUnansweredWarning = ref(false)
-
-const unansweredQuestions = computed(() => {
-  return normalizedQuestions.value
-    .map((q, i) => ({ question: q, index: i }))
-    .filter(({ question }) => !isQuestionAnswered(question) && !question.answer?.is_skipped)
-})
+const submitWarning = ref('')
 
 function goToStep(index) {
   currentStep.value = Math.max(0, Math.min(index, normalizedQuestions.value.length - 1))
-  showUnansweredWarning.value = false
 }
 
 function nextStep() {
@@ -391,19 +384,14 @@ async function toggleSkip(question) {
 async function handleSubmit() {
   if (!attempt.value || isReadOnly.value) return
 
-  if (unansweredQuestions.value.length && !showUnansweredWarning.value) {
-    showUnansweredWarning.value = true
-    return
-  }
-
   if (!canSubmit.value) {
-    showUnansweredWarning.value = true
+    submitWarning.value = 'Не на все обязательные вопросы даны ответы'
     return
   }
 
   submitting.value = true
   error.value = ''
-  showUnansweredWarning.value = false
+  submitWarning.value = ''
 
   try {
     const { data } = await publicApi.post(`/public/attempts/${props.token}/submit`)
@@ -676,20 +664,7 @@ onBeforeUnmount(stopTimer)
               </button>
             </div>
 
-            <div v-if="showUnansweredWarning && unansweredQuestions.length" class="mt-4 rounded-2xl bg-amber-50 p-4">
-              <div class="text-sm font-semibold text-amber-800">Есть неотвеченные вопросы:</div>
-              <div class="mt-2 flex flex-wrap gap-1.5">
-                <button
-                  v-for="item in unansweredQuestions"
-                  :key="item.index"
-                  class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-200 text-xs font-semibold text-amber-800 transition hover:bg-amber-300"
-                  @click="scrollToQuestion(item.index)"
-                >
-                  {{ item.index + 1 }}
-                </button>
-              </div>
-              <p class="mt-2 text-xs text-amber-700">Нажмите на номер для перехода. Нажмите «Завершить» ещё раз для отправки.</p>
-            </div>
+            <p v-if="submitWarning" class="mt-4 text-sm text-amber-700">{{ submitWarning }}</p>
 
             <button v-if="!isReadOnly" class="primary-button mt-6 w-full" :disabled="submitting" @click="handleSubmit">
               {{ submitting ? 'Отправляем…' : 'Завершить тест' }}
