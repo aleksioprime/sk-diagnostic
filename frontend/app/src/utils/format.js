@@ -1,3 +1,8 @@
+/**
+ * Форматирование дат, длительностей, статусов и прочих значений для UI.
+ */
+
+/** Полная дата со временем (русская локаль). */
 export function formatDateTime(value) {
   if (!value) return '—'
   const date = new Date(value)
@@ -11,6 +16,7 @@ export function formatDateTime(value) {
   }).format(date)
 }
 
+/** Краткая дата (DD.MM.YYYY). */
 export function formatShortDate(value) {
   if (!value) return '—'
   const date = new Date(value)
@@ -22,6 +28,7 @@ export function formatShortDate(value) {
   }).format(date)
 }
 
+/** Человекочитаемая продолжительность в секундах → «3 мин 42 сек». */
 export function formatDuration(seconds) {
   if (seconds == null || Number.isNaN(Number(seconds))) return '—'
   const totalSeconds = Math.max(0, Math.round(Number(seconds)))
@@ -34,6 +41,7 @@ export function formatDuration(seconds) {
   return `${restSeconds} сек`
 }
 
+/** Метаданные статуса попытки: метка и CSS-класс. */
 export function getAttemptStatusMeta(status) {
   const normalized = status || 'assigned'
   const map = {
@@ -49,6 +57,7 @@ export function getAttemptStatusMeta(status) {
   return map[normalized] || { label: normalized, className: 'bg-slate-100 text-slate-600' }
 }
 
+/** Метаданные статуса результата: метка и CSS-класс. */
 export function getResultStatusMeta(status) {
   const normalized = status || 'pending'
   const map = {
@@ -61,15 +70,18 @@ export function getResultStatusMeta(status) {
   return map[normalized] || { label: normalized, className: 'bg-slate-100 text-slate-600' }
 }
 
+/** Отображаемое имя пользователя из объекта person. */
 export function personDisplayName(person, fallbackId = null) {
   if (!person) return fallbackId != null ? `#${fallbackId}` : '—'
   return person.short_name || person.full_name || [person.last_name, person.first_name].filter(Boolean).join(' ') || person.email || person.nickname || person.username || (fallbackId != null ? `#${fallbackId}` : '—')
 }
 
+/** Проверка на null / undefined / пустую строку. */
 export function isNil(value) {
   return value === null || value === undefined || value === ''
 }
 
+/** Превратить любое значение в строку для отображения в UI. */
 export function stringifyValue(value) {
   if (value === null || value === undefined || value === '') return '—'
   if (typeof value === 'boolean') return value ? 'Да' : 'Нет'

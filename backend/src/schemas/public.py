@@ -1,3 +1,5 @@
+"""Схемы валидации для публичного API."""
+
 from __future__ import annotations
 
 from typing import List
@@ -6,6 +8,12 @@ from pydantic import BaseModel
 
 
 class AnswerUpdatePayload(BaseModel):
+    """
+    Payload для частичного обновления ответа.
+
+    Поля являются опциональными: передаются только изменённые значения.
+    Используется ``model_dump(exclude_unset=True)`` для извлечения.
+    """
     option_id: int | str | None = None
     scale_option_id: int | str | None = None
     text: str | None = None

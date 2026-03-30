@@ -1,3 +1,5 @@
+"""Публичные маршруты (без авторизации)."""
+
 from fastapi import APIRouter
 
 from .attempts import router as attempts_router

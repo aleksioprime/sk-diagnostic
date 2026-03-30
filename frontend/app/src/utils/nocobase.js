@@ -1,3 +1,11 @@
+/**
+ * Утилиты-обёртки над NocoBase REST API.
+ *
+ * Предоставляют list, get, create, update, destroy —
+ * аналогично бэкендовому NocoBaseClient,
+ * но для фронтенда через прямой Axios-инстанс.
+ */
+
 import api from '../api'
 import logger from './logger'
 

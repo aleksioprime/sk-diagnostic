@@ -186,7 +186,27 @@ function buildAnswersMap(answers = []) {
   const answersMap = {};
 
   for (const item of answers) {
-    answersMap[item.question_number] = item.value;
+    const questionNumber = item.question_number;
+
+    if (questionNumber == null) {
+      continue;
+    }
+
+    let value = null;
+
+    if (typeof item.value === "number" && !Number.isNaN(item.value)) {
+      value = item.value;
+    } else if (
+      item.selected_option &&
+      item.selected_option.value != null &&
+      !Number.isNaN(Number(item.selected_option.value))
+    ) {
+      value = Number(item.selected_option.value);
+    }
+
+    if (value != null) {
+      answersMap[questionNumber] = value;
+    }
   }
 
   return answersMap;

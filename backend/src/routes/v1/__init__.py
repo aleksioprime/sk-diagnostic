@@ -1,3 +1,5 @@
+"""Маршруты API v1."""
+
 from fastapi import APIRouter
 
 from .public import router as public_router

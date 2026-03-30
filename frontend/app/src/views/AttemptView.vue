@@ -1,8 +1,11 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import api from '../api'
-import { get, list, create, update, destroy, normalizeId, toFilter, dedupe } from '../utils/nocobase'
+import DomikiColorRankingQuestion from '../components/diagnostics/DomikiColorRankingQuestion.vue'
+import DomikiColorScaleQuestion from '../components/diagnostics/DomikiColorScaleQuestion.vue'
+import { getDiagnosticQuestionMode } from '../diagnostics'
+import { saveAnswerValue as saveDirectAnswerValue, saveMultipleChoice as saveDirectMultipleChoice, saveRanking as saveDirectRanking } from '../utils/attemptAnswers'
+import { get, list, update, normalizeId, toFilter, dedupe } from '../utils/nocobase'
 import { formatDateTime, formatDuration, getAttemptStatusMeta, isNil, stringifyValue } from '../utils/format'
 
 const props = defineProps({
@@ -80,6 +83,7 @@ const attemptStatus = computed(() => getAttemptStatusMeta(attempt.value?.status)
 const isReadOnly = computed(() => ['submitted', 'completed'].includes(attempt.value?.status))
 const showIntro = computed(() => attempt.value?.status === 'assigned')
 const displayDuration = computed(() => formatDuration(elapsedSeconds.value ?? attempt.value?.duration))
+const diagnosticCode = computed(() => attempt.value?.test?.code || null)
 
 const currentStep = ref(0)
 const isSequential = computed(() => Boolean(attempt.value?.test?.is_sequential))
@@ -158,13 +162,15 @@ function isQuestionAnswered(question) {
   const answer = question.answer
   if (!answer) return false
   if (answer.is_skipped) return false
+  if (question.question_type === 'ranking') {
+    return question.options.length > 0 && question.rankingItems.length === question.options.length
+  }
   if (!isNil(answer.option_id)) return true
   if (!isNil(answer.scale_option_id)) return true
   if (!isNil(answer.boolean)) return true
   if (!isNil(answer.number)) return true
   if (!isNil(answer.text)) return true
   if (Array.isArray(answer.options) && answer.options.length) return true
-  if ((rankingByAnswerId.value[answer.id] || []).length) return true
   return false
 }
 
@@ -172,58 +178,22 @@ function answerSelectedOptions(answer) {
   return Array.isArray(answer?.options) ? answer.options.map((option) => option.id) : []
 }
 
+function questionDiagnosticMode(question) {
+  return getDiagnosticQuestionMode(diagnosticCode.value, question)
+}
+
 async function saveAnswerValue(answerId, payload) {
-  return update('answers', answerId, payload)
+  return saveDirectAnswerValue(answerId, payload)
 }
 
 async function saveMultipleChoice(answerId, optionIds) {
-  const ids = dedupe(optionIds.map((value) => normalizeId(value)))
-  const strategies = [
-    () => update('answers', answerId, { options: ids, is_skipped: false }),
-    () => update('answers', answerId, { options: ids.map((id) => ({ id })), is_skipped: false }),
-    () => api.post(`/answers/${answerId}/options:set`, { values: ids }),
-    () => api.post(`/answers/${answerId}/options:set`, ids),
-  ]
-
-  let lastError = null
-  for (const strategy of strategies) {
-    try {
-      const response = await strategy()
-      return response?.data?.data || response
-    } catch (err) {
-      lastError = err
-    }
-  }
-  throw lastError
+  return saveDirectMultipleChoice(answerId, optionIds)
 }
 
-async function saveRanking(answerId, rankedOptionIds) {
-  const existingItems = await list('answer_ranking_items', {
-    filter: toFilter({ answer_id: normalizeId(answerId) }),
-    sort: 'rank,id',
-  })
-
-  const existingByOptionId = new Map(existingItems.map((item) => [item.option_id, item]))
-  const nextOptionIds = dedupe(rankedOptionIds.map((value) => normalizeId(value)))
-
-  const deletions = existingItems.filter((item) => !nextOptionIds.includes(item.option_id))
-  await Promise.all(deletions.map((item) => destroy('answer_ranking_items', item.id)))
-
-  await Promise.all(nextOptionIds.map((optionId, index) => {
-    const existing = existingByOptionId.get(optionId)
-    const payload = { answer_id: normalizeId(answerId), option_id: optionId, rank: index + 1 }
-    return existing
-      ? update('answer_ranking_items', existing.id, payload)
-      : create('answer_ranking_items', payload)
-  }))
-
-  await update('answers', answerId, { is_skipped: false })
-
-  return list('answer_ranking_items', {
-    filter: toFilter({ answer_id: normalizeId(answerId) }),
-    appends: 'option',
-    sort: 'rank,id',
-  })
+async function saveRanking(question, rankedOptionIds) {
+  const result = await saveDirectRanking(question.answer.id, rankedOptionIds)
+  patchAnswer(question.answer.id, { ...question.answer, ...(result.answer || {}), is_skipped: false })
+  return result.rankingItems || []
 }
 
 async function withSaving(questionId, action) {
@@ -234,8 +204,9 @@ async function withSaving(questionId, action) {
     await action()
     savingState[questionId] = { pending: false, error: '' }
     globalNotice.value = 'Ответ сохранён'
-  } catch {
-    savingState[questionId] = { pending: false, error: 'Не удалось сохранить ответ' }
+  } catch (error) {
+    const details = error.response?.data?.detail || error.response?.data?.errors?.[0]?.message
+    savingState[questionId] = { pending: false, error: details || 'Не удалось сохранить ответ' }
   }
 }
 
@@ -377,9 +348,8 @@ async function toggleMultiple(question, optionId) {
   }
 
   await withSaving(question.id, async () => {
-    await saveMultipleChoice(question.answer.id, nextIds)
-    const nextOptions = question.options.filter((option) => nextIds.includes(option.id))
-    patchAnswer(question.answer.id, { ...question.answer, options: nextOptions, is_skipped: false })
+    const updated = await saveMultipleChoice(question.answer.id, nextIds)
+    patchAnswer(question.answer.id, { ...question.answer, ...updated, is_skipped: false })
   })
 }
 
@@ -397,7 +367,52 @@ async function moveRanking(question, optionId, direction) {
   ;[next[index], next[targetIndex]] = [next[targetIndex], next[index]]
 
   await withSaving(question.id, async () => {
-    const updatedItems = await saveRanking(question.answer.id, next)
+    const updatedItems = await saveRanking(question, next)
+    rankingItems.value = [
+      ...rankingItems.value.filter((item) => item.answer_id !== question.answer.id),
+      ...updatedItems,
+    ]
+  })
+}
+
+async function appendRankingSelection(question, optionId) {
+  if (!question.answer || isReadOnly.value || showIntro.value) return
+  const currentOrder = question.rankingItems.length
+    ? question.rankingItems.map((item) => item.option_id)
+    : []
+
+  if (currentOrder.includes(optionId)) return
+
+  await withSaving(question.id, async () => {
+    const updatedItems = await saveRanking(question, [...currentOrder, optionId])
+    rankingItems.value = [
+      ...rankingItems.value.filter((item) => item.answer_id !== question.answer.id),
+      ...updatedItems,
+    ]
+  })
+}
+
+async function removeRankingSelection(question, optionId) {
+  if (!question.answer || isReadOnly.value || showIntro.value) return
+  const currentOrder = question.rankingItems.length
+    ? question.rankingItems.map((item) => item.option_id)
+    : []
+
+  if (!currentOrder.includes(optionId)) return
+
+  await withSaving(question.id, async () => {
+    const updatedItems = await saveRanking(question, currentOrder.filter((id) => id !== optionId))
+    rankingItems.value = [
+      ...rankingItems.value.filter((item) => item.answer_id !== question.answer.id),
+      ...updatedItems,
+    ]
+  })
+}
+
+async function resetRankingSelection(question) {
+  if (!question.answer || isReadOnly.value || showIntro.value) return
+  await withSaving(question.id, async () => {
+    const updatedItems = await saveRanking(question, [])
     rankingItems.value = [
       ...rankingItems.value.filter((item) => item.answer_id !== question.answer.id),
       ...updatedItems,
@@ -413,7 +428,7 @@ async function toggleSkip(question) {
       await saveMultipleChoice(question.answer.id, [])
     }
     if (question.rankingItems.length) {
-      await saveRanking(question.answer.id, [])
+      await saveRanking(question, [])
     }
 
     const updated = await saveAnswerValue(question.answer.id, {
@@ -688,6 +703,13 @@ onBeforeUnmount(stopTimer)
               </button>
             </div>
 
+            <DomikiColorScaleQuestion
+              v-else-if="questionDiagnosticMode(question) === 'domiki-scale'"
+              :question="question"
+              :disabled="savingState[question.id]?.pending"
+              @select="saveScaleOption(question, $event)"
+            />
+
             <div v-else-if="question.question_type === 'scale' && question.scaleOptions.length" class="grid gap-3">
               <button v-for="option in question.scaleOptions" :key="option.id" class="cursor-pointer rounded-[24px] border px-4 py-4 text-left transition" :class="question.answer?.scale_option_id === option.id ? 'border-primary bg-primary/8 text-slate-900 shadow-sm' : 'border-slate-200/80 bg-white/80 text-slate-700 hover:border-primary/40'" @click="saveScaleOption(question, option.id)">
                 <div class="flex items-center justify-between gap-3">
@@ -740,6 +762,15 @@ onBeforeUnmount(stopTimer)
               <input v-model="numberDrafts[question.answer?.id]" class="field-input max-w-xs" type="number" placeholder="Введите число" @blur="saveNumber(question)" />
               <p class="mt-2 text-xs text-slate-400">Ответ сохраняется при потере фокуса.</p>
             </div>
+
+            <DomikiColorRankingQuestion
+              v-else-if="questionDiagnosticMode(question) === 'domiki-ranking'"
+              :question="question"
+              :disabled="savingState[question.id]?.pending"
+              @select="appendRankingSelection(question, $event)"
+              @remove="removeRankingSelection(question, $event)"
+              @reset="resetRankingSelection(question)"
+            />
 
             <div v-else-if="question.question_type === 'ranking'" class="grid gap-3">
               <div v-for="(item, position) in (question.rankingItems.length ? question.rankingItems : question.options.map((option, index) => ({ option_id: option.id, option, rank: index + 1 })))" :key="item.option_id" class="flex items-center justify-between gap-4 rounded-[24px] border border-slate-200/80 bg-white/85 px-4 py-4">

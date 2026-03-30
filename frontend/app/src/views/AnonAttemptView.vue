@@ -1,6 +1,9 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import DomikiColorRankingQuestion from '../components/diagnostics/DomikiColorRankingQuestion.vue'
+import DomikiColorScaleQuestion from '../components/diagnostics/DomikiColorScaleQuestion.vue'
 import publicApi from '../api/public'
+import { getDiagnosticQuestionMode } from '../diagnostics'
 import { formatDateTime, formatDuration, getAttemptStatusMeta, isNil, stringifyValue } from '../utils/format'
 
 const props = defineProps({
@@ -74,6 +77,7 @@ const canSubmit = computed(() => normalizedQuestions.value.every((question) => !
 const attemptStatus = computed(() => getAttemptStatusMeta(attempt.value?.status))
 const isReadOnly = computed(() => ['submitted', 'completed'].includes(attempt.value?.status))
 const displayDuration = computed(() => formatDuration(elapsedSeconds.value ?? attempt.value?.duration))
+const diagnosticCode = computed(() => attempt.value?.test?.code || null)
 
 const currentStep = ref(0)
 const isSequential = computed(() => Boolean(attempt.value?.test?.is_sequential))
@@ -165,18 +169,24 @@ function isQuestionAnswered(question) {
   const answer = question.answer
   if (!answer) return false
   if (answer.is_skipped) return false
+  if (question.question_type === 'ranking') {
+    return question.options.length > 0 && question.rankingItems.length === question.options.length
+  }
   if (!isNil(answer.option_id)) return true
   if (!isNil(answer.scale_option_id)) return true
   if (!isNil(answer.boolean)) return true
   if (!isNil(answer.number)) return true
   if (!isNil(answer.text)) return true
   if (Array.isArray(answer.options) && answer.options.length) return true
-  if ((rankingByAnswerId.value[answer.id] || []).length) return true
   return false
 }
 
 function answerSelectedOptions(answer) {
   return Array.isArray(answer?.options) ? answer.options.map((option) => option.id) : []
+}
+
+function questionDiagnosticMode(question) {
+  return getDiagnosticQuestionMode(diagnosticCode.value, question)
 }
 
 function patchAnswer(answer) {
@@ -202,8 +212,9 @@ async function withSaving(questionId, action) {
     await action()
     savingState[questionId] = { pending: false, error: '' }
     globalNotice.value = 'Ответ сохранён'
-  } catch {
-    savingState[questionId] = { pending: false, error: 'Не удалось сохранить ответ' }
+  } catch (error) {
+    const details = error.response?.data?.detail || error.response?.data?.errors?.[0]?.message
+    savingState[questionId] = { pending: false, error: details || 'Не удалось сохранить ответ' }
   }
 }
 
@@ -352,6 +363,54 @@ async function moveRanking(question, optionId, direction) {
 
   await withSaving(question.id, async () => {
     const result = await saveAnswerValue(question.id, { ranking: next })
+    patchAnswer(result.answer)
+    rankingItems.value = [
+      ...rankingItems.value.filter((item) => item.answer_id !== question.answer.id),
+      ...(result.ranking_items || []),
+    ]
+  })
+}
+
+async function appendRankingSelection(question, optionId) {
+  if (!question.answer || isReadOnly.value) return
+  const currentOrder = question.rankingItems.length
+    ? question.rankingItems.map((item) => item.option_id)
+    : []
+
+  if (currentOrder.includes(optionId)) return
+
+  await withSaving(question.id, async () => {
+    const result = await saveAnswerValue(question.id, { ranking: [...currentOrder, optionId] })
+    patchAnswer(result.answer)
+    rankingItems.value = [
+      ...rankingItems.value.filter((item) => item.answer_id !== question.answer.id),
+      ...(result.ranking_items || []),
+    ]
+  })
+}
+
+async function removeRankingSelection(question, optionId) {
+  if (!question.answer || isReadOnly.value) return
+  const currentOrder = question.rankingItems.length
+    ? question.rankingItems.map((item) => item.option_id)
+    : []
+
+  if (!currentOrder.includes(optionId)) return
+
+  await withSaving(question.id, async () => {
+    const result = await saveAnswerValue(question.id, { ranking: currentOrder.filter((id) => id !== optionId) })
+    patchAnswer(result.answer)
+    rankingItems.value = [
+      ...rankingItems.value.filter((item) => item.answer_id !== question.answer.id),
+      ...(result.ranking_items || []),
+    ]
+  })
+}
+
+async function resetRankingSelection(question) {
+  if (!question.answer || isReadOnly.value) return
+  await withSaving(question.id, async () => {
+    const result = await saveAnswerValue(question.id, { ranking: [] })
     patchAnswer(result.answer)
     rankingItems.value = [
       ...rankingItems.value.filter((item) => item.answer_id !== question.answer.id),
@@ -561,6 +620,13 @@ onBeforeUnmount(stopTimer)
                 </button>
               </div>
 
+              <DomikiColorScaleQuestion
+                v-else-if="questionDiagnosticMode(question) === 'domiki-scale'"
+                :question="question"
+                :disabled="savingState[question.id]?.pending"
+                @select="saveScaleOption(question, $event)"
+              />
+
               <div v-else-if="question.question_type === 'scale' && question.scaleOptions.length" class="grid gap-3">
                 <button v-for="option in question.scaleOptions" :key="option.id" class="cursor-pointer rounded-3xl border px-4 py-4 text-left transition" :class="question.answer?.scale_option_id === option.id ? 'border-primary bg-primary/8 text-slate-900 shadow-sm' : 'border-slate-200/80 bg-white/80 text-slate-700 hover:border-primary/40'" @click="saveScaleOption(question, option.id)">
                   <div class="flex items-center justify-between gap-3">
@@ -610,6 +676,15 @@ onBeforeUnmount(stopTimer)
                 <input v-model="numberDrafts[question.answer?.id]" class="field-input max-w-xs" type="number" placeholder="Введите число" @blur="saveNumber(question)" />
                 <p class="mt-2 text-xs text-slate-400">Ответ сохраняется при потере фокуса.</p>
               </div>
+
+              <DomikiColorRankingQuestion
+                v-else-if="questionDiagnosticMode(question) === 'domiki-ranking'"
+                :question="question"
+                :disabled="savingState[question.id]?.pending"
+                @select="appendRankingSelection(question, $event)"
+                @remove="removeRankingSelection(question, $event)"
+                @reset="resetRankingSelection(question)"
+              />
 
               <div v-else-if="question.question_type === 'ranking'" class="grid gap-3">
                 <div v-for="(item, position) in (question.rankingItems.length ? question.rankingItems : question.options.map((option, index) => ({ option_id: option.id, option, rank: index + 1 })))" :key="item.option_id" class="flex items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white/85 px-4 py-4">

@@ -1,3 +1,11 @@
+/**
+ * Шаблоны отображения результатов диагностик.
+ *
+ * Каждый шаблон определяет структуру колонок таблицы,
+ * hero-блок и секции детальной страницы.
+ * generic — шаблон по умолчанию.
+ */
+
 import { stringifyValue, personDisplayName } from './format'
 
 function primitiveEntries(source = {}) {

@@ -1,3 +1,11 @@
+"""
+HTTP-клиент для взаимодействия с NocoBase REST API.
+
+Предоставляет CRUD-операции над коллекциями: list, get, create, update,
+destroy, set_relation.  Каждый вызов открывает отдельный ``httpx.AsyncClient``
+(stateless), что упрощает конфигурацию и потокобезопасность.
+"""
+
 from __future__ import annotations
 
 import json
@@ -7,13 +15,19 @@ import httpx
 from fastapi import HTTPException
 
 from .config import settings
+from .logging import get_logger
 
+logger = get_logger(__name__)
 
+# Максимальное количество записей, запрашиваемых за один раз
 DEFAULT_PAGE_SIZE = 500
 
 
 class NocoBaseClient:
+    """Асинхронный клиент к NocoBase API."""
+
     def _normalize_params(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Привести параметры запроса к плоскому строковому виду."""
         normalized: dict[str, Any] = {}
         for key, value in params.items():
             if value is None:
@@ -32,6 +46,7 @@ class NocoBaseClient:
         params: dict[str, Any] | None = None,
         json_payload: Any = None,
     ) -> httpx.Response:
+        """Выполнить HTTP-запрос к NocoBase и вернуть ответ."""
         if not settings.api_key:
             raise HTTPException(status_code=500, detail='API_KEY is not configured')
 
@@ -39,6 +54,8 @@ class NocoBaseClient:
             'Authorization': f'Bearer {settings.api_key}',
             'Content-Type': 'application/json',
         }
+
+        logger.debug("NocoBase → %s %s  params=%s", method, path, params)
 
         async with httpx.AsyncClient(
             base_url=settings.nocobase_api_url,
@@ -58,8 +75,10 @@ class NocoBaseClient:
                 detail = response.json()
             except Exception:
                 pass
+            logger.warning("NocoBase ← %s %s  status=%d", method, path, response.status_code)
             raise HTTPException(status_code=response.status_code, detail=detail)
 
+        logger.debug("NocoBase ← %s %s  status=%d", method, path, response.status_code)
         return response
 
     async def list(
@@ -71,6 +90,7 @@ class NocoBaseClient:
         sort: str | list[str] | None = None,
         page_size: int = DEFAULT_PAGE_SIZE,
     ) -> list[dict[str, Any]]:
+        """Получить список записей коллекции с фильтрацией и сортировкой."""
         response = await self._request(
             'GET',
             f'/{collection}:list',
@@ -91,6 +111,7 @@ class NocoBaseClient:
         *,
         appends: str | list[str] | None = None,
     ) -> dict[str, Any]:
+        """Получить одну запись коллекции по первичному ключу."""
         response = await self._request(
             'GET',
             f'/{collection}:get',
@@ -99,10 +120,12 @@ class NocoBaseClient:
         return response.json().get('data') or {}
 
     async def create(self, collection: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """Создать запись в коллекции."""
         response = await self._request('POST', f'/{collection}:create', json_payload=payload)
         return response.json().get('data') or {}
 
     async def update(self, collection: str, record_id: str | int, payload: dict[str, Any]) -> dict[str, Any]:
+        """Обновить запись коллекции по ID."""
         response = await self._request(
             'POST',
             f'/{collection}:update',
@@ -112,12 +135,14 @@ class NocoBaseClient:
         return response.json().get('data') or {}
 
     async def destroy(self, collection: str, record_id: str | int) -> None:
+        """Удалить запись из коллекции (пробует DELETE, при ошибке — POST)."""
         try:
             await self._request('DELETE', f'/{collection}:destroy', params={'filterByTk': record_id})
         except HTTPException:
             await self._request('POST', f'/{collection}:destroy', params={'filterByTk': record_id})
 
     async def set_relation(self, collection: str, record_id: str | int, relation: str, ids: list[str | int]) -> Any:
+        """Установить связь many-to-many, пробуя несколько стратегий NocoBase API."""
         strategies = [
             lambda: self.update(collection, record_id, {relation: ids}),
             lambda: self.update(collection, record_id, {relation: [{'id': value} for value in ids]}),

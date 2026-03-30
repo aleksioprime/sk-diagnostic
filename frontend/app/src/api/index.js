@@ -1,3 +1,10 @@
+/**
+ * Axios-инстанс для запросов к NocoBase API.
+ *
+ * Автоматически подставляет Bearer-токен из localStorage,
+ * логирует каждый запрос/ответ и перенаправляет на /login при 401.
+ */
+
 import axios from 'axios'
 import router from '../router'
 import logger from '../utils/logger'

@@ -1,57 +1,616 @@
 {
-  "attempt_id": "att_1001",
+  "attempt_id": 356032467959808,
+  "test_id": 353846487482368,
   "test_code": "motivation_learning",
+  "test_title": "Диагностика мотивации учения и эмоционального отношения к учению",
+  "submitted_at": "2026-03-30T11:18:15.285Z",
   "student": {
-    "id": "stu_501",
-    "full_name": "Иванов Иван",
-    "age": 14,
-    "class_name": "8А",
+    "id": 355515231240192,
+    "name": "Семочкин Алексей Викторович",
+    "birth_date": "2015-12-05",
+    "age": 10,
     "gender": "male"
   },
-  "submitted_at": "2026-03-20T10:30:00Z",
   "answers": [
-    { "question_number": 1, "value": 3 },
-    { "question_number": 2, "value": 4 },
-    { "question_number": 3, "value": 2 },
-    { "question_number": 4, "value": 3 },
-    { "question_number": 5, "value": 2 },
-    { "question_number": 6, "value": 4 },
-    { "question_number": 7, "value": 1 },
-    { "question_number": 8, "value": 4 },
-    { "question_number": 9, "value": 2 },
-    { "question_number": 10, "value": 4 },
-
-    { "question_number": 11, "value": 2 },
-    { "question_number": 12, "value": 3 },
-    { "question_number": 13, "value": 2 },
-    { "question_number": 14, "value": 2 },
-    { "question_number": 15, "value": 1 },
-    { "question_number": 16, "value": 4 },
-    { "question_number": 17, "value": 2 },
-    { "question_number": 18, "value": 4 },
-    { "question_number": 19, "value": 1 },
-    { "question_number": 20, "value": 2 },
-
-    { "question_number": 21, "value": 3 },
-    { "question_number": 22, "value": 4 },
-    { "question_number": 23, "value": 1 },
-    { "question_number": 24, "value": 4 },
-    { "question_number": 25, "value": 3 },
-    { "question_number": 26, "value": 4 },
-    { "question_number": 27, "value": 1 },
-    { "question_number": 28, "value": 2 },
-    { "question_number": 29, "value": 2 },
-    { "question_number": 30, "value": 2 },
-
-    { "question_number": 31, "value": 3 },
-    { "question_number": 32, "value": 4 },
-    { "question_number": 33, "value": 3 },
-    { "question_number": 34, "value": 4 },
-    { "question_number": 35, "value": 1 },
-    { "question_number": 36, "value": 4 },
-    { "question_number": 37, "value": 1 },
-    { "question_number": 38, "value": 2 },
-    { "question_number": 39, "value": 1 },
-    { "question_number": 40, "value": 4 }
+    {
+      "answer_id": 356032467959811,
+      "question_id": 353993000000001,
+      "question_number": 1,
+      "question_type": "scale",
+      "question_text": "Я спокоен",
+      "display": "Часто",
+      "value": 3,
+      "selected_option": {
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959812,
+      "question_id": 353993000000002,
+      "question_number": 2,
+      "question_type": "scale",
+      "question_text": "Мне хочется узнать, понять, докопаться до сути",
+      "display": "Иногда",
+      "value": 2,
+      "selected_option": {
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959813,
+      "question_id": 353993000000003,
+      "question_number": 3,
+      "question_type": "scale",
+      "question_text": "Я разъярён",
+      "display": "Часто",
+      "value": 3,
+      "selected_option": {
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959814,
+      "question_id": 353993000000004,
+      "question_number": 4,
+      "question_type": "scale",
+      "question_text": "Я стараюсь не делать ошибок",
+      "display": "Почти всегда",
+      "value": 4,
+      "selected_option": {
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959815,
+      "question_id": 353993000000005,
+      "question_number": 5,
+      "question_type": "scale",
+      "question_text": "Утверждение 5",
+      "display": "Иногда",
+      "value": 2,
+      "selected_option": {
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959816,
+      "question_id": 353993000000006,
+      "question_number": 6,
+      "question_type": "scale",
+      "question_text": "Утверждение 6",
+      "display": "Почти всегда",
+      "value": 4,
+      "selected_option": {
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959817,
+      "question_id": 353993000000007,
+      "question_number": 7,
+      "question_type": "scale",
+      "question_text": "Утверждение 7",
+      "display": "Иногда",
+      "value": 2,
+      "selected_option": {
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959818,
+      "question_id": 353993000000008,
+      "question_number": 8,
+      "question_type": "scale",
+      "question_text": "Утверждение 8",
+      "display": "Часто",
+      "value": 3,
+      "selected_option": {
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959819,
+      "question_id": 353993000000009,
+      "question_number": 9,
+      "question_type": "scale",
+      "question_text": "Утверждение 9",
+      "display": "Почти никогда",
+      "value": 1,
+      "selected_option": {
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959820,
+      "question_id": 353993000000010,
+      "question_number": 10,
+      "question_type": "scale",
+      "question_text": "Утверждение 10",
+      "display": "Почти всегда",
+      "value": 4,
+      "selected_option": {
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959821,
+      "question_id": 353993000000011,
+      "question_number": 11,
+      "question_type": "scale",
+      "question_text": "Утверждение 11",
+      "display": "Иногда",
+      "value": 2,
+      "selected_option": {
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959822,
+      "question_id": 353993000000012,
+      "question_number": 12,
+      "question_type": "scale",
+      "question_text": "Утверждение 12",
+      "display": "Часто",
+      "value": 3,
+      "selected_option": {
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959823,
+      "question_id": 353993000000013,
+      "question_number": 13,
+      "question_type": "scale",
+      "question_text": "Утверждение 13",
+      "display": "Иногда",
+      "value": 2,
+      "selected_option": {
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959824,
+      "question_id": 353993000000014,
+      "question_number": 14,
+      "question_type": "scale",
+      "question_text": "Утверждение 14",
+      "display": "Почти всегда",
+      "value": 4,
+      "selected_option": {
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959825,
+      "question_id": 353993000000015,
+      "question_number": 15,
+      "question_type": "scale",
+      "question_text": "Утверждение 15",
+      "display": "Почти никогда",
+      "value": 1,
+      "selected_option": {
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959826,
+      "question_id": 353993000000016,
+      "question_number": 16,
+      "question_type": "scale",
+      "question_text": "Утверждение 16",
+      "display": "Часто",
+      "value": 3,
+      "selected_option": {
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959827,
+      "question_id": 353993000000017,
+      "question_number": 17,
+      "question_type": "scale",
+      "question_text": "Утверждение 17",
+      "display": "Иногда",
+      "value": 2,
+      "selected_option": {
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959828,
+      "question_id": 353993000000018,
+      "question_number": 18,
+      "question_type": "scale",
+      "question_text": "Утверждение 18",
+      "display": "Почти всегда",
+      "value": 4,
+      "selected_option": {
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959829,
+      "question_id": 353993000000019,
+      "question_number": 19,
+      "question_type": "scale",
+      "question_text": "Утверждение 19",
+      "display": "Иногда",
+      "value": 2,
+      "selected_option": {
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959830,
+      "question_id": 353993000000020,
+      "question_number": 20,
+      "question_type": "scale",
+      "question_text": "Утверждение 20",
+      "display": "Часто",
+      "value": 3,
+      "selected_option": {
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959831,
+      "question_id": 353993000000021,
+      "question_number": 21,
+      "question_type": "scale",
+      "question_text": "Утверждение 21",
+      "display": "Почти никогда",
+      "value": 1,
+      "selected_option": {
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959832,
+      "question_id": 353993000000022,
+      "question_number": 22,
+      "question_type": "scale",
+      "question_text": "Утверждение 22",
+      "display": "Почти всегда",
+      "value": 4,
+      "selected_option": {
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959833,
+      "question_id": 353993000000023,
+      "question_number": 23,
+      "question_type": "scale",
+      "question_text": "Утверждение 23",
+      "display": "Иногда",
+      "value": 2,
+      "selected_option": {
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959834,
+      "question_id": 353993000000024,
+      "question_number": 24,
+      "question_type": "scale",
+      "question_text": "Утверждение 24",
+      "display": "Часто",
+      "value": 3,
+      "selected_option": {
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959835,
+      "question_id": 353993000000025,
+      "question_number": 25,
+      "question_type": "scale",
+      "question_text": "Утверждение 25",
+      "display": "Иногда",
+      "value": 2,
+      "selected_option": {
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959836,
+      "question_id": 353993000000026,
+      "question_number": 26,
+      "question_type": "scale",
+      "question_text": "Утверждение 26",
+      "display": "Почти всегда",
+      "value": 4,
+      "selected_option": {
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959837,
+      "question_id": 353993000000027,
+      "question_number": 27,
+      "question_type": "scale",
+      "question_text": "Утверждение 27",
+      "display": "Почти никогда",
+      "value": 1,
+      "selected_option": {
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959838,
+      "question_id": 353993000000028,
+      "question_number": 28,
+      "question_type": "scale",
+      "question_text": "Утверждение 28",
+      "display": "Часто",
+      "value": 3,
+      "selected_option": {
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959839,
+      "question_id": 353993000000029,
+      "question_number": 29,
+      "question_type": "scale",
+      "question_text": "Утверждение 29",
+      "display": "Иногда",
+      "value": 2,
+      "selected_option": {
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959840,
+      "question_id": 353993000000030,
+      "question_number": 30,
+      "question_type": "scale",
+      "question_text": "Утверждение 30",
+      "display": "Почти всегда",
+      "value": 4,
+      "selected_option": {
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959841,
+      "question_id": 353993000000031,
+      "question_number": 31,
+      "question_type": "scale",
+      "question_text": "Утверждение 31",
+      "display": "Иногда",
+      "value": 2,
+      "selected_option": {
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959842,
+      "question_id": 353993000000032,
+      "question_number": 32,
+      "question_type": "scale",
+      "question_text": "Утверждение 32",
+      "display": "Часто",
+      "value": 3,
+      "selected_option": {
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959843,
+      "question_id": 353993000000033,
+      "question_number": 33,
+      "question_type": "scale",
+      "question_text": "Утверждение 33",
+      "display": "Почти никогда",
+      "value": 1,
+      "selected_option": {
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959844,
+      "question_id": 353993000000034,
+      "question_number": 34,
+      "question_type": "scale",
+      "question_text": "Утверждение 34",
+      "display": "Почти всегда",
+      "value": 4,
+      "selected_option": {
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959845,
+      "question_id": 353993000000035,
+      "question_number": 35,
+      "question_type": "scale",
+      "question_text": "Утверждение 35",
+      "display": "Иногда",
+      "value": 2,
+      "selected_option": {
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959846,
+      "question_id": 353993000000036,
+      "question_number": 36,
+      "question_type": "scale",
+      "question_text": "Утверждение 36",
+      "display": "Часто",
+      "value": 3,
+      "selected_option": {
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959847,
+      "question_id": 353993000000037,
+      "question_number": 37,
+      "question_type": "scale",
+      "question_text": "Утверждение 37",
+      "display": "Иногда",
+      "value": 2,
+      "selected_option": {
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959848,
+      "question_id": 353993000000038,
+      "question_number": 38,
+      "question_type": "scale",
+      "question_text": "Утверждение 38",
+      "display": "Почти всегда",
+      "value": 4,
+      "selected_option": {
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959849,
+      "question_id": 353993000000039,
+      "question_number": 39,
+      "question_type": "scale",
+      "question_text": "Утверждение 39",
+      "display": "Почти никогда",
+      "value": 1,
+      "selected_option": {
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 356032467959850,
+      "question_id": 353993000000040,
+      "question_number": 40,
+      "question_type": "scale",
+      "question_text": "Утверждение 40",
+      "display": "Часто",
+      "value": 3,
+      "selected_option": {
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "scale_option"
+      }
+    }
   ]
 }
