@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -14,6 +14,16 @@ const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 const menuOpen = ref(false)
+const menuWrapper = ref(null)
+
+function onClickOutside(event) {
+  if (menuOpen.value && menuWrapper.value && !menuWrapper.value.contains(event.target)) {
+    menuOpen.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('click', onClickOutside, true))
+onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true))
 
 const navItems = computed(() => {
   const items = [{ label: 'Мои тесты', to: { name: 'assigned-tests' } }]
@@ -67,7 +77,7 @@ async function logout() {
         </nav>
       </div>
 
-      <div class="relative">
+      <div ref="menuWrapper" class="relative">
         <button
           class="flex cursor-pointer items-center gap-3 rounded-full border border-slate-200/70 bg-white/80 px-3 py-2 text-left shadow-sm transition hover:bg-white"
           @click="menuOpen = !menuOpen"
@@ -81,8 +91,7 @@ async function logout() {
           </div>
         </button>
 
-        <div v-if="menuOpen" class="fixed inset-0 z-10" @click="menuOpen = false"></div>
-        <div v-if="menuOpen" class="absolute right-0 z-20 mt-3 w-72 overflow-hidden rounded-3xl border border-white/60 bg-white/92 p-2 shadow-[0_18px_55px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+        <div v-if="menuOpen" class="absolute right-0 z-40 mt-3 w-72 overflow-hidden rounded-3xl border border-white/60 bg-white/92 p-2 shadow-[0_18px_55px_rgba(15,23,42,0.14)] backdrop-blur-xl">
           <div class="rounded-2xl bg-slate-50/80 px-4 py-3">
             <div class="text-sm font-semibold text-slate-900">{{ auth.displayName }}</div>
             <div class="mt-1 text-xs text-slate-500">{{ auth.isPsycho ? 'Доступ к результатам открыт' : 'Доступ к тестам открыт' }}</div>
