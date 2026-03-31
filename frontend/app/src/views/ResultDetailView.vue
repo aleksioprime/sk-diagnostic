@@ -137,7 +137,7 @@ onMounted(loadData)
 <template>
   <section class="w-full">
     <div class="mb-5 flex flex-wrap items-center gap-3">
-      <RouterLink :to="{ name: 'results-test', params: { testId: props.testId } }" class="ghost-button no-underline">← К попыткам по тесту</RouterLink>
+      <RouterLink :to="{ name: 'results-test', params: { testId: props.testId } }" class="ghost-button no-underline">← К прохождениям по тесту</RouterLink>
       <span v-if="attempt" class="badge" :class="attemptStatus.className">{{ attemptStatus.label }}</span>
       <span v-if="resultRecord" class="badge" :class="resultStatus.className">{{ resultStatus.label }}</span>
     </div>
@@ -197,7 +197,7 @@ onMounted(loadData)
       </div>
     </div>
     <div v-else class="glass-panel p-10 text-center text-sm text-slate-500">
-      Для этой попытки пока нет результата.
+      Для этого прохождения пока нет результата.
     </div>
   </section>
 </template>

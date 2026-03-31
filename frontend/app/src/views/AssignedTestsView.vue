@@ -154,7 +154,7 @@ onMounted(loadData)
     <div v-else class="grid gap-8">
       <div>
         <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-slate-900">Активные попытки</h2>
+          <h2 class="text-lg font-semibold text-slate-900">Активные прохождения</h2>
           <span class="badge bg-primary/10 text-primary">{{ activeAttempts.length }}</span>
         </div>
 
@@ -194,11 +194,11 @@ onMounted(loadData)
 
       <div>
         <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-slate-900">Завершённые попытки</h2>
+          <h2 class="text-lg font-semibold text-slate-900">Завершённые прохождения</h2>
           <span class="badge bg-slate-100 text-slate-600">{{ archivedAttempts.length }}</span>
         </div>
 
-        <div v-if="!archivedAttempts.length" class="glass-panel p-8 text-sm text-slate-500">Завершённых попыток пока нет.</div>
+        <div v-if="!archivedAttempts.length" class="glass-panel p-8 text-sm text-slate-500">Завершённых прохождений пока нет.</div>
         <div v-else class="grid gap-4">
           <div
             v-for="attempt in archivedAttempts"
@@ -229,7 +229,7 @@ onMounted(loadData)
         <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">Подтверждение</p>
         <h2 class="mt-3 text-2xl font-semibold text-slate-900">Начать прохождение</h2>
         <p class="mt-3 text-sm leading-6 text-slate-600">
-          После подтверждения для этой попытки будет зафиксировано время старта и запустится таймер.
+          После подтверждения для этого прохождения будет зафиксировано время старта и запустится таймер.
         </p>
         <div class="mt-5 rounded-[24px] bg-slate-50/90 p-4">
           <div class="text-sm font-semibold text-slate-900">{{ startCandidate.test?.title || `Тест #${startCandidate.test_id}` }}</div>

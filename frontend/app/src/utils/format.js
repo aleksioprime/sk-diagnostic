@@ -45,29 +45,29 @@ export function formatDuration(seconds) {
 export function getAttemptStatusMeta(status) {
   const normalized = status || 'assigned'
   const map = {
-    assigned: { label: 'Выдан', className: 'bg-slate-100 text-slate-600' },
-    in_progress: { label: 'В работе', className: 'bg-primary/10 text-primary' },
-    started: { label: 'Начат', className: 'bg-primary/10 text-primary' },
-    submitted: { label: 'Отправлен', className: 'bg-emerald-100 text-emerald-700' },
-    completed: { label: 'Обработан', className: 'bg-emerald-100 text-emerald-700' },
-    checking: { label: 'В расчете', className: 'bg-amber-100 text-amber-700' },
-    error: { label: 'Ошибка', className: 'bg-red-100 text-red-700' },
+    assigned: { label: 'Выдан', className: 'bg-slate-100 text-slate-600 whitespace-nowrap' },
+    in_progress: { label: 'В работе', className: 'bg-primary/10 text-primary whitespace-nowrap' },
+    started: { label: 'Начат', className: 'bg-primary/10 text-primary whitespace-nowrap' },
+    submitted: { label: 'Отправлен', className: 'bg-emerald-100 text-emerald-700 whitespace-nowrap' },
+    completed: { label: 'Обработан', className: 'bg-emerald-100 text-emerald-700 whitespace-nowrap' },
+    checking: { label: 'В расчете', className: 'bg-amber-100 text-amber-700 whitespace-nowrap' },
+    error: { label: 'Ошибка', className: 'bg-red-100 text-red-700 whitespace-nowrap' },
   }
 
-  return map[normalized] || { label: normalized, className: 'bg-slate-100 text-slate-600' }
+  return map[normalized] || { label: normalized, className: 'bg-slate-100 text-slate-600 whitespace-nowrap' }
 }
 
 /** Метаданные статуса результата: метка и CSS-класс. */
 export function getResultStatusMeta(status) {
   const normalized = status || 'pending'
   const map = {
-    pending: { label: 'Ожидает', className: 'bg-slate-100 text-slate-600' },
-    processing: { label: 'Рассчитывается', className: 'bg-amber-100 text-amber-700' },
-    success: { label: 'Готов', className: 'bg-emerald-100 text-emerald-700' },
-    error: { label: 'Ошибка', className: 'bg-red-100 text-red-700' },
+    pending: { label: 'Ожидает', className: 'bg-slate-100 text-slate-600 whitespace-nowrap' },
+    processing: { label: 'Рассчитывается', className: 'bg-amber-100 text-amber-700 whitespace-nowrap' },
+    success: { label: 'Готов', className: 'bg-emerald-100 text-emerald-700 whitespace-nowrap' },
+    error: { label: 'Ошибка', className: 'bg-red-100 text-red-700 whitespace-nowrap' },
   }
 
-  return map[normalized] || { label: normalized, className: 'bg-slate-100 text-slate-600' }
+  return map[normalized] || { label: normalized, className: 'bg-slate-100 text-slate-600 whitespace-nowrap' }
 }
 
 /** Отображаемое имя пользователя из объекта person. */

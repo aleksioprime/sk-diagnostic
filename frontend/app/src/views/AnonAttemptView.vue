@@ -497,7 +497,7 @@ async function init() {
   try {
     await loadAttempt()
   } catch {
-    error.value = 'Ссылка недействительна или попытка недоступна.'
+    error.value = 'Ссылка недействительна или прохождение недоступно.'
     phase.value = 'error'
   }
 }

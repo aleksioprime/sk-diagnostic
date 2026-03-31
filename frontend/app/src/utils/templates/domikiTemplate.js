@@ -156,7 +156,7 @@ export const domikiTemplate = {
     // 7. Контекст
     sections.push({
       kind: 'keyValue',
-      title: 'Контекст попытки',
+      title: 'Контекст прохождения',
       items: [
         { label: 'Тест', value: attempt?.test?.title || '—' },
         { label: 'Пользователь', value: personDisplayName(attempt?.person, attempt?.person_id) },

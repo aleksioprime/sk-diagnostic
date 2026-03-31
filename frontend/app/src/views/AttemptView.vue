@@ -36,6 +36,16 @@ const rankingItems = ref([])
 const textDrafts = reactive({})
 const numberDrafts = reactive({})
 const savingState = reactive({})
+const shuffledOrders = reactive({})
+
+function shuffleArray(array) {
+  const arr = [...array]
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
 
 let timerHandle = null
 
@@ -66,12 +76,23 @@ const rankingByAnswerId = computed(() => {
 const normalizedQuestions = computed(() => {
   return questions.value.map((question) => {
     const answer = answersByQuestionId.value[question.id] || null
+    const rawOptions = optionsByQuestionId.value[question.id] || []
+    const rawScaleOptions = scaleOptionsByScaleId.value[question.scale_id] || []
+    let resolvedOptions = rawOptions
+    let resolvedScaleOptions = rawScaleOptions
+
+    if (question.random && shuffledOrders[question.id]) {
+      const { optionIds, scaleOptionIds } = shuffledOrders[question.id]
+      if (optionIds) resolvedOptions = optionIds.map((id) => rawOptions.find((o) => o.id === id)).filter(Boolean)
+      if (scaleOptionIds) resolvedScaleOptions = scaleOptionIds.map((id) => rawScaleOptions.find((o) => o.id === id)).filter(Boolean)
+    }
+
     return {
       ...question,
       answer,
-      options: optionsByQuestionId.value[question.id] || [],
+      options: resolvedOptions,
       scale: scalesById.value[question.scale_id] || null,
-      scaleOptions: scaleOptionsByScaleId.value[question.scale_id] || [],
+      scaleOptions: resolvedScaleOptions,
       rankingItems: answer ? rankingByAnswerId.value[answer.id] || [] : [],
     }
   })
@@ -108,10 +129,14 @@ function jumpToFirstUnanswered() {
 }
 
 function scrollToQuestion(index) {
-  if (isSequential.value) {
+  if (isSequential.value && !isReadOnly.value) {
     goToStep(index)
   } else {
-    document.getElementById(`question-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const el = document.getElementById(`question-${index}`)
+    if (!el) return
+    const headerOffset = 88
+    const top = el.getBoundingClientRect().top + window.scrollY - headerOffset
+    window.scrollTo({ top, behavior: 'smooth' })
   }
 }
 
@@ -231,10 +256,10 @@ async function startAttempt({ silent = false } = {}) {
       status: 'in_progress',
       started_at: updatedAttempt?.started_at || startedAt,
     }
-    if (!silent) globalNotice.value = 'Попытка началась'
+    if (!silent) globalNotice.value = 'Прохождение началось'
     syncTimer()
   } catch {
-    error.value = 'Не удалось начать попытку'
+    error.value = 'Не удалось начать прохождение'
     throw new Error('start_failed')
   } finally {
     starting.value = false
@@ -383,6 +408,9 @@ async function appendRankingSelection(question, optionId) {
 
   if (currentOrder.includes(optionId)) return
 
+  const nextCount = currentOrder.length + 1
+  const totalOptions = question.options.length
+
   await withSaving(question.id, async () => {
     const updatedItems = await saveRanking(question, [...currentOrder, optionId])
     rankingItems.value = [
@@ -390,6 +418,7 @@ async function appendRankingSelection(question, optionId) {
       ...updatedItems,
     ]
   })
+
 }
 
 async function removeRankingSelection(question, optionId) {
@@ -486,7 +515,7 @@ async function handleSubmit() {
     stopTimer()
     router.push({ name: 'assigned-tests' })
   } catch {
-    error.value = 'Не удалось отправить попытку'
+    error.value = 'Не удалось отправить прохождение'
   } finally {
     submitting.value = false
   }
@@ -563,6 +592,26 @@ async function loadData() {
         sort: 'rank,id',
       }) : Promise.resolve([]),
     ])
+
+    const optsByQuestion = loadedOptions.reduce((map, opt) => {
+      if (!map[opt.question_id]) map[opt.question_id] = []
+      map[opt.question_id].push(opt)
+      return map
+    }, {})
+    const scaleOptsByScale = loadedScaleOptions.reduce((map, opt) => {
+      if (!map[opt.scale_id]) map[opt.scale_id] = []
+      map[opt.scale_id].push(opt)
+      return map
+    }, {})
+    loadedQuestions.forEach((question) => {
+      if (!question.random) return
+      const rawOpts = optsByQuestion[question.id] || []
+      const rawScOpts = scaleOptsByScale[question.scale_id] || []
+      shuffledOrders[question.id] = {
+        optionIds: rawOpts.length ? shuffleArray(rawOpts.map((o) => o.id)) : null,
+        scaleOptionIds: rawScOpts.length ? shuffleArray(rawScOpts.map((o) => o.id)) : null,
+      }
+    })
 
     attempt.value = loadedAttempt
     questions.value = loadedQuestions
@@ -647,7 +696,7 @@ onBeforeUnmount(stopTimer)
 
         <template v-for="(question, index) in normalizedQuestions" :key="question.id">
           <div
-            v-show="!isSequential || index === currentStep"
+            v-show="isReadOnly || !isSequential || index === currentStep"
             :id="`question-${index}`"
             class="glass-panel overflow-hidden p-5 sm:p-6 transition-colors"
             :class="{
@@ -754,8 +803,10 @@ onBeforeUnmount(stopTimer)
             </div>
 
             <div v-else-if="question.question_type === 'text'">
-              <textarea v-model="textDrafts[question.answer?.id]" class="field-input min-h-36 resize-y" placeholder="Введите ответ" @blur="saveText(question)"></textarea>
-              <p class="mt-2 text-xs text-slate-400">Ответ сохраняется при потере фокуса.</p>
+              <textarea v-model="textDrafts[question.answer?.id]" class="field-input min-h-36 resize-y" placeholder="Введите ответ"></textarea>
+              <div class="mt-3 flex items-center gap-3">
+                <button class="primary-button" :disabled="savingState[question.id]?.pending" @click="saveText(question)">Сохранить</button>
+              </div>
             </div>
 
             <div v-else-if="question.question_type === 'number'">
@@ -803,7 +854,7 @@ onBeforeUnmount(stopTimer)
         </div>
       </div>
 
-      <aside class="space-y-5 xl:sticky xl:top-24 xl:self-start">
+      <aside class="space-y-5">
         <div class="glass-panel p-5">
           <div class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Статус прохождения</div>
           <div class="mt-4 text-4xl font-semibold text-slate-900">{{ completedRequiredCount }} / {{ normalizedQuestions.length }}</div>
@@ -835,11 +886,11 @@ onBeforeUnmount(stopTimer)
           <p v-if="submitWarning" class="mt-4 text-sm text-amber-700">{{ submitWarning }}</p>
 
           <button v-if="!isReadOnly" class="primary-button mt-6 w-full" :disabled="submitting" @click="handleSubmit">
-            {{ submitting ? 'Отправляем…' : 'Завершить попытку' }}
+            {{ submitting ? 'Отправляем…' : 'Завершить прохождение' }}
           </button>
 
           <p v-else class="mt-6 rounded-[24px] bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Попытка уже отправлена {{ formatDateTime(attempt.submitted_at) }}.
+            Прохождение уже отправлено {{ formatDateTime(attempt.submitted_at) }}.
           </p>
         </div>
       </aside>

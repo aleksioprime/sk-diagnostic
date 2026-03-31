@@ -121,7 +121,7 @@ async function loadData() {
     results.value = loadedResults
     persons.value = loadedPersons
   } catch {
-    error.value = 'Не удалось загрузить попытки по тесту'
+    error.value = 'Не удалось загрузить прохождения по тесту'
   } finally {
     loading.value = false
   }
@@ -139,10 +139,10 @@ onMounted(loadData)
     <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
         <p class="mb-2 text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">Результаты</p>
-        <h1 class="section-title">{{ test?.title || 'Попытки по тесту' }}</h1>
+        <h1 class="section-title">{{ test?.title || 'Прохождения по тесту' }}</h1>
       </div>
       <div class="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
-        <input v-model="search" class="field-input" type="text" placeholder="ФИО или ID попытки" />
+        <input v-model="search" class="field-input" type="text" placeholder="ФИО или ID прохождения" />
         <select v-model="selectedResultStatus" class="field-input">
           <option value="">Все статусы</option>
           <option value="pending">pending</option>
@@ -165,7 +165,7 @@ onMounted(loadData)
           <thead class="bg-slate-50 text-slate-500">
             <tr>
               <th class="px-4 py-3 font-semibold">Тестируемый</th>
-              <th class="px-4 py-3 font-semibold">Попытка</th>
+              <th class="px-4 py-3 font-semibold">Прохождение</th>
               <th class="px-4 py-3 font-semibold">Статусы</th>
               <th class="px-4 py-3 font-semibold">Отправлен</th>
               <th v-for="column in activeTemplateColumns" :key="column.key" class="px-4 py-3 font-semibold">

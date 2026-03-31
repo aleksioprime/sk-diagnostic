@@ -90,12 +90,12 @@ export const motivationTemplate = {
       },
       {
         kind: 'keyValue',
-        title: 'Контекст попытки',
+        title: 'Контекст прохождения',
         items: [
           { label: 'Тест', value: attempt?.test?.title || '—' },
           { label: 'Пользователь', value: personDisplayName(attempt?.person, attempt?.person_id) },
           { label: 'Код теста', value: json.test?.code || attempt?.test?.code || '—' },
-          { label: 'ID попытки', value: attempt?.id || '—' },
+          { label: 'ID прохождения', value: attempt?.id || '—' },
         ],
       },
     ]
