@@ -44,11 +44,6 @@ export const motivationTemplate = {
     return {
       eyebrow: attempt?.test?.title || 'Диагностика мотивации',
       title: json.student?.name || personDisplayName(attempt?.person, attempt?.person_id),
-      subtitle: json.result?.interpretation || 'Интерпретация пока не получена',
-      badges: [
-        { label: `Уровень ${json.result?.level || '—'}`, tone: 'primary' },
-        { label: `Сумма ${json.result?.total_score ?? '—'}`, tone: 'accent' },
-      ],
     }
   },
 
@@ -80,23 +75,13 @@ export const motivationTemplate = {
         columns: [
           { key: 'title', label: 'Шкала' },
           { key: 'value', label: 'Значение' },
-          { key: 'level', label: 'Уровень нормы' },
+          { key: 'level_label', label: 'Уровень нормы' },
         ],
         rows: scales.map((item) => ({
           title: item.title,
           value: item.value,
-          level: item.level,
+          level_label: item.level_label || item.level || '—',
         })),
-      },
-      {
-        kind: 'keyValue',
-        title: 'Контекст прохождения',
-        items: [
-          { label: 'Тест', value: attempt?.test?.title || '—' },
-          { label: 'Пользователь', value: personDisplayName(attempt?.person, attempt?.person_id) },
-          { label: 'Код теста', value: json.test?.code || attempt?.test?.code || '—' },
-          { label: 'ID прохождения', value: attempt?.id || '—' },
-        ],
       },
     ]
   },

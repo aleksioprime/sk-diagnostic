@@ -1,0 +1,1217 @@
+{
+  "attempt_id": 5000021,
+  "test_id": 3000001,
+  "test_code": "motivation_learning",
+  "test_title": "Диагностика мотивации учения и эмоционального отношения к учению",
+  "submitted_at": "2026-09-23T15:48:00.000Z",
+  "student": {
+    "id": 4000021,
+    "name": "Трофимова Людмила Павловна",
+    "birth_date": "2013-06-15",
+    "age": 13,
+    "gender": "female",
+    "gender_value": "женский"
+  },
+  "answers": [
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002002,
+      "question_id": 7000001,
+      "scale_option": null,
+      "question_code": "q1",
+      "question_text": "Я спокоен",
+      "question_type": "single_choice",
+      "question_number": 1,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100003,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 3,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Часто",
+      "ranking": null,
+      "answer_id": 6002003,
+      "question_id": 7000002,
+      "scale_option": null,
+      "question_code": "q2",
+      "question_text": "Мне хочется узнать, понять, докопаться до сути",
+      "question_type": "single_choice",
+      "question_number": 2,
+      "selected_option": {
+        "option_id": 9100003,
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002004,
+      "question_id": 7000003,
+      "scale_option": null,
+      "question_code": "q3",
+      "question_text": "Я разъярен",
+      "question_type": "single_choice",
+      "question_number": 3,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100004,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 4,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти всегда",
+      "ranking": null,
+      "answer_id": 6002005,
+      "question_id": 7000004,
+      "scale_option": null,
+      "question_code": "q4",
+      "question_text": "Я стараюсь не делать ошибок",
+      "question_type": "single_choice",
+      "question_number": 4,
+      "selected_option": {
+        "option_id": 9100004,
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002006,
+      "question_id": 7000005,
+      "scale_option": null,
+      "question_code": "q5",
+      "question_text": "Я напряжен",
+      "question_type": "single_choice",
+      "question_number": 5,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100002,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 2,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Иногда",
+      "ranking": null,
+      "answer_id": 6002007,
+      "question_id": 7000006,
+      "scale_option": null,
+      "question_code": "q6",
+      "question_text": "Я испытываю любопытство",
+      "question_type": "single_choice",
+      "question_number": 6,
+      "selected_option": {
+        "option_id": 9100002,
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002008,
+      "question_id": 7000007,
+      "scale_option": null,
+      "question_code": "q7",
+      "question_text": "Мне хочется стукнуть кулаком по столу",
+      "question_type": "single_choice",
+      "question_number": 7,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100004,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 4,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти всегда",
+      "ranking": null,
+      "answer_id": 6002009,
+      "question_id": 7000008,
+      "scale_option": null,
+      "question_code": "q8",
+      "question_text": "Я стремлюсь получать только хорошие и отличные оценки",
+      "question_type": "single_choice",
+      "question_number": 8,
+      "selected_option": {
+        "option_id": 9100004,
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002010,
+      "question_id": 7000009,
+      "scale_option": null,
+      "question_code": "q9",
+      "question_text": "Я раскован",
+      "question_type": "single_choice",
+      "question_number": 9,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100002,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 2,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Иногда",
+      "ranking": null,
+      "answer_id": 6002011,
+      "question_id": 7000010,
+      "scale_option": null,
+      "question_code": "q10",
+      "question_text": "Мне интересно",
+      "question_type": "single_choice",
+      "question_number": 10,
+      "selected_option": {
+        "option_id": 9100002,
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100002,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 2,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Иногда",
+      "ranking": null,
+      "answer_id": 6002012,
+      "question_id": 7000011,
+      "scale_option": null,
+      "question_code": "q11",
+      "question_text": "Я рассержен",
+      "question_type": "single_choice",
+      "question_number": 11,
+      "selected_option": {
+        "option_id": 9100002,
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002013,
+      "question_id": 7000012,
+      "scale_option": null,
+      "question_code": "q12",
+      "question_text": "Я прилагаю все силы, чтобы не отстать от других",
+      "question_type": "single_choice",
+      "question_number": 12,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002014,
+      "question_id": 7000013,
+      "scale_option": null,
+      "question_code": "q13",
+      "question_text": "Меня волнуют возможные неудачи",
+      "question_type": "single_choice",
+      "question_number": 13,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100004,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 4,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти всегда",
+      "ranking": null,
+      "answer_id": 6002015,
+      "question_id": 7000014,
+      "scale_option": null,
+      "question_code": "q14",
+      "question_text": "Мне кажется, что урок никогда не кончится",
+      "question_type": "single_choice",
+      "question_number": 14,
+      "selected_option": {
+        "option_id": 9100004,
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002016,
+      "question_id": 7000015,
+      "scale_option": null,
+      "question_code": "q15",
+      "question_text": "Мне хочется на кого-нибудь накричать",
+      "question_type": "single_choice",
+      "question_number": 15,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002017,
+      "question_id": 7000016,
+      "scale_option": null,
+      "question_code": "q16",
+      "question_text": "Мне нравится выполнять трудные задания",
+      "question_type": "single_choice",
+      "question_number": 16,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002018,
+      "question_id": 7000017,
+      "scale_option": null,
+      "question_code": "q17",
+      "question_text": "Я чувствую себя неудачником",
+      "question_type": "single_choice",
+      "question_number": 17,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002019,
+      "question_id": 7000018,
+      "scale_option": null,
+      "question_code": "q18",
+      "question_text": "Я чувствую себя исследователем",
+      "question_type": "single_choice",
+      "question_number": 18,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002020,
+      "question_id": 7000019,
+      "scale_option": null,
+      "question_code": "q19",
+      "question_text": "Мне хочется что-нибудь сломать",
+      "question_type": "single_choice",
+      "question_number": 19,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100003,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 3,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Часто",
+      "ranking": null,
+      "answer_id": 6002021,
+      "question_id": 7000020,
+      "scale_option": null,
+      "question_code": "q20",
+      "question_text": "Я избегаю заданий, с которыми не могу справиться",
+      "question_type": "single_choice",
+      "question_number": 20,
+      "selected_option": {
+        "option_id": 9100003,
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002022,
+      "question_id": 7000021,
+      "scale_option": null,
+      "question_code": "q21",
+      "question_text": "Я взвинчен",
+      "question_type": "single_choice",
+      "question_number": 21,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002023,
+      "question_id": 7000022,
+      "scale_option": null,
+      "question_code": "q22",
+      "question_text": "Я энергичен",
+      "question_type": "single_choice",
+      "question_number": 22,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002024,
+      "question_id": 7000023,
+      "scale_option": null,
+      "question_code": "q23",
+      "question_text": "Я взбешен",
+      "question_type": "single_choice",
+      "question_number": 23,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100002,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 2,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Иногда",
+      "ranking": null,
+      "answer_id": 6002025,
+      "question_id": 7000024,
+      "scale_option": null,
+      "question_code": "q24",
+      "question_text": "Я стремлюсь добиться успеха",
+      "question_type": "single_choice",
+      "question_number": 24,
+      "selected_option": {
+        "option_id": 9100002,
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100003,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 3,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Часто",
+      "ranking": null,
+      "answer_id": 6002026,
+      "question_id": 7000025,
+      "scale_option": null,
+      "question_code": "q25",
+      "question_text": "Я чувствую себя совершенно свободно",
+      "question_type": "single_choice",
+      "question_number": 25,
+      "selected_option": {
+        "option_id": 9100003,
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100002,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 2,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Иногда",
+      "ranking": null,
+      "answer_id": 6002027,
+      "question_id": 7000026,
+      "scale_option": null,
+      "question_code": "q26",
+      "question_text": "Я чувствую, что у меня хорошо работает голова",
+      "question_type": "single_choice",
+      "question_number": 26,
+      "selected_option": {
+        "option_id": 9100002,
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002028,
+      "question_id": 7000027,
+      "scale_option": null,
+      "question_code": "q27",
+      "question_text": "Я раздражен",
+      "question_type": "single_choice",
+      "question_number": 27,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100002,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 2,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Иногда",
+      "ranking": null,
+      "answer_id": 6002029,
+      "question_id": 7000028,
+      "scale_option": null,
+      "question_code": "q28",
+      "question_text": "Я пытаюсь избежать неудачи",
+      "question_type": "single_choice",
+      "question_number": 28,
+      "selected_option": {
+        "option_id": 9100002,
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100003,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 3,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Часто",
+      "ranking": null,
+      "answer_id": 6002030,
+      "question_id": 7000029,
+      "scale_option": null,
+      "question_code": "q29",
+      "question_text": "Мне не хватает уверенности в себе",
+      "question_type": "single_choice",
+      "question_number": 29,
+      "selected_option": {
+        "option_id": 9100003,
+        "label": "Часто",
+        "value": "3",
+        "score": 3,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100002,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 2,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Иногда",
+      "ranking": null,
+      "answer_id": 6002031,
+      "question_id": 7000030,
+      "scale_option": null,
+      "question_code": "q30",
+      "question_text": "Мне скучно",
+      "question_type": "single_choice",
+      "question_number": 30,
+      "selected_option": {
+        "option_id": 9100002,
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002032,
+      "question_id": 7000031,
+      "scale_option": null,
+      "question_code": "q31",
+      "question_text": "Я злюсь",
+      "question_type": "single_choice",
+      "question_number": 31,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002033,
+      "question_id": 7000032,
+      "scale_option": null,
+      "question_code": "q32",
+      "question_text": "Я стараюсь не получить двойку",
+      "question_type": "single_choice",
+      "question_number": 32,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002034,
+      "question_id": 7000033,
+      "scale_option": null,
+      "question_code": "q33",
+      "question_text": "Я уравновешен",
+      "question_type": "single_choice",
+      "question_number": 33,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100002,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 2,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Иногда",
+      "ranking": null,
+      "answer_id": 6002035,
+      "question_id": 7000034,
+      "scale_option": null,
+      "question_code": "q34",
+      "question_text": "Мне нравится думать, решать",
+      "question_type": "single_choice",
+      "question_number": 34,
+      "selected_option": {
+        "option_id": 9100002,
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002036,
+      "question_id": 7000035,
+      "scale_option": null,
+      "question_code": "q35",
+      "question_text": "Я чувствую себя обманутым",
+      "question_type": "single_choice",
+      "question_number": 35,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002037,
+      "question_id": 7000036,
+      "scale_option": null,
+      "question_code": "q36",
+      "question_text": "Я делаю все, чтобы быть среди лучших учеников",
+      "question_type": "single_choice",
+      "question_number": 36,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002038,
+      "question_id": 7000037,
+      "scale_option": null,
+      "question_code": "q37",
+      "question_text": "Я боюсь",
+      "question_type": "single_choice",
+      "question_number": 37,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100004,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 4,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти всегда",
+      "ranking": null,
+      "answer_id": 6002039,
+      "question_id": 7000038,
+      "scale_option": null,
+      "question_code": "q38",
+      "question_text": "Я чувствую уныние и тоску",
+      "question_type": "single_choice",
+      "question_number": 38,
+      "selected_option": {
+        "option_id": 9100004,
+        "label": "Почти всегда",
+        "value": "4",
+        "score": 4,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100002,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 2,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Иногда",
+      "ranking": null,
+      "answer_id": 6002040,
+      "question_id": 7000039,
+      "scale_option": null,
+      "question_code": "q39",
+      "question_text": "Меня многое приводит в ярость",
+      "question_type": "single_choice",
+      "question_number": 39,
+      "selected_option": {
+        "option_id": 9100002,
+        "label": "Иногда",
+        "value": "2",
+        "score": 2,
+        "source": "option"
+      }
+    },
+    {
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": 9100001,
+        "scale_option_id": null
+      },
+      "text": null,
+      "value": 1,
+      "number": null,
+      "values": null,
+      "boolean": null,
+      "display": "Почти никогда",
+      "ranking": null,
+      "answer_id": 6002041,
+      "question_id": 7000040,
+      "scale_option": null,
+      "question_code": "q40",
+      "question_text": "Я стремлюсь показать мои способности и ум",
+      "question_type": "single_choice",
+      "question_number": 40,
+      "selected_option": {
+        "option_id": 9100001,
+        "label": "Почти никогда",
+        "value": "1",
+        "score": 1,
+        "source": "option"
+      }
+    }
+  ]
+}

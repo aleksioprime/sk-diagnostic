@@ -290,6 +290,12 @@ function getLevelByNorm(value, norm) {
   throw new Error(`Значение ${value} вне диапазонов`);
 }
 
+const LEVEL_LABELS = {
+  high: "высокий",
+  medium: "средний",
+  low: "низкий"
+};
+
 /*
   * Возвращает возрастную группу по возрасту
   * 10-11, 12-14, 15-16
@@ -401,6 +407,7 @@ function calculateMotivationResult(data) {
       birth_date: data.student.birth_date || null,
       age: data.student.age,
       gender: data.student.gender,
+      gender_value: data.student.gender_value || null,
       gender_label: getGenderLabel(data.student.gender)
     },
     result: {
@@ -414,25 +421,29 @@ function calculateMotivationResult(data) {
         code: "cognitive_activity",
         title: "Познавательная активность",
         value: pa,
-        level: normLevels.cognitive_activity
+        level: normLevels.cognitive_activity,
+        level_label: LEVEL_LABELS[normLevels.cognitive_activity]
       },
       {
         code: "achievement_motivation",
         title: "Мотивация достижения",
         value: md,
-        level: normLevels.achievement_motivation
+        level: normLevels.achievement_motivation,
+        level_label: LEVEL_LABELS[normLevels.achievement_motivation]
       },
       {
         code: "anxiety",
         title: "Тревожность",
         value: t,
-        level: normLevels.anxiety
+        level: normLevels.anxiety,
+        level_label: LEVEL_LABELS[normLevels.anxiety]
       },
       {
         code: "anger",
         title: "Гнев",
         value: g,
-        level: normLevels.anger
+        level: normLevels.anger,
+        level_label: LEVEL_LABELS[normLevels.anger]
       }
     ]
   };

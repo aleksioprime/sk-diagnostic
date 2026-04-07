@@ -151,7 +151,7 @@ onMounted(loadData)
         <h1 class="mt-3 text-4xl leading-none font-semibold tracking-tight text-slate-900">{{ hero.title }}</h1>
 
         <div class="mt-6 grid gap-3 text-sm text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
-          <div>Пол: <span class="font-medium text-slate-800">{{ resultStudent.gender_value || resultStudent.gender || '—' }}</span></div>
+          <div>Пол: <span class="font-medium text-slate-800">{{ resultStudent.gender_value || resultStudent.gender_label || resultStudent.gender || '—' }}</span></div>
           <div>Возраст: <span class="font-medium text-slate-800">{{ resultStudent.age ?? '—' }}</span></div>
           <div>Отправлен: <span class="font-medium text-slate-800">{{ formatDateTime(attempt.submitted_at) }}</span></div>
           <div>Длительность: <span class="font-medium text-slate-800">{{ formatDuration(attempt.duration) }}</span></div>
@@ -172,7 +172,7 @@ onMounted(loadData)
           <div
             v-for="item in answersPreview"
             :key="item.id"
-            class="rounded-[24px] border border-slate-200/70 bg-white/82 px-4 py-4"
+            class="rounded-3xl border border-slate-200/70 bg-white/82 px-4 py-4"
           >
             <div class="text-sm font-semibold text-slate-900">{{ item.title }}</div>
             <div class="mt-2 text-sm leading-6 text-slate-600">{{ item.value }}</div>
