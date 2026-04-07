@@ -21,16 +21,16 @@ const SCALES = {
   anger: [3, 7, 11, 15, 19, 23, 27, 31, 35, 39] // Гнев
 };
 
-/**
- * В этих вопросах используется обратная шкала:
- * вместо value берётся (5 - value)
- */
-const REVERSED = {
-  cognitive_activity: [14, 30, 38], // Вопросы 14, 30, 38 по шкале познавательной активности
-  achievement_motivation: [4, 12, 20, 28, 32], // Вопросы 4, 12, 20, 28, 32 по шкале мотивации достижения
-  anxiety: [1, 9, 25, 33], // Вопросы 1, 9, 25, 33 по шкале тревожности
-  anger: [] // Нет обратных вопросов по шкале гнева
-};
+// ПРИМЕЧАНИЕ: Применение обратной шкалы (реверса) требует уточнения у психологов.
+// Нормы в Таблице 3 PDF методики эмпирически совпадают с Excel-расчётами при подсчёте
+// RAW-сумм (без реверса). Закомментированный блок REVERSED оставлен для восстановления.
+//
+// const REVERSED = {
+//   cognitive_activity:     [14, 30, 38],          // Вопросы 14, 30, 38 по шкале познавательной активности
+//   achievement_motivation: [4, 12, 20, 28, 32],   // Вопросы 4, 12, 20, 28, 32 по шкале мотивации достижения
+//   anxiety:                [1, 9, 25, 33],        // Вопросы 1, 9, 25, 33 по шкале тревожности
+//   anger:                  [],                    // Нет обратных вопросов по шкале гнева
+// };
 
 /*
  * Нормы для каждой шкалы в зависимости от возрастной группы и пола
@@ -213,29 +213,43 @@ function buildAnswersMap(answers = []) {
 }
 
 /**
- * Получить значение ответа с учётом обратной шкалы
+ * Получить значение ответа для вопроса (без реверса)
  */
-function getWeightedValue(questionNumber, scaleName, answersMap, reversed = REVERSED) {
+function getAnswerValue(questionNumber, answersMap) {
   const rawValue = answersMap[questionNumber];
 
   if (![1, 2, 3, 4].includes(rawValue)) {
     throw new Error(`Некорректный или отсутствующий ответ для вопроса ${questionNumber}`);
   }
 
-  // Проверяем, нужно ли применять обратную шкалу для данного вопроса
-  const isReversed = reversed[scaleName].includes(questionNumber);
-  // Если вопрос в обратной шкале, то возвращаем 5 - rawValue, иначе возвращаем rawValue
-  return isReversed ? 5 - rawValue : rawValue;
+  return rawValue;
 }
 
+// Вариант с обратной шкалой (реверсом) — раскомментировать при подтверждении психологами:
+// function getAnswerValue(questionNumber, scaleName, answersMap) {
+//   const rawValue = answersMap[questionNumber];
+//   if (![1, 2, 3, 4].includes(rawValue)) {
+//     throw new Error(`Некорректный или отсутствующий ответ для вопроса ${questionNumber}`);
+//   }
+//   const isReversed = REVERSED[scaleName].includes(questionNumber);
+//   return isReversed ? 5 - rawValue : rawValue;
+// }
+
 /**
- * Подсчёт суммы по одной шкале (с учётом обратной шкалы)
+ * Подсчёт суммы по одной шкале
  */
-function calcScale(scaleName, answersMap, scales = SCALES, reversed = REVERSED) {
+function calcScale(scaleName, answersMap, scales = SCALES) {
   return scales[scaleName].reduce((sum, questionNumber) => {
-    return sum + getWeightedValue(questionNumber, scaleName, answersMap, reversed);
+    return sum + getAnswerValue(questionNumber, answersMap);
   }, 0);
 }
+
+// Вариант с реверсом:
+// function calcScale(scaleName, answersMap, scales = SCALES) {
+//   return scales[scaleName].reduce((sum, questionNumber) => {
+//     return sum + getAnswerValue(questionNumber, scaleName, answersMap);
+//   }, 0);
+// }
 
 /**
  * Определение уровня мотивации и текстовой интерпретации
