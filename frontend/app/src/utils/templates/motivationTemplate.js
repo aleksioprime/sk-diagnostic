@@ -100,4 +100,8 @@ export const motivationTemplate = {
       },
     ]
   },
+
+  buildGroupSummary(_rows) {
+    return { stub: 'Сводная информация по мотивационному тесту в разработке.' }
+  },
 }

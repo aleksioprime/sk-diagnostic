@@ -120,6 +120,9 @@ const genericTemplate = {
       },
     ]
   },
+  buildGroupSummary(_rows) {
+    return { stub: 'Сводная информация по умолчанию ещё не реализована.' }
+  },
 }
 
 const templates = [domikiTemplate, motivationTemplate, genericTemplate]

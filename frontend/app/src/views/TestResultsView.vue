@@ -25,6 +25,8 @@ const results = ref([])
 const persons = ref([])
 const search = ref('')
 const selectedResultStatus = ref('')
+const selectedIds = ref(new Set())
+const showSummaryModal = ref(false)
 
 const personsById = computed(() => Object.fromEntries(persons.value.map((person) => [person.id, person])))
 const resultByAttemptId = computed(() => Object.fromEntries(results.value.map((result) => [result.attempt_id, result])))
@@ -79,6 +81,31 @@ const activeTemplateColumns = computed(() => {
   if (!rows.value.length || !hasSingleTemplate.value) return []
   return rows.value[0].template.getTableColumns?.() || []
 })
+
+const selectedRows = computed(() => rows.value.filter((row) => selectedIds.value.has(row.attempt.id)))
+
+const isAllSelected = computed(() => rows.value.length > 0 && rows.value.every((row) => selectedIds.value.has(row.attempt.id)))
+
+const summaryContent = computed(() => {
+  if (!selectedRows.value.length || !hasSingleTemplate.value) return null
+  const template = selectedRows.value[0]?.template
+  return template?.buildGroupSummary?.(selectedRows.value) ?? null
+})
+
+function toggleSelectRow(id) {
+  const next = new Set(selectedIds.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  selectedIds.value = next
+}
+
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    selectedIds.value = new Set()
+  } else {
+    selectedIds.value = new Set(rows.value.map((row) => row.attempt.id))
+  }
+}
 
 async function loadData() {
   loading.value = true
@@ -141,8 +168,8 @@ onMounted(loadData)
         <p class="mb-2 text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">Результаты</p>
         <h1 class="section-title">{{ test?.title || 'Прохождения по тесту' }}</h1>
       </div>
-      <div class="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
-        <input v-model="search" class="field-input" type="text" placeholder="ФИО или ID прохождения" />
+      <div class="grid gap-3 sm:grid-cols-[minmax(260px,2fr)_auto_auto]">
+        <input v-model="search" class="field-input" type="text" placeholder="Поиск по ФИО" />
         <select v-model="selectedResultStatus" class="field-input">
           <option value="">Все статусы</option>
           <option value="pending">pending</option>
@@ -159,13 +186,15 @@ onMounted(loadData)
     <div v-if="loading" class="glass-panel p-10 text-center text-sm text-slate-500">Загрузка попыток…</div>
     <div v-else-if="error" class="glass-panel p-10 text-center text-sm text-red-700">{{ error }}</div>
     <div v-else-if="!rows.length" class="glass-panel p-10 text-center text-sm text-slate-500">По этому тесту пока нет доступных попыток.</div>
-    <div v-else class="overflow-hidden rounded-[30px] border border-white/60 bg-white/92 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+    <div v-else class="overflow-hidden border border-white/60 bg-white/92 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
       <div class="overflow-x-auto">
         <table class="min-w-full border-collapse text-left text-sm">
           <thead class="bg-slate-50 text-slate-500">
             <tr>
+              <th class="px-4 py-3">
+                <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" class="cursor-pointer" />
+              </th>
               <th class="px-4 py-3 font-semibold">Тестируемый</th>
-              <th class="px-4 py-3 font-semibold">Прохождение</th>
               <th class="px-4 py-3 font-semibold">Статусы</th>
               <th class="px-4 py-3 font-semibold">Отправлен</th>
               <th v-for="column in activeTemplateColumns" :key="column.key" class="px-4 py-3 font-semibold">
@@ -176,12 +205,13 @@ onMounted(loadData)
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in rows" :key="row.attempt.id" class="border-t border-slate-100 align-top">
+            <tr v-for="row in rows" :key="row.attempt.id" class="border-t border-slate-100 align-top" :class="{ 'bg-primary/5': selectedIds.has(row.attempt.id) }">
+              <td class="px-4 py-4">
+                <input type="checkbox" :checked="selectedIds.has(row.attempt.id)" @change="toggleSelectRow(row.attempt.id)" class="cursor-pointer" />
+              </td>
               <td class="px-4 py-4">
                 <div class="font-semibold text-slate-900">{{ row.resultRecord?.json_results?.student?.name || personDisplayName(row.attempt.person, row.attempt.person_id) }}</div>
-                <div class="mt-1 text-xs text-slate-500">{{ personDisplayName(row.attempt.person, row.attempt.person_id) }}</div>
               </td>
-              <td class="px-4 py-4 font-mono text-xs text-slate-600">{{ row.attempt.id }}</td>
               <td class="px-4 py-4">
                 <div class="flex flex-col gap-2">
                   <span class="badge" :class="row.attempt.attemptStatus.className">{{ row.attempt.attemptStatus.label }}</span>
@@ -209,5 +239,37 @@ onMounted(loadData)
         </table>
       </div>
     </div>
+
+    <!-- Кнопка сводной информации -->
+    <div v-if="selectedIds.size >= 2" class="mt-4 flex items-center gap-3">
+      <span class="text-sm text-slate-500">Выбрано: {{ selectedIds.size }}</span>
+      <button class="ghost-button" @click="showSummaryModal = true">Сводная информация</button>
+      <button class="ghost-button text-slate-400" @click="selectedIds = new Set()">Сбросить выбор</button>
+    </div>
+
+    <!-- Модальное окно сводной информации -->
+    <Teleport to="body">
+      <div v-if="showSummaryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showSummaryModal = false">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showSummaryModal = false"></div>
+        <div class="relative z-10 w-full max-w-2xl rounded-3xl border border-white/60 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.18)] p-6 sm:p-8">
+          <div class="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-semibold text-slate-900">Сводная информация</h2>
+              <p class="mt-1 text-sm text-slate-500">По {{ selectedIds.size }} выбранным прохождениям</p>
+            </div>
+            <button class="ghost-button shrink-0" @click="showSummaryModal = false">Закрыть</button>
+          </div>
+          <div v-if="summaryContent">
+            <div v-if="summaryContent.stub" class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+              {{ summaryContent.stub }}
+            </div>
+            <div v-else class="text-sm text-slate-700">{{ summaryContent }}</div>
+          </div>
+          <div v-else class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+            Сводная информация для данного типа теста ещё не реализована.
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </section>
 </template>

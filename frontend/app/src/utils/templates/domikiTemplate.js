@@ -140,4 +140,8 @@ export const domikiTemplate = {
 
     return sections
   },
+
+  buildGroupSummary(_rows) {
+    return { stub: 'Сводная информация по методике «Домики» в разработке.' }
+  },
 }
