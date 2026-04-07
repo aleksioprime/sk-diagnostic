@@ -37,7 +37,7 @@ const rankingByAnswerId = computed(() => {
 
 const template = computed(() => {
   return resolveResultTemplate({
-    test: attempt.value?.test,
+    test: attempt.value?.test_assignment?.test,
     attempt: attempt.value,
     resultRecord: resultRecord.value,
   })
@@ -87,11 +87,12 @@ async function loadData() {
   error.value = ''
 
   try {
-    const loadedAttempt = await get('attempts', props.attemptId, { appends: 'test,person' })
-    if (!loadedAttempt || loadedAttempt.is_archived) {
+    const loadedAttempt = await get('attempts', props.attemptId, { appends: 'test_assignment,test_assignment.test,person' })
+    if (!loadedAttempt) {
       throw new Error('archived')
     }
-    if (String(loadedAttempt.test_id) !== String(props.testId)) {
+    const attemptTestId = loadedAttempt.test_assignment?.test_id ?? loadedAttempt.test_assignment?.test?.id
+    if (String(attemptTestId) !== String(props.testId)) {
       throw new Error('wrong_test')
     }
 

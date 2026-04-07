@@ -115,10 +115,9 @@ async function loadData() {
     const loadedTest = await get('tests', props.testId)
     const loadedAttempts = await list('attempts', {
       filter: toFilter({
-        test_id: normalizeId(props.testId),
-        is_archived: { $ne: true },
+        test_assignment: { test_id: normalizeId(props.testId) },
       }),
-      appends: 'test,person',
+      appends: 'test_assignment,test_assignment.test,person',
       sort: '-submitted_at,-started_at,-id',
     })
 

@@ -104,10 +104,10 @@ const attemptStatus = computed(() => getAttemptStatusMeta(attempt.value?.status)
 const isReadOnly = computed(() => ['submitted', 'completed'].includes(attempt.value?.status))
 const showIntro = computed(() => attempt.value?.status === 'assigned')
 const displayDuration = computed(() => formatDuration(elapsedSeconds.value ?? attempt.value?.duration))
-const diagnosticCode = computed(() => attempt.value?.test?.code || null)
+const diagnosticCode = computed(() => attempt.value?.test_assignment?.test?.code || null)
 
 const currentStep = ref(0)
-const isSequential = computed(() => Boolean(attempt.value?.test?.is_sequential))
+const isSequential = computed(() => Boolean(attempt.value?.test_assignment?.test?.is_sequential))
 const submitWarning = ref('')
 
 function goToStep(index) {
@@ -552,12 +552,12 @@ async function loadData() {
   error.value = ''
 
   try {
-    const loadedAttempt = await get('attempts', props.attemptId, { appends: 'test,person' })
-    if (!loadedAttempt || loadedAttempt.is_archived) {
+    const loadedAttempt = await get('attempts', props.attemptId, { appends: 'test_assignment,test_assignment.test,person' })
+    if (!loadedAttempt) {
       throw new Error('archived')
     }
 
-    const testId = loadedAttempt.test_id ?? loadedAttempt.test?.id
+    const testId = loadedAttempt.test_assignment?.test_id ?? loadedAttempt.test_assignment?.test?.id
     const [loadedQuestions, loadedAnswers] = await Promise.all([
       list('questions', {
         filter: toFilter({ test_id: testId, is_active: true }),
@@ -653,7 +653,7 @@ onBeforeUnmount(stopTimer)
 
     <div v-else-if="attempt && showIntro" class="flex justify-center py-4 sm:py-10">
       <div class="glass-panel w-full max-w-3xl p-6 sm:p-8">
-        <h1 class="text-3xl font-semibold tracking-tight text-slate-900">{{ attempt.test?.title || `Тест #${attempt.test_id}` }}</h1>
+        <h1 class="text-3xl font-semibold tracking-tight text-slate-900">{{ attempt.test_assignment?.test?.title || `Тест #${attempt.test_assignment?.test_id}` }}</h1>
 
         <div class="mt-6 grid gap-3 sm:grid-cols-3">
           <div class="rounded-[24px] bg-slate-50/90 p-4">
@@ -686,7 +686,7 @@ onBeforeUnmount(stopTimer)
     <div v-else-if="attempt" class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_21rem]">
       <div class="grid gap-5">
         <div class="glass-panel p-6 sm:p-7">
-          <h1 class="text-3xl font-semibold tracking-tight text-slate-900">{{ attempt.test?.title || `Тест #${attempt.test_id}` }}</h1>
+          <h1 class="text-3xl font-semibold tracking-tight text-slate-900">{{ attempt.test_assignment?.test?.title || `Тест #${attempt.test_assignment?.test_id}` }}</h1>
           <div class="mt-5 flex flex-wrap gap-3 text-sm text-slate-500">
             <span>Начало: {{ formatDateTime(attempt.started_at) }}</span>
             <span>Таймер: {{ displayDuration }}</span>

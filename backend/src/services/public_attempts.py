@@ -53,8 +53,8 @@ class PublicAttemptsService:
         logger.info("Поиск попытки по токену: %s", token[:8] + '...')
         attempts = await nocobase_client.list(
             'attempts',
-            filter={'token': token, 'is_archived': {'$ne': True}},
-            appends='test,person',
+            filter={'token': token},
+            appends='test_assignment,test_assignment.test,person',
             page_size=1,
         )
         if not attempts:
@@ -88,10 +88,8 @@ class PublicAttemptsService:
 
     async def build_bundle(self, attempt: dict[str, Any]) -> dict[str, Any]:
         """Собрать полный бандл данных для прохождения: вопросы, ответы, варианты, шкалы."""
-        if attempt.get('is_archived'):
-            raise HTTPException(status_code=404, detail='Attempt is archived')
-
-        test_id = attempt.get('test_id') or attempt.get('test', {}).get('id')
+        ta = attempt.get('test_assignment') or {}
+        test_id = ta.get('test_id') or (ta.get('test') or {}).get('id')
         if not test_id:
             raise HTTPException(status_code=400, detail='Attempt has no test')
 

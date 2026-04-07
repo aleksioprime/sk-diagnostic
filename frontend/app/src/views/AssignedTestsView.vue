@@ -68,7 +68,7 @@ async function loadData() {
 
   try {
     const personId = normalizeId(auth.personId)
-    const filter = { is_archived: { $ne: true } }
+    const filter = {}
 
     if (personId != null) {
       filter.person_id = personId
@@ -76,7 +76,7 @@ async function loadData() {
 
     const loadedAttempts = await list('attempts', {
       filter: toFilter(filter),
-      appends: 'test,person',
+      appends: 'test_assignment,test_assignment.test',
       sort: '-submitted_at,-started_at,-id',
     })
 
@@ -168,7 +168,7 @@ onMounted(loadData)
             @click="openAttempt(attempt)"
           >
             <div class="flex items-start justify-between gap-3">
-              <h3 class="text-xl font-semibold text-slate-900">{{ attempt.test?.title || `Тест #${attempt.test_id}` }}</h3>
+              <h3 class="text-xl font-semibold text-slate-900">{{ attempt.test_assignment?.test?.title || `Тест #${attempt.test_assignment?.test_id}` }}</h3>
               <span class="badge" :class="attempt.attemptStatus.className">{{ attempt.attemptStatus.label }}</span>
             </div>
 
@@ -206,7 +206,7 @@ onMounted(loadData)
             class="glass-panel flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between"
           >
             <div>
-              <h3 class="text-lg font-semibold text-slate-900">{{ attempt.test?.title || `Тест #${attempt.test_id}` }}</h3>
+              <h3 class="text-lg font-semibold text-slate-900">{{ attempt.test_assignment?.test?.title || `Тест #${attempt.test_assignment?.test_id}` }}</h3>
               <p class="mt-2 text-sm text-slate-500">Отправлен: {{ formatDateTime(attempt.submitted_at) }}</p>
             </div>
 
@@ -232,8 +232,8 @@ onMounted(loadData)
           После подтверждения для этого прохождения будет зафиксировано время старта и запустится таймер.
         </p>
         <div class="mt-5 rounded-[24px] bg-slate-50/90 p-4">
-          <div class="text-sm font-semibold text-slate-900">{{ startCandidate.test?.title || `Тест #${startCandidate.test_id}` }}</div>
-          <div class="mt-1 text-sm text-slate-500">{{ startCandidate.test?.description || 'Открыть вопросы и начать прохождение.' }}</div>
+          <div class="text-sm font-semibold text-slate-900">{{ startCandidate.test_assignment?.test?.title || `Тест #${startCandidate.test_assignment?.test_id}` }}</div>
+          <div class="mt-1 text-sm text-slate-500">{{ startCandidate.test_assignment?.test?.description || 'Открыть вопросы и начать прохождение.' }}</div>
         </div>
         <div class="mt-6 flex flex-wrap justify-end gap-3">
           <button class="ghost-button" @click="closeStartModal">Отмена</button>

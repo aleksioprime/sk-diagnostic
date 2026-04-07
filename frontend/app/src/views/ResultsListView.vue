@@ -11,8 +11,10 @@ const search = ref('')
 
 const attemptsByTestId = computed(() => {
   return attempts.value.reduce((map, attempt) => {
-    if (!map[attempt.test_id]) map[attempt.test_id] = []
-    map[attempt.test_id].push(attempt)
+    const testId = attempt.test_assignment?.test_id ?? attempt.test_assignment?.test?.id
+    if (testId == null) return map
+    if (!map[testId]) map[testId] = []
+    map[testId].push(attempt)
     return map
   }, {})
 })
@@ -43,7 +45,7 @@ async function loadData() {
     const [loadedTests, loadedAttempts] = await Promise.all([
       list('tests', { sort: 'title,id' }),
       list('attempts', {
-        filter: toFilter({ is_archived: { $ne: true } }),
+        appends: 'test_assignment',
         sort: '-submitted_at,-started_at,-id',
       }),
     ])

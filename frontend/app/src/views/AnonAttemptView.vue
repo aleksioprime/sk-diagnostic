@@ -31,6 +31,16 @@ const rankingItems = ref([])
 const textDrafts = reactive({})
 const numberDrafts = reactive({})
 const savingState = reactive({})
+const shuffledOrders = reactive({})
+
+function shuffleArray(array) {
+  const arr = [...array]
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
 
 let timerHandle = null
 
@@ -61,12 +71,23 @@ const rankingByAnswerId = computed(() => {
 const normalizedQuestions = computed(() => {
   return questions.value.map((question) => {
     const answer = answersByQuestionId.value[question.id] || null
+    const rawOptions = optionsByQuestionId.value[question.id] || []
+    const rawScaleOptions = scaleOptionsByScaleId.value[question.scale_id] || []
+    let resolvedOptions = rawOptions
+    let resolvedScaleOptions = rawScaleOptions
+
+    if (question.random && shuffledOrders[question.id]) {
+      const { optionIds, scaleOptionIds } = shuffledOrders[question.id]
+      if (optionIds) resolvedOptions = optionIds.map((id) => rawOptions.find((o) => o.id === id)).filter(Boolean)
+      if (scaleOptionIds) resolvedScaleOptions = scaleOptionIds.map((id) => rawScaleOptions.find((o) => o.id === id)).filter(Boolean)
+    }
+
     return {
       ...question,
       answer,
-      options: optionsByQuestionId.value[question.id] || [],
+      options: resolvedOptions,
       scale: scalesById.value[question.scale_id] || null,
-      scaleOptions: scaleOptionsByScaleId.value[question.scale_id] || [],
+      scaleOptions: resolvedScaleOptions,
       rankingItems: answer ? rankingByAnswerId.value[answer.id] || [] : [],
     }
   })
@@ -77,10 +98,10 @@ const canSubmit = computed(() => normalizedQuestions.value.every((question) => !
 const attemptStatus = computed(() => getAttemptStatusMeta(attempt.value?.status))
 const isReadOnly = computed(() => ['submitted', 'completed'].includes(attempt.value?.status))
 const displayDuration = computed(() => formatDuration(elapsedSeconds.value ?? attempt.value?.duration))
-const diagnosticCode = computed(() => attempt.value?.test?.code || null)
+const diagnosticCode = computed(() => attempt.value?.test_assignment?.test?.code || null)
 
 const currentStep = ref(0)
-const isSequential = computed(() => Boolean(attempt.value?.test?.is_sequential))
+const isSequential = computed(() => Boolean(attempt.value?.test_assignment?.test?.is_sequential))
 const submitWarning = ref('')
 
 function goToStep(index) {
@@ -160,6 +181,27 @@ function applyBundle(bundle) {
   scales.value = bundle.scales || []
   scaleOptions.value = bundle.scale_options || []
   rankingItems.value = bundle.ranking_items || []
+
+  const optsByQuestion = options.value.reduce((map, opt) => {
+    if (!map[opt.question_id]) map[opt.question_id] = []
+    map[opt.question_id].push(opt)
+    return map
+  }, {})
+  const scaleOptsByScale = scaleOptions.value.reduce((map, opt) => {
+    if (!map[opt.scale_id]) map[opt.scale_id] = []
+    map[opt.scale_id].push(opt)
+    return map
+  }, {})
+  questions.value.forEach((question) => {
+    if (!question.random) return
+    const rawOpts = optsByQuestion[question.id] || []
+    const rawScOpts = scaleOptsByScale[question.scale_id] || []
+    shuffledOrders[question.id] = {
+      optionIds: rawOpts.length ? shuffleArray(rawOpts.map((o) => o.id)) : null,
+      scaleOptionIds: rawScOpts.length ? shuffleArray(rawScOpts.map((o) => o.id)) : null,
+    }
+  })
+
   initDrafts()
   syncTimer()
   jumpToFirstUnanswered()
@@ -517,7 +559,7 @@ onBeforeUnmount(stopTimer)
 
     <div v-else-if="phase === 'intro' && attempt" class="flex justify-center py-4 sm:py-10">
       <div class="glass-panel w-full max-w-3xl p-6 sm:p-8">
-        <h1 class="text-3xl font-semibold tracking-tight text-slate-900">{{ attempt.test?.title || `Тест #${attempt.test_id}` }}</h1>
+        <h1 class="text-3xl font-semibold tracking-tight text-slate-900">{{ attempt.test_assignment?.test?.title || `Тест #${attempt.test_assignment?.test_id}` }}</h1>
 
         <div class="mt-6 grid gap-3 sm:grid-cols-3">
           <div class="rounded-[24px] bg-slate-50/90 p-4">
@@ -554,7 +596,7 @@ onBeforeUnmount(stopTimer)
       <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_21rem]">
         <div class="grid gap-5">
           <div class="glass-panel p-6 sm:p-7">
-            <h1 class="text-3xl font-semibold tracking-tight text-slate-900">{{ attempt.test?.title || `Тест #${attempt.test_id}` }}</h1>
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-900">{{ attempt.test_assignment?.test?.title || `Тест #${attempt.test_assignment?.test_id}` }}</h1>
             <div class="mt-5 flex flex-wrap gap-3 text-sm text-slate-500">
               <span>Начало: {{ formatDateTime(attempt.started_at) }}</span>
               <span>Таймер: {{ displayDuration }}</span>

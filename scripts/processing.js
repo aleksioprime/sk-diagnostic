@@ -272,9 +272,9 @@ const answers = Array.isArray(attempt.answers)
 
 return {
   attempt_id: attempt.id,
-  test_id: attempt.test?.id ?? null,
-  test_code: attempt.test?.code || null,
-  test_title: attempt.test?.title || null,
+  test_id: attempt.test_assignment?.test?.id ?? null,
+  test_code: attempt.test_assignment?.test?.code || null,
+  test_title: attempt.test_assignment?.test?.title || null,
   submitted_at: attempt.submitted_at || null,
   student: {
     id: person.id,
