@@ -83,7 +83,7 @@ export const domikiTemplate = {
     if (vk.interpretation) {
       sections.push({
         kind: 'text',
-        title: `Работоспособность — ${vk.label || ''}`,
+        title: `Работоспособность: ${vk.label || ''}`,
         text: vk.interpretation,
       })
     }
@@ -92,8 +92,8 @@ export const domikiTemplate = {
     if (bg.interpretation) {
       sections.push({
         kind: 'text',
-        title: `Эмоциональный фон — ${bg.title || ''}`,
-        text: `Суммарное отклонение от аутогенной нормы: ${bg.value ?? '—'}. ${bg.interpretation}`,
+        title: `Эмоциональный фон: ${bg.title || ''}`,
+        text: `Суммарное отклонение от аутогенной нормы: ${bg.interpretation} (${bg.value ?? '—'})`,
       })
     }
 
@@ -101,7 +101,7 @@ export const domikiTemplate = {
     if (result.school_relation) {
       sections.push({
         kind: 'text',
-        title: `Отношение к школе — ${result.school_relation.label || ''}`,
+        title: `Отношение к школе: ${result.school_relation.label || ''}`,
         text: result.school_relation.interpretation || 'Нет интерпретации',
       })
     }
@@ -137,18 +137,6 @@ export const domikiTemplate = {
         ],
       })
     }
-
-    // 7. Контекст
-    sections.push({
-      kind: 'keyValue',
-      title: 'Контекст прохождения',
-      items: [
-        { label: 'Тест', value: attempt?.test?.title || '—' },
-        { label: 'Пользователь', value: personDisplayName(attempt?.person, attempt?.person_id) },
-        { label: 'Возраст', value: student.age ?? '—' },
-        { label: 'Пол', value: student.gender || '—' },
-      ],
-    })
 
     return sections
   },

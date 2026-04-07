@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 import JsonResultTable from '../components/results/JsonResultTable.vue'
 import ResultSections from '../components/results/ResultSections.vue'
 import { get, list, normalizeId, toFilter } from '../utils/nocobase'
-import { formatDateTime, formatDuration, getAttemptStatusMeta, getResultStatusMeta, personDisplayName } from '../utils/format'
+import { formatDateTime, formatDuration, getAttemptStatusMeta, getResultStatusMeta } from '../utils/format'
 import { resolveResultTemplate } from '../utils/resultTemplates'
 
 const props = defineProps({
@@ -80,6 +80,7 @@ const answersPreview = computed(() => {
 
 const attemptStatus = computed(() => getAttemptStatusMeta(attempt.value?.status))
 const resultStatus = computed(() => getResultStatusMeta(resultRecord.value?.status))
+const resultStudent = computed(() => resultRecord.value?.json_results?.student || {})
 
 async function loadData() {
   loading.value = true
@@ -148,26 +149,10 @@ onMounted(loadData)
       <div class="glass-panel overflow-hidden p-6 sm:p-7">
         <p class="text-sm font-semibold uppercase tracking-[0.26em] text-slate-400">{{ hero.eyebrow }}</p>
         <h1 class="mt-3 text-4xl leading-none font-semibold tracking-tight text-slate-900">{{ hero.title }}</h1>
-        <p class="mt-4 max-w-3xl text-sm leading-7 text-slate-600">{{ hero.subtitle }}</p>
-
-        <div class="mt-5 flex flex-wrap gap-2">
-          <span
-            v-for="badge in hero.badges"
-            :key="badge.label"
-            class="badge"
-            :class="{
-              'bg-orange-100 text-orange-700': badge.tone === 'accent',
-              'bg-red-100 text-red-700': badge.tone === 'danger',
-              'bg-primary/10 text-primary': badge.tone !== 'accent' && badge.tone !== 'danger',
-            }"
-          >
-            {{ badge.label }}
-          </span>
-        </div>
 
         <div class="mt-6 grid gap-3 text-sm text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
-          <div>Тест: <span class="font-medium text-slate-800">{{ attempt.test?.title || `Тест #${attempt.test_id}` }}</span></div>
-          <div>Пользователь: <span class="font-medium text-slate-800">{{ personDisplayName(attempt.person, attempt.person_id) }}</span></div>
+          <div>Пол: <span class="font-medium text-slate-800">{{ resultStudent.gender_value || resultStudent.gender || '—' }}</span></div>
+          <div>Возраст: <span class="font-medium text-slate-800">{{ resultStudent.age ?? '—' }}</span></div>
           <div>Отправлен: <span class="font-medium text-slate-800">{{ formatDateTime(attempt.submitted_at) }}</span></div>
           <div>Длительность: <span class="font-medium text-slate-800">{{ formatDuration(attempt.duration) }}</span></div>
         </div>
@@ -175,12 +160,15 @@ onMounted(loadData)
 
       <ResultSections :sections="sections" />
 
-      <div class="glass-panel p-5 sm:p-6">
-        <div class="mb-4">
-          <h2 class="text-lg font-semibold text-slate-900">Ответы пользователя</h2>
-          <p class="mt-1 text-sm text-slate-500">Сводка по ответам, которые были даны во время прохождения.</p>
-        </div>
-        <div class="grid gap-3">
+      <details class="glass-panel p-5 sm:p-6">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-2 [&::-webkit-details-marker]:hidden">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900">Ответы пользователя</h2>
+            <p class="mt-1 text-sm text-slate-500">Сводка по ответам, которые были даны во время прохождения.</p>
+          </div>
+          <span class="mt-1 shrink-0 text-slate-400 select-none">▾</span>
+        </summary>
+        <div class="mt-4 grid gap-3">
           <div
             v-for="item in answersPreview"
             :key="item.id"
@@ -190,15 +178,20 @@ onMounted(loadData)
             <div class="mt-2 text-sm leading-6 text-slate-600">{{ item.value }}</div>
           </div>
         </div>
-      </div>
+      </details>
 
-      <div>
-        <div class="mb-3">
-          <h2 class="text-lg font-semibold text-slate-900">Подробные данные результата</h2>
-          <p class="mt-1 text-sm text-slate-500">Табличное представление всех полей результата.</p>
+      <details class="glass-panel p-5 sm:p-6">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-2 [&::-webkit-details-marker]:hidden">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900">Подробные данные результата</h2>
+            <p class="mt-1 text-sm text-slate-500">Табличное представление всех полей результата.</p>
+          </div>
+          <span class="mt-1 shrink-0 text-slate-400 select-none">▾</span>
+        </summary>
+        <div class="mt-4">
+          <JsonResultTable :value="resultRecord.json_results" />
         </div>
-        <JsonResultTable :value="resultRecord.json_results" />
-      </div>
+      </details>
     </div>
     <div v-else class="glass-panel p-10 text-center text-sm text-slate-500">
       Для этого прохождения пока нет результата.

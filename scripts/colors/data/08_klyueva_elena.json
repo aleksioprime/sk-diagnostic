@@ -1,7 +1,7 @@
 {
   "attempt_id": 1000008,
   "test_id": 2000001,
-  "test_code": "domiki_orekhova",
+  "test_code": "domiki_emotion",
   "test_title": "Проективная методика «Домики»",
   "submitted_at": "2024-10-28T08:00:00.000Z",
   "student": {
@@ -9,7 +9,8 @@
     "name": "Клюева Елена",
     "birth_date": null,
     "age": null,
-    "gender": null
+    "gender": null,
+    "gender_value": null
   },
   "answers": [
     {
@@ -92,7 +93,13 @@
       "text": null,
       "number": null,
       "boolean": null,
-      "raw": {}
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": null,
+        "scale_option_id": null
+      }
     },
     {
       "answer_id": 801,
@@ -117,7 +124,7 @@
         "scale_option_id": 105
       },
       "scale_option": {
-        "id": 105,
+        "option_id": 105,
         "label": "Фиолетовый",
         "value": "violet",
         "score": null,
@@ -147,7 +154,7 @@
         "scale_option_id": 102
       },
       "scale_option": {
-        "id": 102,
+        "option_id": 102,
         "label": "Синий",
         "value": "blue",
         "score": null,
@@ -177,7 +184,7 @@
         "scale_option_id": 103
       },
       "scale_option": {
-        "id": 103,
+        "option_id": 103,
         "label": "Зеленый",
         "value": "green",
         "score": null,
@@ -207,7 +214,7 @@
         "scale_option_id": 106
       },
       "scale_option": {
-        "id": 106,
+        "option_id": 106,
         "label": "Серый",
         "value": "gray",
         "score": null,
@@ -237,7 +244,7 @@
         "scale_option_id": 101
       },
       "scale_option": {
-        "id": 101,
+        "option_id": 101,
         "label": "Желтый",
         "value": "yellow",
         "score": null,
@@ -267,7 +274,7 @@
         "scale_option_id": 107
       },
       "scale_option": {
-        "id": 107,
+        "option_id": 107,
         "label": "Коричневый",
         "value": "brown",
         "score": null,
@@ -297,7 +304,7 @@
         "scale_option_id": 104
       },
       "scale_option": {
-        "id": 104,
+        "option_id": 104,
         "label": "Красный",
         "value": "red",
         "score": null,
@@ -327,7 +334,7 @@
         "scale_option_id": 104
       },
       "scale_option": {
-        "id": 104,
+        "option_id": 104,
         "label": "Красный",
         "value": "red",
         "score": null,
@@ -357,7 +364,7 @@
         "scale_option_id": 106
       },
       "scale_option": {
-        "id": 106,
+        "option_id": 106,
         "label": "Серый",
         "value": "gray",
         "score": null,
@@ -387,7 +394,7 @@
         "scale_option_id": 105
       },
       "scale_option": {
-        "id": 105,
+        "option_id": 105,
         "label": "Фиолетовый",
         "value": "violet",
         "score": null,
@@ -417,7 +424,7 @@
         "scale_option_id": 105
       },
       "scale_option": {
-        "id": 105,
+        "option_id": 105,
         "label": "Фиолетовый",
         "value": "violet",
         "score": null,
@@ -447,7 +454,7 @@
         "scale_option_id": 102
       },
       "scale_option": {
-        "id": 102,
+        "option_id": 102,
         "label": "Синий",
         "value": "blue",
         "score": null,
@@ -477,7 +484,7 @@
         "scale_option_id": 101
       },
       "scale_option": {
-        "id": 101,
+        "option_id": 101,
         "label": "Желтый",
         "value": "yellow",
         "score": null,
@@ -507,7 +514,7 @@
         "scale_option_id": 102
       },
       "scale_option": {
-        "id": 102,
+        "option_id": 102,
         "label": "Синий",
         "value": "blue",
         "score": null,
@@ -537,7 +544,7 @@
         "scale_option_id": 105
       },
       "scale_option": {
-        "id": 105,
+        "option_id": 105,
         "label": "Фиолетовый",
         "value": "violet",
         "score": null,
@@ -567,7 +574,7 @@
         "scale_option_id": 103
       },
       "scale_option": {
-        "id": 103,
+        "option_id": 103,
         "label": "Зеленый",
         "value": "green",
         "score": null,
@@ -597,7 +604,7 @@
         "scale_option_id": 101
       },
       "scale_option": {
-        "id": 101,
+        "option_id": 101,
         "label": "Желтый",
         "value": "yellow",
         "score": null,
@@ -627,7 +634,7 @@
         "scale_option_id": 105
       },
       "scale_option": {
-        "id": 105,
+        "option_id": 105,
         "label": "Фиолетовый",
         "value": "violet",
         "score": null,
@@ -657,7 +664,7 @@
         "scale_option_id": 102
       },
       "scale_option": {
-        "id": 102,
+        "option_id": 102,
         "label": "Синий",
         "value": "blue",
         "score": null,
@@ -687,7 +694,7 @@
         "scale_option_id": 104
       },
       "scale_option": {
-        "id": 104,
+        "option_id": 104,
         "label": "Красный",
         "value": "red",
         "score": null,

@@ -276,7 +276,7 @@ function interpretVegetativeCoefficient(vk) {
     return {
       level: "critical_fatigue",
       title: "Хроническое переутомление",
-      interpretation: "Истощение, низкая работоспособность, нагрузки могут быть непосильны."
+      interpretation: "Истощение, низкая работоспособность. Нагрузки непосильны для ребенка."
     };
   }
 
@@ -284,7 +284,7 @@ function interpretVegetativeCoefficient(vk) {
     return {
       level: "compensated_fatigue",
       title: "Компенсируемое состояние усталости",
-      interpretation: "Самовосстановление возможно за счет периодического снижения активности; стоит оптимизировать режим труда и отдыха."
+      interpretation: "Самовосстановление оптимальной работоспособности происходит за счет периодического снижения активности. Необходима оптимизация рабочего ритма, режима труда и отдыха."
     };
   }
 
@@ -292,14 +292,14 @@ function interpretVegetativeCoefficient(vk) {
     return {
       level: "optimal",
       title: "Оптимальная работоспособность",
-      interpretation: "Энергетический баланс в норме, ребенок бодр и готов к энергозатратам."
+      interpretation: "Ребенок отличается бодростью, здоровой активностью, готовностью к энергозатратам. Нагрузки соответствуют возможностям. Образ жизни позволяет ребенку восстанавливать затраченную энергию."
     };
   }
 
   return {
     level: "overexcitation",
     title: "Перевозбуждение",
-    interpretation: "Возможна работа на пределе возможностей, что может приводить к быстрому истощению."
+    interpretation: "Чаще является результатом работы ребенка на пределе своих возможностей, что приводит к быстрому истощению. Требуется нормализация темпа деятельности, режима труда и отдыха, а иногда и снижение нагрузки."
   };
 }
 
@@ -326,7 +326,7 @@ function interpretTotalDeviation(totalDeviation) {
     return {
       level: "negative_background",
       title: "Преобладание отрицательных эмоций",
-      interpretation: "Доминируют плохое настроение и неприятные переживания; возможны проблемы, которые ребенку трудно решить самостоятельно."
+      interpretation: "У ребенка доминируют плохое настроение и неприятные переживания. Имеются проблемы, которые ребенок не может решить самостоятельно."
     };
   }
 
@@ -334,7 +334,7 @@ function interpretTotalDeviation(totalDeviation) {
     return {
       level: "normal_background",
       title: "Эмоциональное состояние в норме",
-      interpretation: "Ребенок может радоваться и печалиться; выраженных поводов для беспокойства нет."
+      interpretation: "Ребенок может радоваться и печалиться, поводов для беспокойства нет."
     };
   }
 
@@ -350,7 +350,7 @@ function interpretTotalDeviation(totalDeviation) {
   return {
     level: "positive_background",
     title: "Преобладание положительных эмоций",
-    interpretation: "Ребенок в целом весел, счастлив и настроен оптимистично."
+    interpretation: "Ребенок весел, счастлив, настроен оптимистично."
   };
 }
 
@@ -717,7 +717,8 @@ function calculateDomikiResult(data) {
       name: data.student.name || null,
       birth_date: data.student.birth_date || null,
       age: data.student.age || null,
-      gender: data.student.gender || null
+      gender: data.student.gender || null,
+      gender_value: data.student.gender_value || null
     },
     result: {
       calculated_at: new Date().toISOString(),
