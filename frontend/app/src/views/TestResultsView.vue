@@ -60,7 +60,7 @@ const rows = computed(() => {
 
       const haystack = [
         personDisplayName(row.attempt.person, row.attempt.person_id),
-        row.resultRecord?.json?.student?.name,
+        row.resultRecord?.json_results?.student?.name,
         String(row.attempt.id),
       ]
         .filter(Boolean)
@@ -178,7 +178,7 @@ onMounted(loadData)
           <tbody>
             <tr v-for="row in rows" :key="row.attempt.id" class="border-t border-slate-100 align-top">
               <td class="px-4 py-4">
-                <div class="font-semibold text-slate-900">{{ row.resultRecord?.json?.student?.name || personDisplayName(row.attempt.person, row.attempt.person_id) }}</div>
+                <div class="font-semibold text-slate-900">{{ row.resultRecord?.json_results?.student?.name || personDisplayName(row.attempt.person, row.attempt.person_id) }}</div>
                 <div class="mt-1 text-xs text-slate-500">{{ personDisplayName(row.attempt.person, row.attempt.person_id) }}</div>
               </td>
               <td class="px-4 py-4 font-mono text-xs text-slate-600">{{ row.attempt.id }}</td>

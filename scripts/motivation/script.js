@@ -443,6 +443,6 @@ const result = calculateMotivationResult(data);
 
 // Выводим результат в консоль (можно заменить на return для использования в API)
 return {
-  status: 'success',
+  status: 'calculated',
   json: result
 };

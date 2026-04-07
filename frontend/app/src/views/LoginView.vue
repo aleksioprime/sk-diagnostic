@@ -28,25 +28,9 @@ async function handleLogin() {
 
 <template>
   <section class="flex w-full items-center justify-center py-8 sm:py-14">
-    <div class="grid w-full max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-      <div class="glass-panel hidden p-10 lg:block">
-        <p class="mb-3 text-sm font-semibold uppercase tracking-[0.26em] text-primary">Диагностика</p>
-        <h1 class="max-w-lg text-5xl leading-[1.02] font-semibold tracking-tight text-slate-900">
-          Прохождение тестов и просмотр результатов в одном интерфейсе.
-        </h1>
-        <p class="mt-6 max-w-xl text-base leading-7 text-slate-600">
-          Здесь можно проходить назначенные тесты, а специалисты могут просматривать и анализировать готовые результаты.
-        </p>
-        <div class="mt-8 grid gap-4 sm:grid-cols-2">
-          <div class="rounded-[28px] border border-white/70 bg-white/82 p-5">
-            <div class="text-sm font-semibold text-slate-900">Для пользователя</div>
-            <div class="mt-2 text-sm leading-6 text-slate-600">Все назначенные тесты собраны в одном месте, чтобы к ним можно было вернуться в любой момент.</div>
-          </div>
-          <div class="rounded-[28px] border border-white/70 bg-white/82 p-5">
-            <div class="text-sm font-semibold text-slate-900">Для специалиста</div>
-            <div class="mt-2 text-sm leading-6 text-slate-600">Результаты доступны в удобной таблице и на отдельной странице с подробной расшифровкой.</div>
-          </div>
-        </div>
+    <div class="w-full max-w-md">
+      <div class="mb-6 text-center">
+        <p class="text-sm font-semibold uppercase tracking-[0.26em] text-primary">Диагностика SK</p>
       </div>
 
       <form class="glass-panel w-full p-8 sm:p-10" @submit.prevent="handleLogin">

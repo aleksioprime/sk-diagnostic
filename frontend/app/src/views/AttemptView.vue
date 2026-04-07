@@ -695,8 +695,9 @@ onBeforeUnmount(stopTimer)
         </div>
 
         <template v-for="(question, index) in normalizedQuestions" :key="question.id">
+          <Transition name="q-step">
           <div
-            v-show="isReadOnly || !isSequential || index === currentStep"
+            v-if="isReadOnly || !isSequential || index === currentStep"
             :id="`question-${index}`"
             class="glass-panel overflow-hidden p-5 sm:p-6 transition-colors"
             :class="{
@@ -845,6 +846,7 @@ onBeforeUnmount(stopTimer)
             <div v-else class="rounded-[24px] bg-red-50 px-4 py-3 text-sm text-red-700">Тип вопроса <code>{{ question.question_type }}</code> пока не поддержан во фронтенде.</div>
           </div>
         </div>
+          </Transition>
         </template>
 
         <div v-if="isSequential && !isReadOnly && normalizedQuestions.length > 1" class="flex items-center justify-between gap-3">
@@ -869,7 +871,7 @@ onBeforeUnmount(stopTimer)
             <button
               v-for="(question, index) in normalizedQuestions"
               :key="question.id"
-              class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition"
+              class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-xs font-semibold transition"
               :class="{
                 'bg-emerald-100 text-emerald-700': isQuestionAnswered(question),
                 'bg-orange-100 text-orange-700': !isQuestionAnswered(question) && question.is_required && !question.answer?.is_skipped,
@@ -897,3 +899,19 @@ onBeforeUnmount(stopTimer)
     </div>
   </section>
 </template>
+
+<style scoped>
+.q-step-enter-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.q-step-leave-active {
+  transition: opacity 0.15s ease;
+}
+.q-step-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.q-step-leave-to {
+  opacity: 0;
+}
+</style>

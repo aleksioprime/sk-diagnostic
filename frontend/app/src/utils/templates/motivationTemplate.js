@@ -9,38 +9,38 @@ export const motivationTemplate = {
       {
         key: 'level',
         label: 'Уровень',
-        value: (row) => row.resultRecord?.json?.result?.level || '—',
+        value: (row) => row.resultRecord?.json_results?.result?.level || '—',
       },
       {
         key: 'total_score',
         label: 'Сумма',
-        value: (row) => row.resultRecord?.json?.result?.total_score ?? '—',
+        value: (row) => row.resultRecord?.json_results?.result?.total_score ?? '—',
       },
       {
         key: 'cognitive_activity',
         label: 'ПА',
-        value: (row) => row.resultRecord?.json?.scales?.find((item) => item.code === 'cognitive_activity')?.value ?? '—',
+        value: (row) => row.resultRecord?.json_results?.scales?.find((item) => item.code === 'cognitive_activity')?.value ?? '—',
       },
       {
         key: 'achievement_motivation',
         label: 'МД',
-        value: (row) => row.resultRecord?.json?.scales?.find((item) => item.code === 'achievement_motivation')?.value ?? '—',
+        value: (row) => row.resultRecord?.json_results?.scales?.find((item) => item.code === 'achievement_motivation')?.value ?? '—',
       },
       {
         key: 'anxiety',
         label: 'Тревожность',
-        value: (row) => row.resultRecord?.json?.scales?.find((item) => item.code === 'anxiety')?.value ?? '—',
+        value: (row) => row.resultRecord?.json_results?.scales?.find((item) => item.code === 'anxiety')?.value ?? '—',
       },
       {
         key: 'anger',
         label: 'Гнев',
-        value: (row) => row.resultRecord?.json?.scales?.find((item) => item.code === 'anger')?.value ?? '—',
+        value: (row) => row.resultRecord?.json_results?.scales?.find((item) => item.code === 'anger')?.value ?? '—',
       },
     ]
   },
 
   buildHero({ attempt, resultRecord }) {
-    const json = resultRecord?.json || {}
+    const json = resultRecord?.json_results || {}
     return {
       eyebrow: attempt?.test?.title || 'Диагностика мотивации',
       title: json.student?.name || personDisplayName(attempt?.person, attempt?.person_id),
@@ -53,7 +53,7 @@ export const motivationTemplate = {
   },
 
   buildSections({ attempt, resultRecord }) {
-    const json = resultRecord?.json || {}
+    const json = resultRecord?.json_results || {}
     const student = json.student || {}
     const result = json.result || {}
     const scales = json.scales || []

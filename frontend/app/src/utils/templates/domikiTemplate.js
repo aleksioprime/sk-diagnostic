@@ -29,33 +29,33 @@ export const domikiTemplate = {
       {
         key: 'vk',
         label: 'ВК',
-        value: (row) => row.resultRecord?.json?.result?.vegetative_coefficient?.value ?? '—',
+        value: (row) => row.resultRecord?.json_results?.result?.vegetative_coefficient?.value ?? '—',
       },
       {
         key: 'vk_level',
         label: 'Работоспособность',
-        value: (row) => row.resultRecord?.json?.result?.vegetative_coefficient?.label || '—',
+        value: (row) => row.resultRecord?.json_results?.result?.vegetative_coefficient?.label || '—',
       },
       {
         key: 'emotional_bg',
         label: 'Эмоц. фон',
-        value: (row) => row.resultRecord?.json?.result?.emotional_background?.label || '—',
+        value: (row) => row.resultRecord?.json_results?.result?.emotional_background?.label || '—',
       },
       {
         key: 'self_esteem',
         label: 'Самооценка',
-        value: (row) => row.resultRecord?.json?.result?.self_esteem?.label || '—',
+        value: (row) => row.resultRecord?.json_results?.result?.self_esteem?.label || '—',
       },
       {
         key: 'school_relation',
         label: 'Школа',
-        value: (row) => row.resultRecord?.json?.result?.school_relation?.label || '—',
+        value: (row) => row.resultRecord?.json_results?.result?.school_relation?.label || '—',
       },
     ]
   },
 
   buildHero({ attempt, resultRecord }) {
-    const json = resultRecord?.json || {}
+    const json = resultRecord?.json_results || {}
     const result = json.result || {}
     const vk = result.vegetative_coefficient || {}
     const bg = result.emotional_background || {}
@@ -73,7 +73,7 @@ export const domikiTemplate = {
   },
 
   buildSections({ attempt, resultRecord }) {
-    const json = resultRecord?.json || {}
+    const json = resultRecord?.json_results || {}
     const student = json.student || {}
     const result = json.result || {}
     const domains = json.domains || []

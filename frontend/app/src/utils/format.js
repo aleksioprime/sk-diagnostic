@@ -63,7 +63,7 @@ export function getResultStatusMeta(status) {
   const map = {
     pending: { label: 'Ожидает', className: 'bg-slate-100 text-slate-600 whitespace-nowrap' },
     processing: { label: 'Рассчитывается', className: 'bg-amber-100 text-amber-700 whitespace-nowrap' },
-    success: { label: 'Готов', className: 'bg-emerald-100 text-emerald-700 whitespace-nowrap' },
+    calculated: { label: 'Готов', className: 'bg-emerald-100 text-emerald-700 whitespace-nowrap' },
     error: { label: 'Ошибка', className: 'bg-red-100 text-red-700 whitespace-nowrap' },
   }
 

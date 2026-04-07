@@ -193,7 +193,7 @@ onMounted(loadData)
           <h2 class="text-lg font-semibold text-slate-900">Подробные данные результата</h2>
           <p class="mt-1 text-sm text-slate-500">Табличное представление всех полей результата.</p>
         </div>
-        <JsonResultTable :value="resultRecord.json" />
+        <JsonResultTable :value="resultRecord.json_results" />
       </div>
     </div>
     <div v-else class="glass-panel p-10 text-center text-sm text-slate-500">

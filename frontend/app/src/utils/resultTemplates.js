@@ -48,7 +48,7 @@ function flattenJson(value, prefix = '', rows = []) {
 function detectTemplateId(context) {
   const test = context?.test || {}
   const resultRecord = context?.resultRecord || {}
-  const json = resultRecord?.json || {}
+  const json = resultRecord?.json_results || {}
 
   return (
     resultRecord?.page_template_id ||
@@ -64,7 +64,7 @@ function detectTemplateId(context) {
 function detectTableTemplateId(context) {
   const test = context?.test || {}
   const resultRecord = context?.resultRecord || {}
-  const json = resultRecord?.json || {}
+  const json = resultRecord?.json_results || {}
 
   return (
     resultRecord?.table_template_id ||
@@ -78,7 +78,7 @@ function detectTableTemplateId(context) {
 }
 
 function genericSummary(row) {
-  const resultJson = row.resultRecord?.json || {}
+  const resultJson = row.resultRecord?.json_results || {}
   const summaryEntries = primitiveEntries(resultJson.result || {})
   if (summaryEntries.length) {
     return summaryEntries.map(([key, value]) => `${prettifyPath(key)}: ${stringifyValue(value)}`).join(' · ')
@@ -98,7 +98,7 @@ const genericTemplate = {
     ]
   },
   buildHero({ attempt, resultRecord }) {
-    const json = resultRecord?.json || {}
+    const json = resultRecord?.json_results || {}
     return {
       eyebrow: attempt?.test?.title || 'Результат диагностики',
       title: json.student?.name || '',
@@ -107,7 +107,7 @@ const genericTemplate = {
     }
   },
   buildSections({ resultRecord }) {
-    const json = resultRecord?.json || {}
+    const json = resultRecord?.json_results || {}
     return [
       {
         kind: 'table',
