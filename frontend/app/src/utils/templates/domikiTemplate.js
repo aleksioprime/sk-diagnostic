@@ -1,23 +1,8 @@
 import { personDisplayName } from '../format'
 
-const COLOR_HEX = {
-  red: '#EF4444',
-  yellow: '#EAB308',
-  green: '#22C55E',
-  blue: '#3B82F6',
-  violet: '#A855F7',
-  brown: '#92400E',
-  gray: '#9CA3AF',
-  black: '#1E293B',
-}
-
-function colorDot(code) {
-  return COLOR_HEX[code] || '#CBD5E1'
-}
-
 function statusTone(status) {
   if (status === 'attention') return 'warning'
-  return 'success'
+  return null
 }
 
 export const domikiTemplate = {
@@ -65,8 +50,8 @@ export const domikiTemplate = {
       title: json.student?.name || personDisplayName(attempt?.person, attempt?.person_id),
       subtitle: vk.interpretation || bg.interpretation || 'Интерпретация не получена',
       badges: [
-        { label: `ВК ${vk.value ?? '—'}`, tone: 'primary' },
-        { label: `Фон: ${bg.label || '—'}`, tone: bg.level === 'positive_background' ? 'accent' : 'primary' },
+        { label: `ВК: ${vk.value ?? '—'} — ${vk.label || '?'}`, tone: 'primary' },
+        { label: `ЭФ: ${bg.value ?? '—'} (${bg.label || '?'})`, tone: bg.level === 'positive_background' ? 'accent' : bg.level === 'negative_background' ? 'danger' : 'primary' },
         { label: `Самооценка: ${result.self_esteem?.label || '—'}`, tone: 'primary' },
       ],
     }
@@ -77,7 +62,6 @@ export const domikiTemplate = {
     const student = json.student || {}
     const result = json.result || {}
     const domains = json.domains || []
-    const extra = json.extra || {}
     const vk = result.vegetative_coefficient || {}
     const bg = result.emotional_background || {}
 
@@ -126,7 +110,7 @@ export const domikiTemplate = {
     if (domains.length) {
       sections.push({
         kind: 'table',
-        title: 'Оценка сфер жизни (домики)',
+        title: 'Настроение (домики)',
         columns: [
           { key: 'title', label: 'Сфера' },
           { key: 'color_title', label: 'Цвет' },
@@ -134,21 +118,22 @@ export const domikiTemplate = {
         ],
         rows: domains.map((d) => ({
           title: d.title,
-          color_title: `${d.color_title}`,
+          color_title: d.color_title,
           status_label: d.status_label,
+          _tone: statusTone(d.status),
         })),
       })
     }
 
     // 6. Собственный домик
-    if (extra.custom_house) {
+    const customHouse = domains.find((d) => d.code === 'custom_house')
+    if (customHouse?.description) {
       sections.push({
         kind: 'keyValue',
         title: 'Собственный домик',
         items: [
-          { label: 'Название', value: extra.custom_house.title || '—' },
-          { label: 'Цвет', value: extra.custom_house.color_title || '—' },
-          { label: 'Описание ребёнка', value: extra.custom_house.description || '—' },
+          { label: 'Цвет', value: customHouse.color_title || '—' },
+          { label: 'Описание ребёнка', value: customHouse.description },
         ],
       })
     }

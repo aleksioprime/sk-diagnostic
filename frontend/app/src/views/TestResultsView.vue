@@ -147,7 +147,7 @@ onMounted(loadData)
           <option value="">Все статусы</option>
           <option value="pending">pending</option>
           <option value="processing">processing</option>
-          <option value="success">success</option>
+          <option value="calculated">calculated</option>
           <option value="error">error</option>
         </select>
         <button class="ghost-button" @click="loadData" :disabled="loading">

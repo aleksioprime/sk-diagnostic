@@ -288,7 +288,7 @@ function interpretVegetativeCoefficient(vk) {
     };
   }
 
-  if (vk >= 0.92 && vk <= 1.9) {
+  if (vk >= 0.92 && vk < 2) {
     return {
       level: "optimal",
       title: "Оптимальная работоспособность",
@@ -581,15 +581,16 @@ function getDomainInterpretation(domainCode, relation) {
 function buildCompactDomainStatuses(houses, customHouseDescription) {
   const houseByCode = Object.fromEntries(houses.map((item) => [item.code, item]));
   const definitions = [
-    { code: "soul", title: "Внутренний мир" },
-    { code: "home", title: "Настроение дома" },
-    { code: "school_way", title: "Настроение в школе" },
-    { code: "teacher_talk", title: "Отношения с наставником" },
+    { code: "soul", title: "Душа" },
+    { code: "school_way", title: "Идти в школу" },
+    { code: "reading_lesson", title: "Урок чтения" },
+    { code: "writing_lesson", title: "Урок письма" },
+    { code: "math_lesson", title: "Урок математики" },
+    { code: "teacher_talk", title: "Отношения с учителями" },
     { code: "classmates", title: "Отношения с одноклассниками" },
-    { code: "reading_lesson", title: "Чтение" },
-    { code: "writing_lesson", title: "Письмо" },
-    { code: "math_lesson", title: "Математика" },
-    { code: "homework", title: "Домашнее задание" }
+    { code: "home", title: "Отношение дома" },
+    { code: "homework", title: "Делать уроки" },
+    { code: "custom_house", title: "Придумай сам" }
   ];
 
   const items = definitions
@@ -602,7 +603,7 @@ function buildCompactDomainStatuses(houses, customHouseDescription) {
 
       const status = getAttentionStatusByColor(house.color_code);
 
-      return {
+      const item = {
         code,
         title,
         status: status.value,
@@ -610,22 +611,16 @@ function buildCompactDomainStatuses(houses, customHouseDescription) {
         color_code: house.color_code,
         color_title: house.color_title
       };
+
+      if (code === "custom_house") {
+        item.description = customHouseDescription;
+      }
+
+      return item;
     })
     .filter(Boolean);
 
-  const customHouse = houseByCode.custom_house
-    ? {
-        title: houseByCode.custom_house.title,
-        color_code: houseByCode.custom_house.color_code,
-        color_title: houseByCode.custom_house.color_title,
-        description: customHouseDescription
-      }
-    : null;
-
-  return {
-    items,
-    custom_house: customHouse
-  };
+  return { items };
 }
 
 /**
@@ -746,10 +741,7 @@ function calculateDomikiResult(data) {
         interpretation: houses.school_relation.interpretation
       }
     },
-    domains: domainStatuses.items,
-    extra: {
-      custom_house: domainStatuses.custom_house
-    }
+    domains: domainStatuses.items
   };
 }
 

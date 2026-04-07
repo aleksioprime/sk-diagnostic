@@ -155,7 +155,11 @@ onMounted(loadData)
             v-for="badge in hero.badges"
             :key="badge.label"
             class="badge"
-            :class="badge.tone === 'accent' ? 'bg-orange-100 text-orange-700' : 'bg-primary/10 text-primary'"
+            :class="{
+              'bg-orange-100 text-orange-700': badge.tone === 'accent',
+              'bg-red-100 text-red-700': badge.tone === 'danger',
+              'bg-primary/10 text-primary': badge.tone !== 'accent' && badge.tone !== 'danger',
+            }"
           >
             {{ badge.label }}
           </span>

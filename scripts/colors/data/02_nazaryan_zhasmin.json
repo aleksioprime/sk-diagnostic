@@ -1,20 +1,20 @@
 {
-  "attempt_id": 356300000000001,
-  "test_id": 356200000000001,
+  "attempt_id": 1000002,
+  "test_id": 2000001,
   "test_code": "domiki_orekhova",
   "test_title": "Проективная методика «Домики»",
-  "submitted_at": "2026-03-30T15:45:00.000Z",
+  "submitted_at": "2024-10-28T08:00:00.000Z",
   "student": {
-    "id": 355515231240192,
-    "name": "Семочкин Алексей Викторович",
-    "birth_date": "2018-12-05",
-    "age": 7,
-    "gender": "male"
+    "id": 2,
+    "name": "Назарян Жасмин",
+    "birth_date": null,
+    "age": null,
+    "gender": null
   },
   "answers": [
     {
-      "answer_id": 356300000000010,
-      "question_id": 356200000000010,
+      "answer_id": 200,
+      "question_id": 10,
       "question_number": 1,
       "question_type": "ranking",
       "question_code": "color_preference",
@@ -25,65 +25,65 @@
       "values": null,
       "ranking": [
         {
-          "option_id": 1,
-          "option_label": "Желтый",
-          "option_value": "yellow",
+          "option_id": 5,
+          "option_label": "Фиолетовый",
+          "option_value": "violet",
           "option_score": null,
           "rank": 1,
           "score": null
         },
         {
-          "option_id": 2,
-          "option_label": "Красный",
-          "option_value": "red",
+          "option_id": 4,
+          "option_label": "Желтый",
+          "option_value": "yellow",
           "option_score": null,
           "rank": 2,
           "score": null
         },
         {
           "option_id": 3,
-          "option_label": "Синий",
-          "option_value": "blue",
+          "option_label": "Красный",
+          "option_value": "red",
           "option_score": null,
           "rank": 3,
           "score": null
         },
         {
-          "option_id": 4,
-          "option_label": "Зеленый",
-          "option_value": "green",
+          "option_id": 1,
+          "option_label": "Синий",
+          "option_value": "blue",
           "option_score": null,
           "rank": 4,
           "score": null
         },
         {
-          "option_id": 5,
-          "option_label": "Фиолетовый",
-          "option_value": "violet",
+          "option_id": 2,
+          "option_label": "Зеленый",
+          "option_value": "green",
           "option_score": null,
           "rank": 5,
           "score": null
         },
         {
           "option_id": 6,
-          "option_label": "Серый",
-          "option_value": "gray",
-          "option_score": null,
-          "rank": 6,
-          "score": null
-        },
-        {
-          "option_id": 7,
           "option_label": "Коричневый",
           "option_value": "brown",
           "option_score": null,
-          "rank": 7,
+          "rank": 6,
           "score": null
         },
         {
           "option_id": 8,
           "option_label": "Черный",
           "option_value": "black",
+          "option_score": null,
+          "rank": 7,
+          "score": null
+        },
+        {
+          "option_id": 7,
+          "option_label": "Серый",
+          "option_value": "gray",
           "option_score": null,
           "rank": 8,
           "score": null
@@ -95,8 +95,8 @@
       "raw": {}
     },
     {
-      "answer_id": 356300000000011,
-      "question_id": 356200000000011,
+      "answer_id": 201,
+      "question_id": 11,
       "question_number": 2,
       "question_type": "scale",
       "question_code": "happiness",
@@ -125,14 +125,14 @@
       }
     },
     {
-      "answer_id": 356300000000012,
-      "question_id": 356200000000012,
+      "answer_id": 202,
+      "question_id": 12,
       "question_number": 3,
       "question_type": "scale",
       "question_code": "grief",
       "question_text": "Горе",
-      "display": "Черный",
-      "value": "black",
+      "display": "Серый",
+      "value": "gray",
       "selected_option": null,
       "values": null,
       "ranking": null,
@@ -144,25 +144,25 @@
         "number": null,
         "boolean": null,
         "option_id": null,
-        "scale_option_id": 108
+        "scale_option_id": 106
       },
       "scale_option": {
-        "id": 108,
-        "label": "Черный",
-        "value": "black",
+        "id": 106,
+        "label": "Серый",
+        "value": "gray",
         "score": null,
         "source": "scale_option"
       }
     },
     {
-      "answer_id": 356300000000013,
-      "question_id": 356200000000013,
+      "answer_id": 203,
+      "question_id": 13,
       "question_number": 4,
       "question_type": "scale",
       "question_code": "justice",
       "question_text": "Справедливость",
-      "display": "Зеленый",
-      "value": "green",
+      "display": "Синий",
+      "value": "blue",
       "selected_option": null,
       "values": null,
       "ranking": null,
@@ -174,19 +174,19 @@
         "number": null,
         "boolean": null,
         "option_id": null,
-        "scale_option_id": 103
+        "scale_option_id": 102
       },
       "scale_option": {
-        "id": 103,
-        "label": "Зеленый",
-        "value": "green",
+        "id": 102,
+        "label": "Синий",
+        "value": "blue",
         "score": null,
         "source": "scale_option"
       }
     },
     {
-      "answer_id": 356300000000014,
-      "question_id": 356200000000014,
+      "answer_id": 204,
+      "question_id": 14,
       "question_number": 5,
       "question_type": "scale",
       "question_code": "offense",
@@ -215,12 +215,72 @@
       }
     },
     {
-      "answer_id": 356300000000015,
-      "question_id": 356200000000015,
+      "answer_id": 205,
+      "question_id": 15,
       "question_number": 6,
       "question_type": "scale",
       "question_code": "friendship",
       "question_text": "Дружба",
+      "display": "Зеленый",
+      "value": "green",
+      "selected_option": null,
+      "values": null,
+      "ranking": null,
+      "text": null,
+      "number": null,
+      "boolean": null,
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": null,
+        "scale_option_id": 103
+      },
+      "scale_option": {
+        "id": 103,
+        "label": "Зеленый",
+        "value": "green",
+        "score": null,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 206,
+      "question_id": 16,
+      "question_number": 7,
+      "question_type": "scale",
+      "question_code": "quarrel",
+      "question_text": "Ссора",
+      "display": "Коричневый",
+      "value": "brown",
+      "selected_option": null,
+      "values": null,
+      "ranking": null,
+      "text": null,
+      "number": null,
+      "boolean": null,
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": null,
+        "scale_option_id": 107
+      },
+      "scale_option": {
+        "id": 107,
+        "label": "Коричневый",
+        "value": "brown",
+        "score": null,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 207,
+      "question_id": 17,
+      "question_number": 8,
+      "question_type": "scale",
+      "question_code": "kindness",
+      "question_text": "Доброта",
       "display": "Красный",
       "value": "red",
       "selected_option": null,
@@ -245,68 +305,8 @@
       }
     },
     {
-      "answer_id": 356300000000016,
-      "question_id": 356200000000016,
-      "question_number": 7,
-      "question_type": "scale",
-      "question_code": "quarrel",
-      "question_text": "Ссора",
-      "display": "Черный",
-      "value": "black",
-      "selected_option": null,
-      "values": null,
-      "ranking": null,
-      "text": null,
-      "number": null,
-      "boolean": null,
-      "raw": {
-        "text": null,
-        "number": null,
-        "boolean": null,
-        "option_id": null,
-        "scale_option_id": 108
-      },
-      "scale_option": {
-        "id": 108,
-        "label": "Черный",
-        "value": "black",
-        "score": null,
-        "source": "scale_option"
-      }
-    },
-    {
-      "answer_id": 356300000000017,
-      "question_id": 356200000000017,
-      "question_number": 8,
-      "question_type": "scale",
-      "question_code": "kindness",
-      "question_text": "Доброта",
-      "display": "Синий",
-      "value": "blue",
-      "selected_option": null,
-      "values": null,
-      "ranking": null,
-      "text": null,
-      "number": null,
-      "boolean": null,
-      "raw": {
-        "text": null,
-        "number": null,
-        "boolean": null,
-        "option_id": null,
-        "scale_option_id": 102
-      },
-      "scale_option": {
-        "id": 102,
-        "label": "Синий",
-        "value": "blue",
-        "score": null,
-        "source": "scale_option"
-      }
-    },
-    {
-      "answer_id": 356300000000018,
-      "question_id": 356200000000018,
+      "answer_id": 208,
+      "question_id": 18,
       "question_number": 9,
       "question_type": "scale",
       "question_code": "malice",
@@ -335,8 +335,8 @@
       }
     },
     {
-      "answer_id": 356300000000019,
-      "question_id": 356200000000019,
+      "answer_id": 209,
+      "question_id": 19,
       "question_number": 10,
       "question_type": "scale",
       "question_code": "boredom",
@@ -365,14 +365,14 @@
       }
     },
     {
-      "answer_id": 356300000000020,
-      "question_id": 356200000000020,
+      "answer_id": 210,
+      "question_id": 20,
       "question_number": 11,
       "question_type": "scale",
       "question_code": "admiration",
       "question_text": "Восхищение",
-      "display": "Желтый",
-      "value": "yellow",
+      "display": "Фиолетовый",
+      "value": "violet",
       "selected_option": null,
       "values": null,
       "ranking": null,
@@ -384,53 +384,23 @@
         "number": null,
         "boolean": null,
         "option_id": null,
-        "scale_option_id": 101
+        "scale_option_id": 105
       },
       "scale_option": {
-        "id": 101,
-        "label": "Желтый",
-        "value": "yellow",
+        "id": 105,
+        "label": "Фиолетовый",
+        "value": "violet",
         "score": null,
         "source": "scale_option"
       }
     },
     {
-      "answer_id": 356300000000021,
-      "question_id": 356200000000021,
+      "answer_id": 211,
+      "question_id": 21,
       "question_number": 21,
       "question_type": "scale",
       "question_code": "soul",
       "question_text": "Твоя душа",
-      "display": "Синий",
-      "value": "blue",
-      "selected_option": null,
-      "values": null,
-      "ranking": null,
-      "text": null,
-      "number": null,
-      "boolean": null,
-      "raw": {
-        "text": null,
-        "number": null,
-        "boolean": null,
-        "option_id": null,
-        "scale_option_id": 102
-      },
-      "scale_option": {
-        "id": 102,
-        "label": "Синий",
-        "value": "blue",
-        "score": null,
-        "source": "scale_option"
-      }
-    },
-    {
-      "answer_id": 356300000000022,
-      "question_id": 356200000000022,
-      "question_number": 22,
-      "question_type": "scale",
-      "question_code": "school_way",
-      "question_text": "Твое настроение, когда ты идешь в школу",
       "display": "Желтый",
       "value": "yellow",
       "selected_option": null,
@@ -455,14 +425,14 @@
       }
     },
     {
-      "answer_id": 356300000000023,
-      "question_id": 356200000000023,
-      "question_number": 23,
+      "answer_id": 212,
+      "question_id": 22,
+      "question_number": 22,
       "question_type": "scale",
-      "question_code": "reading_lesson",
-      "question_text": "Твое настроение на уроке чтения",
-      "display": "Зеленый",
-      "value": "green",
+      "question_code": "school_way",
+      "question_text": "Твое настроение, когда ты идешь в школу",
+      "display": "Серый",
+      "value": "gray",
       "selected_option": null,
       "values": null,
       "ranking": null,
@@ -474,19 +444,49 @@
         "number": null,
         "boolean": null,
         "option_id": null,
-        "scale_option_id": 103
+        "scale_option_id": 106
       },
       "scale_option": {
-        "id": 103,
-        "label": "Зеленый",
-        "value": "green",
+        "id": 106,
+        "label": "Серый",
+        "value": "gray",
         "score": null,
         "source": "scale_option"
       }
     },
     {
-      "answer_id": 356300000000024,
-      "question_id": 356200000000024,
+      "answer_id": 213,
+      "question_id": 23,
+      "question_number": 23,
+      "question_type": "scale",
+      "question_code": "reading_lesson",
+      "question_text": "Твое настроение на уроке чтения",
+      "display": "Коричневый",
+      "value": "brown",
+      "selected_option": null,
+      "values": null,
+      "ranking": null,
+      "text": null,
+      "number": null,
+      "boolean": null,
+      "raw": {
+        "text": null,
+        "number": null,
+        "boolean": null,
+        "option_id": null,
+        "scale_option_id": 107
+      },
+      "scale_option": {
+        "id": 107,
+        "label": "Коричневый",
+        "value": "brown",
+        "score": null,
+        "source": "scale_option"
+      }
+    },
+    {
+      "answer_id": 214,
+      "question_id": 24,
       "question_number": 24,
       "question_type": "scale",
       "question_code": "writing_lesson",
@@ -515,8 +515,8 @@
       }
     },
     {
-      "answer_id": 356300000000025,
-      "question_id": 356200000000025,
+      "answer_id": 215,
+      "question_id": 25,
       "question_number": 25,
       "question_type": "scale",
       "question_code": "math_lesson",
@@ -545,14 +545,14 @@
       }
     },
     {
-      "answer_id": 356300000000026,
-      "question_id": 356200000000026,
+      "answer_id": 216,
+      "question_id": 26,
       "question_number": 26,
       "question_type": "scale",
       "question_code": "teacher_talk",
       "question_text": "Твое настроение, когда ты разговариваешь с учителем",
-      "display": "Синий",
-      "value": "blue",
+      "display": "Зеленый",
+      "value": "green",
       "selected_option": null,
       "values": null,
       "ranking": null,
@@ -564,25 +564,25 @@
         "number": null,
         "boolean": null,
         "option_id": null,
-        "scale_option_id": 102
+        "scale_option_id": 103
       },
       "scale_option": {
-        "id": 102,
-        "label": "Синий",
-        "value": "blue",
+        "id": 103,
+        "label": "Зеленый",
+        "value": "green",
         "score": null,
         "source": "scale_option"
       }
     },
     {
-      "answer_id": 356300000000027,
-      "question_id": 356200000000027,
+      "answer_id": 217,
+      "question_id": 27,
       "question_number": 27,
       "question_type": "scale",
       "question_code": "classmates",
       "question_text": "Твое настроение, когда ты общаешься со своими одноклассниками",
-      "display": "Красный",
-      "value": "red",
+      "display": "Серый",
+      "value": "gray",
       "selected_option": null,
       "values": null,
       "ranking": null,
@@ -594,19 +594,19 @@
         "number": null,
         "boolean": null,
         "option_id": null,
-        "scale_option_id": 104
+        "scale_option_id": 106
       },
       "scale_option": {
-        "id": 104,
-        "label": "Красный",
-        "value": "red",
+        "id": 106,
+        "label": "Серый",
+        "value": "gray",
         "score": null,
         "source": "scale_option"
       }
     },
     {
-      "answer_id": 356300000000028,
-      "question_id": 356200000000028,
+      "answer_id": 218,
+      "question_id": 28,
       "question_number": 28,
       "question_type": "scale",
       "question_code": "home",
@@ -635,14 +635,14 @@
       }
     },
     {
-      "answer_id": 356300000000029,
-      "question_id": 356200000000029,
+      "answer_id": 219,
+      "question_id": 29,
       "question_number": 29,
       "question_type": "scale",
       "question_code": "homework",
       "question_text": "Твое настроение, когда ты делаешь уроки",
-      "display": "Коричневый",
-      "value": "brown",
+      "display": "Черный",
+      "value": "black",
       "selected_option": null,
       "values": null,
       "ranking": null,
@@ -654,25 +654,25 @@
         "number": null,
         "boolean": null,
         "option_id": null,
-        "scale_option_id": 107
+        "scale_option_id": 108
       },
       "scale_option": {
-        "id": 107,
-        "label": "Коричневый",
-        "value": "brown",
+        "id": 108,
+        "label": "Черный",
+        "value": "black",
         "score": null,
         "source": "scale_option"
       }
     },
     {
-      "answer_id": 356300000000030,
-      "question_id": 356200000000030,
+      "answer_id": 220,
+      "question_id": 30,
       "question_number": 30,
       "question_type": "scale",
       "question_code": "custom_house",
       "question_text": "Собственный домик",
-      "display": "Фиолетовый",
-      "value": "violet",
+      "display": "Красный",
+      "value": "red",
       "selected_option": null,
       "values": null,
       "ranking": null,
@@ -684,32 +684,15 @@
         "number": null,
         "boolean": null,
         "option_id": null,
-        "scale_option_id": 105
+        "scale_option_id": 104
       },
       "scale_option": {
-        "id": 105,
-        "label": "Фиолетовый",
-        "value": "violet",
+        "id": 104,
+        "label": "Красный",
+        "value": "red",
         "score": null,
         "source": "scale_option"
       }
-    },
-    {
-      "answer_id": 356300000000031,
-      "question_id": 356200000000031,
-      "question_number": 31,
-      "question_type": "text",
-      "question_code": "custom_house_description",
-      "question_text": "Кто живет и что делает в этом домике",
-      "display": null,
-      "value": "Я рисую и играю",
-      "selected_option": null,
-      "values": null,
-      "ranking": null,
-      "text": "Я рисую и играю",
-      "number": null,
-      "boolean": null,
-      "raw": {}
     }
   ]
 }

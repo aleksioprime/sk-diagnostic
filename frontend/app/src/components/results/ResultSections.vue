@@ -59,11 +59,19 @@ defineProps({
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(row, index) in section.rows" :key="index" class="border-t border-slate-100">
+              <tr
+                v-for="(row, index) in section.rows"
+                :key="index"
+                class="border-t border-slate-100"
+                :class="{
+                  'bg-amber-50/70': row._tone === 'warning',
+                }"
+              >
                 <td
                   v-for="column in section.columns"
                   :key="column.key"
-                  class="px-4 py-3 text-slate-800"
+                  class="px-4 py-3"
+                  :class="row._tone === 'warning' ? 'text-amber-900' : 'text-slate-800'"
                 >
                   {{ row[column.key] }}
                 </td>
