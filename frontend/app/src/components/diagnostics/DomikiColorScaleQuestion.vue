@@ -15,15 +15,18 @@ const props = defineProps({
 defineEmits(['select'])
 
 function tileClass(option) {
-  const meta = getDomikiColorMeta(option.value)
   const selectedId = props.question.answer?.scale_option_id
   const isSelected = selectedId === option.id
   const isDimmed = selectedId && !isSelected
   return [
-    meta.tileClass,
     isSelected ? 'ring-4 ring-primary ring-offset-2 shadow-lg scale-95' : '',
     isDimmed ? 'opacity-30' : '',
   ].join(' ')
+}
+
+function tileStyle(option) {
+  const { hex } = getDomikiColorMeta(option.value)
+  return hex ? { backgroundColor: hex, borderColor: hex } : {}
 }
 </script>
 
@@ -34,6 +37,7 @@ function tileClass(option) {
       :key="option.id"
       class="aspect-square cursor-pointer rounded-[16px] border-4 transition disabled:cursor-not-allowed disabled:opacity-60"
       :class="tileClass(option)"
+      :style="tileStyle(option)"
       :disabled="disabled"
       @click="$emit('select', option.id)"
     />

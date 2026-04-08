@@ -10,38 +10,14 @@ const DOMIKI_CODES = ['domiki_emotion', 'domiki_orekhova']
 const COLOR_CODES = ['blue', 'green', 'red', 'yellow', 'violet', 'brown', 'gray', 'black']
 
 const COLOR_META = {
-  blue: {
-    tileClass: 'border-sky-300 bg-sky-100 text-sky-950 hover:border-sky-400',
-    badgeClass: 'bg-sky-200 text-sky-900',
-  },
-  green: {
-    tileClass: 'border-emerald-300 bg-emerald-100 text-emerald-950 hover:border-emerald-400',
-    badgeClass: 'bg-emerald-200 text-emerald-900',
-  },
-  red: {
-    tileClass: 'border-rose-300 bg-rose-100 text-rose-950 hover:border-rose-400',
-    badgeClass: 'bg-rose-200 text-rose-900',
-  },
-  yellow: {
-    tileClass: 'border-amber-300 bg-amber-100 text-amber-950 hover:border-amber-400',
-    badgeClass: 'bg-amber-200 text-amber-900',
-  },
-  violet: {
-    tileClass: 'border-fuchsia-300 bg-fuchsia-100 text-fuchsia-950 hover:border-fuchsia-400',
-    badgeClass: 'bg-fuchsia-200 text-fuchsia-900',
-  },
-  brown: {
-    tileClass: 'border-amber-700 bg-amber-900/15 text-amber-950 hover:border-amber-800',
-    badgeClass: 'bg-amber-900/20 text-amber-950',
-  },
-  gray: {
-    tileClass: 'border-slate-300 bg-slate-100 text-slate-950 hover:border-slate-400',
-    badgeClass: 'bg-slate-200 text-slate-900',
-  },
-  black: {
-    tileClass: 'border-slate-800 bg-slate-900 text-white hover:border-black',
-    badgeClass: 'bg-slate-800 text-white',
-  },
+  blue:   { hex: '#203e69' },
+  green:  { hex: '#007f79' },
+  red:    { hex: '#ff4325' },
+  yellow: { hex: '#fce435' },
+  violet: { hex: '#d13e7f' },
+  brown:  { hex: '#886753' },
+  gray:   { hex: '#bfcac6' },
+  black:  { hex: '#272c30' },
 }
 
 function normalizeCode(value) {
@@ -84,10 +60,7 @@ export function getDiagnosticQuestionMode(testCode, question) {
 }
 
 export function getDomikiColorMeta(colorCode) {
-  return COLOR_META[normalizeCode(colorCode)] || {
-    tileClass: 'border-slate-200 bg-white text-slate-900 hover:border-slate-300',
-    badgeClass: 'bg-slate-100 text-slate-700',
-  }
+  return COLOR_META[normalizeCode(colorCode)] || { hex: null }
 }
 
 export function getDomikiRankingState(question) {

@@ -134,7 +134,7 @@ const EMOTION_TITLES = {
 const HOUSE_TITLES = {
   soul: "Твоя душа",
   school_way: "Когда ты идешь в школу",
-  reading_lesson: "На уроке чтения",
+  reading_lesson: "На уроке литературы",
   writing_lesson: "На уроке письма",
   math_lesson: "На уроке математики",
   teacher_talk: "Когда разговариваешь с учителем",

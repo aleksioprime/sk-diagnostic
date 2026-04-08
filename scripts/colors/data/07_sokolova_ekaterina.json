@@ -6,7 +6,7 @@
   "submitted_at": "2024-10-28T08:00:00.000Z",
   "student": {
     "id": 7,
-    "name": "Парк Екатерина",
+    "name": "Соколова Екатерина",
     "birth_date": null,
     "age": null,
     "gender": null,
@@ -467,7 +467,7 @@
       "question_number": 23,
       "question_type": "scale",
       "question_code": "reading_lesson",
-      "question_text": "Твое настроение на уроке чтения",
+      "question_text": "Твое настроение на уроке литературы",
       "display": "Желтый",
       "value": "yellow",
       "selected_option": null,

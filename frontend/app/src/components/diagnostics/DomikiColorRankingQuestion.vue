@@ -17,8 +17,9 @@ defineEmits(['select', 'remove', 'reset'])
 
 const rankingState = computed(() => getDomikiRankingState(props.question))
 
-function tileClass(option) {
-  return getDomikiColorMeta(option.value).tileClass
+function tileStyle(option) {
+  const { hex } = getDomikiColorMeta(option.value)
+  return hex ? { backgroundColor: hex, borderColor: hex } : {}
 }
 </script>
 
@@ -29,7 +30,7 @@ function tileClass(option) {
         v-for="option in rankingState.remainingOptions"
         :key="option.id"
         class="aspect-square cursor-pointer rounded-[16px] border-4 transition disabled:cursor-not-allowed disabled:opacity-60"
-        :class="tileClass(option)"
+        :style="tileStyle(option)"
         :disabled="disabled"
         @click="$emit('select', option.id)"
       />
