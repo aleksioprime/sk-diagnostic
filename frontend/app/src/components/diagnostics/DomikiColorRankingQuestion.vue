@@ -41,7 +41,7 @@ function tileStyle(option) {
     </div>
 
     <div v-if="!rankingState.remainingOptions.length" class="rounded-[24px] border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-      Порядок цветов полностью сформирован.
+      Порядок цветов полностью сформирован
     </div>
   </div>
 </template>

@@ -229,12 +229,8 @@ onMounted(loadData)
         <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">Подтверждение</p>
         <h2 class="mt-3 text-2xl font-semibold text-slate-900">Начать прохождение</h2>
         <p class="mt-3 text-sm leading-6 text-slate-600">
-          После подтверждения для этого прохождения будет зафиксировано время старта и запустится таймер.
+          После подтверждения для этого прохождения будет зафиксировано время старта и запустится таймер
         </p>
-        <div class="mt-5 rounded-[24px] bg-slate-50/90 p-4">
-          <div class="text-sm font-semibold text-slate-900">{{ startCandidate.test_assignment?.test?.title || `Тест #${startCandidate.test_assignment?.test_id}` }}</div>
-          <div class="mt-1 text-sm text-slate-500">{{ startCandidate.test_assignment?.test?.description || 'Открыть вопросы и начать прохождение.' }}</div>
-        </div>
         <div class="mt-6 flex flex-wrap justify-end gap-3">
           <button class="ghost-button" @click="closeStartModal">Отмена</button>
           <button class="primary-button" @click="confirmStart">Подтвердить старт</button>

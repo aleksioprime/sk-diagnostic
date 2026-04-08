@@ -621,7 +621,8 @@ onBeforeUnmount(stopTimer)
                 <p v-if="question.description" class="mt-2 text-sm leading-6 text-slate-500">{{ question.description }}</p>
               </div>
               <div class="flex flex-wrap items-center gap-2">
-                <span v-if="question.is_required" class="badge bg-orange-100 text-orange-700">Обязательный</span>
+                <span v-if="question.is_required && !isQuestionAnswered(question)" class="badge bg-orange-100 text-orange-700">Обязательный</span>
+                <span v-if="question.is_required && isQuestionAnswered(question)" class="badge bg-emerald-100 text-emerald-700">Отвечено</span>
                 <button v-if="!question.is_required && !isReadOnly" class="ghost-button" @click="toggleSkip(question)">
                   {{ question.answer?.is_skipped ? 'Вернуть вопрос' : 'Пропустить' }}
                 </button>
@@ -748,9 +749,11 @@ onBeforeUnmount(stopTimer)
           </template>
 
           <div v-if="isSequential && !isReadOnly && normalizedQuestions.length > 1" class="flex items-center justify-between gap-3">
-            <button class="ghost-button" :disabled="currentStep === 0" @click="prevStep">← Назад</button>
+            <button v-if="currentStep > 0" class="ghost-button" @click="prevStep">← Назад</button>
+            <div v-else class="invisible ghost-button pointer-events-none">← Назад</div>
             <span class="text-sm text-slate-500">{{ currentStep + 1 }} из {{ normalizedQuestions.length }}</span>
-            <button class="ghost-button" :disabled="currentStep >= normalizedQuestions.length - 1" @click="nextStep">Вперёд →</button>
+            <button v-if="currentStep < normalizedQuestions.length - 1" :class="isQuestionAnswered(normalizedQuestions[currentStep]) ? 'primary-button' : 'ghost-button'" @click="nextStep">Вперёд →</button>
+            <div v-else class="invisible ghost-button pointer-events-none">Вперёд →</div>
           </div>
         </div>
 
@@ -783,7 +786,7 @@ onBeforeUnmount(stopTimer)
 
             <p v-if="submitWarning" class="mt-4 text-sm text-amber-700">{{ submitWarning }}</p>
 
-            <button v-if="!isReadOnly" class="primary-button mt-6 w-full" :disabled="submitting" @click="handleSubmit">
+            <button v-if="!isReadOnly" class="primary-button mt-6 w-full" :disabled="submitting || !canSubmit" @click="handleSubmit">
               {{ submitting ? 'Отправляем…' : 'Завершить тест' }}
             </button>
 

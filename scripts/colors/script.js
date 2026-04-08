@@ -583,7 +583,7 @@ function buildCompactDomainStatuses(houses, customHouseDescription) {
   const definitions = [
     { code: "soul", title: "Душа" },
     { code: "school_way", title: "Идти в школу" },
-    { code: "reading_lesson", title: "Урок чтения" },
+    { code: "reading_lesson", title: "Урок литературы" },
     { code: "writing_lesson", title: "Урок письма" },
     { code: "math_lesson", title: "Урок математики" },
     { code: "teacher_talk", title: "Отношения с учителями" },
