@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
@@ -8,6 +9,7 @@ const router = useRouter()
 
 const account = ref('')
 const password = ref('')
+const showPassword = ref(false)
 const error = ref('')
 const loading = ref(false)
 
@@ -36,7 +38,6 @@ async function handleLogin() {
       <form class="glass-panel w-full p-8 sm:p-10" @submit.prevent="handleLogin">
         <p class="mb-3 text-sm font-semibold uppercase tracking-[0.26em] text-slate-400">Авторизация</p>
         <h2 class="text-3xl font-semibold tracking-tight text-slate-900">Войти в систему</h2>
-        <p class="mt-3 text-sm leading-6 text-slate-500">Введите логин и пароль, чтобы открыть назначенные тесты и результаты.</p>
 
         <div class="mt-8 space-y-4">
           <label class="block">
@@ -46,7 +47,25 @@ async function handleLogin() {
 
           <label class="block">
             <span class="mb-2 block text-sm font-medium text-slate-700">Пароль</span>
-            <input v-model="password" class="field-input" type="password" autocomplete="current-password" required />
+            <div class="relative">
+              <input
+                v-model="password"
+                class="field-input pr-24"
+                :type="showPassword ? 'text' : 'password'"
+                autocomplete="current-password"
+                required
+              />
+              <button
+                v-if="password"
+                type="button"
+                class="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
+                @click="showPassword = !showPassword"
+              >
+                <EyeIcon v-if="!showPassword" class="h-5 w-5" />
+                <EyeSlashIcon v-else class="h-5 w-5" />
+              </button>
+            </div>
           </label>
         </div>
 
