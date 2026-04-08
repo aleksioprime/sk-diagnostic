@@ -5,6 +5,84 @@ function statusTone(status) {
   return null
 }
 
+function toPercent(value, total) {
+  if (!total) return 0
+  return Math.round((value / total) * 1000) / 10
+}
+
+function normalizeLabel(value) {
+  if (typeof value === 'string' && value.trim()) return value.trim()
+  return 'Нет данных'
+}
+
+function buildDistribution(rows, config) {
+  const counts = new Map()
+
+  rows.forEach((row) => {
+    const label = normalizeLabel(config.pickLabel(row))
+    counts.set(label, (counts.get(label) || 0) + 1)
+  })
+
+  return {
+    id: config.id,
+    title: config.title,
+    chartType: config.chartType,
+    items: [...counts.entries()]
+      .map(([label, count]) => ({
+        label,
+        count,
+        percent: toPercent(count, rows.length),
+      }))
+      .sort((a, b) => b.count - a.count),
+  }
+}
+
+function buildDomainsAttentionDistribution(rows) {
+  const domainStats = new Map()
+
+  rows.forEach((row) => {
+    const domains = row.resultRecord?.json_results?.domains || []
+
+    domains.forEach((domain) => {
+      if (domain?.code === 'custom_house') return
+
+      const title = normalizeLabel(domain?.title)
+      const next = domainStats.get(title) || { total: 0, attention: 0 }
+      next.total += 1
+
+      const isAttention = domain?.status === 'attention'
+        || String(domain?.status_label || '').toLowerCase().includes('вним')
+
+      if (isAttention) {
+        next.attention += 1
+      }
+
+      domainStats.set(title, next)
+    })
+  })
+
+  return {
+    id: 'domains_mood',
+    title: 'Настроение (домики)',
+    chartType: 'stackedBar',
+    items: [...domainStats.entries()]
+      .map(([title, stats]) => {
+        const attentionCount = stats.attention
+        const okCount = Math.max(stats.total - stats.attention, 0)
+
+        return {
+          label: title,
+          total: stats.total,
+          okCount,
+          attentionCount,
+          okPercent: toPercent(okCount, stats.total),
+          attentionPercent: toPercent(attentionCount, stats.total),
+        }
+      })
+      .sort((a, b) => b.attentionPercent - a.attentionPercent),
+  }
+}
+
 export const domikiTemplate = {
   id: 'domiki_emotion',
   aliases: ['domiki'],
@@ -141,7 +219,44 @@ export const domikiTemplate = {
     return sections
   },
 
-  buildGroupSummary(_rows) {
-    return { stub: 'Сводная информация по методике «Домики» в разработке.' }
+  buildGroupSummary(rows) {
+    if (!rows?.length) {
+      return { stub: 'Недостаточно данных для сводной информации.' }
+    }
+
+    return {
+      kind: 'domiki-distributions',
+      total: rows.length,
+      tables: [
+        buildDistribution(rows, {
+          id: 'work_capacity',
+          title: 'Работоспособность',
+          chartType: 'pie',
+          pickLabel: (row) => row.resultRecord?.json_results?.result?.vegetative_coefficient?.label,
+        }),
+        buildDistribution(rows, {
+          id: 'emotional_background',
+          title: 'Эмоциональный фон',
+          chartType: 'pie',
+          pickLabel: (row) => {
+            const bg = row.resultRecord?.json_results?.result?.emotional_background
+            return bg?.label || bg?.title
+          },
+        }),
+        buildDistribution(rows, {
+          id: 'self_esteem',
+          title: 'Самооценка',
+          chartType: 'pie',
+          pickLabel: (row) => row.resultRecord?.json_results?.result?.self_esteem?.label,
+        }),
+        buildDistribution(rows, {
+          id: 'school_relation',
+          title: 'Отношение обучающихся',
+          chartType: 'pie',
+          pickLabel: (row) => row.resultRecord?.json_results?.result?.school_relation?.label,
+        }),
+        buildDomainsAttentionDistribution(rows),
+      ],
+    }
   },
 }
