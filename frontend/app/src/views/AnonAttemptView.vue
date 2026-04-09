@@ -7,9 +7,13 @@ import { getDiagnosticQuestionMode } from '../diagnostics'
 import { formatDateTime, formatDuration, getAttemptStatusMeta, isNil, stringifyValue } from '../utils/format'
 
 const props = defineProps({
+  publicToken: {
+    type: String,
+    default: null,
+  },
   token: {
     type: String,
-    required: true,
+    default: null,
   },
 })
 
@@ -20,6 +24,7 @@ const starting = ref(false)
 const submitting = ref(false)
 const elapsedSeconds = ref(null)
 
+const testInfo = ref(null)
 const attempt = ref(null)
 const questions = ref([])
 const answers = ref([])
@@ -27,6 +32,11 @@ const options = ref([])
 const scales = ref([])
 const scaleOptions = ref([])
 const rankingItems = ref([])
+
+// Определяем, в каком режиме мы находимся
+const isIntroPhase = computed(() => !!props.publicToken && !props.token)
+const attemptToken = computed(() => props.token || null)
+const publicToken = computed(() => props.publicToken || null)
 
 const textDrafts = reactive({})
 const numberDrafts = reactive({})
@@ -236,13 +246,21 @@ function patchAnswer(answer) {
 }
 
 async function loadAttempt() {
-  const { data } = await publicApi.get(`/public/attempts/${props.token}`)
-  applyBundle(data)
-  phase.value = attempt.value?.status === 'assigned' ? 'intro' : 'test'
+  if (isIntroPhase.value) {
+    // Загружаем информацию о тесте по публичному токену
+    const { data } = await publicApi.get(`/public/tests/${publicToken.value}`)
+    testInfo.value = data
+    phase.value = 'intro'
+  } else {
+    // Загружаем информацию о попытке по токену
+    const { data } = await publicApi.get(`/public/attempts/${attemptToken.value}`)
+    applyBundle(data)
+    phase.value = attempt.value?.status === 'assigned' ? 'intro' : 'test'
+  }
 }
 
 async function saveAnswerValue(questionId, payload) {
-  const { data } = await publicApi.patch(`/public/attempts/${props.token}/answers/${questionId}`, payload)
+  const { data } = await publicApi.patch(`/public/attempts/${attemptToken.value}/answers/${questionId}`, payload)
   return data
 }
 
@@ -261,15 +279,29 @@ async function withSaving(questionId, action) {
 }
 
 async function startAttempt() {
-  if (!attempt.value || attempt.value.status !== 'assigned') return
   starting.value = true
   error.value = ''
 
   try {
-    const { data } = await publicApi.post(`/public/attempts/${props.token}/start`)
-    applyBundle(data)
-    phase.value = 'test'
-    globalNotice.value = 'Прохождение началось'
+    if (isIntroPhase.value) {
+      // Создаём новую попытку по публичному токену
+      const { data } = await publicApi.post(`/public/tests/${publicToken.value}/start`)
+      applyBundle(data)
+      // Перенаправляем на URL с токеном попытки
+      const attemptTokenValue = data.attempt?.token
+      if (attemptTokenValue) {
+        window.location.href = `/a/${attemptTokenValue}`
+      } else {
+        error.value = 'Не удалось получить токен попытки'
+        phase.value = 'error'
+      }
+    } else {
+      // Начинаем существующую попытку
+      const { data } = await publicApi.post(`/public/attempts/${attemptToken.value}/start`)
+      applyBundle(data)
+      phase.value = 'test'
+      globalNotice.value = 'Прохождение началось'
+    }
   } catch {
     error.value = 'Не удалось начать прохождение'
     phase.value = 'error'
@@ -495,7 +527,7 @@ async function handleSubmit() {
   submitWarning.value = ''
 
   try {
-    const { data } = await publicApi.post(`/public/attempts/${props.token}/submit`)
+    const { data } = await publicApi.post(`/public/attempts/${attemptToken.value}/submit`)
     attempt.value = { ...attempt.value, ...data.attempt }
     stopTimer()
     phase.value = 'done'
@@ -557,15 +589,11 @@ onBeforeUnmount(stopTimer)
       <p class="mt-3 text-sm text-slate-600">{{ error }}</p>
     </div>
 
-    <div v-else-if="phase === 'intro' && attempt" class="flex justify-center py-4 sm:py-10">
+    <div v-else-if="phase === 'intro'" class="flex justify-center py-4 sm:py-10">
       <div class="glass-panel w-full max-w-3xl p-6 sm:p-8">
-        <h1 class="text-3xl font-semibold tracking-tight text-slate-900">{{ attempt.test_assignment?.test?.title || `Тест #${attempt.test_assignment?.test_id}` }}</h1>
+        <h1 class="text-3xl font-semibold tracking-tight text-slate-900">{{ (attempt || testInfo?.test_assignment)?.test?.title || 'Тест' }}</h1>
 
         <div class="mt-6 grid gap-3 sm:grid-cols-3">
-          <div class="rounded-[24px] bg-slate-50/90 p-4">
-            <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Вопросов</div>
-            <div class="mt-2 text-2xl font-semibold text-slate-900">{{ normalizedQuestions.length }}</div>
-          </div>
           <div class="rounded-[24px] bg-slate-50/90 p-4">
             <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Формат</div>
             <div class="mt-2 text-sm font-medium text-slate-900">Ответы сохраняются автоматически</div>

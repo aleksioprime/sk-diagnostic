@@ -14,10 +14,10 @@ services:
     build:
       context: ./frontend
       target: dev
-      args:
-        - VITE_LOGGING=${VITE_LOGGING}
-        - VITE_API_URL=${VITE_API_URL}
-        - VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL}
+    env_file:
+      - ./.env
+    environment:
+      VITE_BACKEND_API_PROXY_URL: http://backend:8000/api/v1
     depends_on:
       - backend
     volumes:

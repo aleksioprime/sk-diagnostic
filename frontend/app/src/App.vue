@@ -5,7 +5,11 @@ import AppHeader from './components/AppHeader.vue'
 
 const route = useRoute()
 const appTitle = 'Диагностика SK'
-const showHeader = computed(() => route.name !== 'login' && route.name !== 'anon-attempt')
+const showHeader = computed(() =>
+  route.name !== 'login' &&
+  route.name !== 'anon-attempt' &&
+  route.name !== 'anon-test-intro'
+)
 </script>
 
 <template>

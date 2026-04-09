@@ -23,7 +23,8 @@ const NoAccessView = {
 const routes = [
   { path: '/login', name: 'login', component: LoginView, meta: { public: true } },
   { path: '/no-access', name: 'no-access', component: NoAccessView, meta: { public: true } },
-  { path: '/t/:token', name: 'anon-attempt', component: AnonAttemptView, props: true, meta: { public: true } },
+  { path: '/t/:publicToken', name: 'anon-test-intro', component: AnonAttemptView, props: true, meta: { public: true } },
+  { path: '/a/:token', name: 'anon-attempt', component: AnonAttemptView, props: true, meta: { public: true } },
   { path: '/', name: 'assigned-tests', component: AssignedTestsView },
   { path: '/attempts/:attemptId', name: 'attempt', component: AttemptView, props: true },
   { path: '/results', name: 'results', component: ResultsListView, meta: { requiresPsycho: true } },

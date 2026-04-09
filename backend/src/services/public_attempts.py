@@ -7,6 +7,8 @@
 
 from __future__ import annotations
 
+import secrets
+import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -62,8 +64,8 @@ class PublicAttemptsService:
             raise HTTPException(status_code=404, detail='Attempt not found')
         return attempts[0]
 
-    async def get_answer(self, attempt_id: Any, question_id: Any) -> dict[str, Any]:
-        """Найти ответ по ID попытки и вопроса."""
+    async def get_or_create_answer(self, attempt_id: Any, question_id: Any) -> dict[str, Any]:
+        """Найти ответ по ID попытки и вопроса, создать если не существует."""
         answers = await nocobase_client.list(
             'answers',
             filter={
@@ -73,8 +75,28 @@ class PublicAttemptsService:
             appends='option,scale_option,options,question',
             page_size=1,
         )
+        if answers:
+            return answers[0]
+
+        logger.warning(
+            "[get_or_create_answer] Ответ не найден, создаём: attempt=%s question=%s",
+            attempt_id, question_id,
+        )
+        new_answer = await nocobase_client.create(
+            'answers',
+            {
+                'attempt': normalize_id(attempt_id),
+                'question': normalize_id(question_id),
+            },
+        )
+        answers = await nocobase_client.list(
+            'answers',
+            filter={'id': normalize_id(new_answer['id'])},
+            appends='option,scale_option,options,question',
+            page_size=1,
+        )
         if not answers:
-            raise HTTPException(status_code=404, detail='Answer not found')
+            raise HTTPException(status_code=500, detail='Failed to create answer')
         return answers[0]
 
     async def list_ranking_items(self, answer_id: Any) -> list[dict[str, Any]]:
@@ -277,8 +299,8 @@ class PublicAttemptsService:
         self.validate_attempt_for_update(attempt)
 
         t1 = time.perf_counter()
-        answer = await self.get_answer(attempt['id'], question_id)
-        logger.info("[update_answer] get_answer  %.0f ms", (time.perf_counter() - t1) * 1000)
+        answer = await self.get_or_create_answer(attempt['id'], question_id)
+        logger.info("[update_answer] get_or_create_answer  %.0f ms", (time.perf_counter() - t1) * 1000)
 
         data = payload.model_dump(exclude_unset=True)
         ranking_payload = data.pop('ranking', None)
@@ -333,5 +355,56 @@ class PublicAttemptsService:
         logger.info("Обновление ответа: token=%s question=%s", token[:8] + '...', question_id)
         attempt = await self.get_attempt_by_token(token)
         return await self.update_answer_for_attempt(attempt, question_id, payload)
+
+    async def get_test_assignment_by_public_token(self, public_token: str) -> dict[str, Any]:
+        """Найти test_assignment по публичному токену или вернуть 404."""
+        logger.info("Поиск test_assignment по public_token: %s", public_token[:8] + '...')
+        assignments = await nocobase_client.list(
+            'test_assignments',
+            filter={'public_token': public_token, 'is_active': True},
+            appends='test',
+            page_size=1,
+        )
+        if not assignments:
+            logger.warning("test_assignment не найдена: public_token=%s", public_token[:8] + '...')
+            raise HTTPException(status_code=404, detail='Test not found')
+        return assignments[0]
+
+    async def get_test_info(self, public_token: str) -> dict[str, Any]:
+        """Получить информацию о тесте по публичному токену (для интро экрана)."""
+        logger.info("Запрос информации о тесте: public_token=%s", public_token[:8] + '...')
+        test_assignment = await self.get_test_assignment_by_public_token(public_token)
+        test = test_assignment.get('test') or {}
+        return {
+            'test_assignment': test_assignment,
+            'test': test,
+        }
+
+    async def start_test(self, public_token: str) -> dict[str, Any]:
+        """Начать прохождение: создать новую попытку с генерированным токеном."""
+        logger.info("Начало теста: public_token=%s", public_token[:8] + '...')
+        test_assignment = await self.get_test_assignment_by_public_token(public_token)
+
+        # Генерируем уникальный токен для анонимной попытки
+        attempt_token = secrets.token_urlsafe(16)
+        logger.info("Созданный токен для попытки: %s", attempt_token[:8] + '...')
+
+        # Создаём новую попытку
+        attempt = await nocobase_client.create(
+            'attempts',
+            {
+                'test_assignment': test_assignment['id'],
+                'token': attempt_token,
+                'status': 'assigned',
+            },
+        )
+        logger.info("Попытка создана с ID: %s", attempt['id'])
+
+        # Получаем созданную попытку со всеми аппендами
+        attempt = await self.get_attempt_by_token(attempt_token)
+
+        # Возвращаем полный бандл
+        # Пустые ответы создаёт NocoBase workflow при создании попытки
+        return await self.build_bundle(attempt)
 
 public_attempts_service = PublicAttemptsService()
