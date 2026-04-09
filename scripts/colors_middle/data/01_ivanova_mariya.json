@@ -1,0 +1,230 @@
+{
+  "attempt_id": 2000001,
+  "test_id": 3000001,
+  "test_code": "domiki_emotion_middle",
+  "test_title": "Цветовой тест отношений (7 класс)",
+  "submitted_at": "2026-04-09T09:00:00.000Z",
+  "student": {
+    "id": 100,
+    "name": "Иванова Мария",
+    "birth_date": "2013-05-15",
+    "age": 13,
+    "gender": "female",
+    "gender_value": "женский"
+  },
+  "answers": [
+    {
+      "answer_id": 1,
+      "question_id": 1,
+      "question_number": 1,
+      "question_type": "ranking",
+      "question_code": "color_preference",
+      "question_text": "Расположи цвета по предпочтению",
+      "display": null,
+      "value": null,
+      "selected_option": null,
+      "values": null,
+      "ranking": [
+        { "option_id": 1, "option_label": "Синий",       "option_value": "blue",   "option_score": null, "rank": 1, "score": null },
+        { "option_id": 2, "option_label": "Зеленый",     "option_value": "green",  "option_score": null, "rank": 2, "score": null },
+        { "option_id": 3, "option_label": "Красный",     "option_value": "red",    "option_score": null, "rank": 3, "score": null },
+        { "option_id": 4, "option_label": "Желтый",      "option_value": "yellow", "option_score": null, "rank": 4, "score": null },
+        { "option_id": 5, "option_label": "Фиолетовый",  "option_value": "violet", "option_score": null, "rank": 5, "score": null },
+        { "option_id": 6, "option_label": "Коричневый",  "option_value": "brown",  "option_score": null, "rank": 6, "score": null },
+        { "option_id": 7, "option_label": "Серый",       "option_value": "gray",   "option_score": null, "rank": 7, "score": null },
+        { "option_id": 8, "option_label": "Черный",      "option_value": "black",  "option_score": null, "rank": 8, "score": null }
+      ],
+      "text": null,
+      "scale_option": null
+    },
+    {
+      "answer_id": 2, "question_id": 2, "question_number": 2,
+      "question_type": "scale", "question_code": "happiness",
+      "question_text": "Подберите цвет, который наиболее соответствует слову «Счастье»",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 1, "label": "Синий", "value": "blue", "score": null }
+    },
+    {
+      "answer_id": 3, "question_id": 3, "question_number": 3,
+      "question_type": "scale", "question_code": "grief",
+      "question_text": "Подберите цвет, который наиболее соответствует слову «Горе»",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 8, "label": "Черный", "value": "black", "score": null }
+    },
+    {
+      "answer_id": 4, "question_id": 4, "question_number": 4,
+      "question_type": "scale", "question_code": "justice",
+      "question_text": "Подберите цвет, который наиболее соответствует слову «Справедливость»",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 4, "label": "Желтый", "value": "yellow", "score": null }
+    },
+    {
+      "answer_id": 5, "question_id": 5, "question_number": 5,
+      "question_type": "scale", "question_code": "offense",
+      "question_text": "Подберите цвет, который наиболее соответствует слову «Обида»",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 6, "label": "Коричневый", "value": "brown", "score": null }
+    },
+    {
+      "answer_id": 6, "question_id": 6, "question_number": 6,
+      "question_type": "scale", "question_code": "friendship",
+      "question_text": "Подберите цвет, который наиболее соответствует слову «Дружба»",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 3, "label": "Красный", "value": "red", "score": null }
+    },
+    {
+      "answer_id": 7, "question_id": 7, "question_number": 7,
+      "question_type": "scale", "question_code": "quarrel",
+      "question_text": "Подберите цвет, который наиболее соответствует слову «Ссора»",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 7, "label": "Серый", "value": "gray", "score": null }
+    },
+    {
+      "answer_id": 8, "question_id": 8, "question_number": 8,
+      "question_type": "scale", "question_code": "kindness",
+      "question_text": "Подберите цвет, который наиболее соответствует слову «Доброта»",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 2, "label": "Зеленый", "value": "green", "score": null }
+    },
+    {
+      "answer_id": 9, "question_id": 9, "question_number": 9,
+      "question_type": "scale", "question_code": "malice",
+      "question_text": "Подберите цвет, который наиболее соответствует слову «Злоба»",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 8, "label": "Черный", "value": "black", "score": null }
+    },
+    {
+      "answer_id": 10, "question_id": 10, "question_number": 10,
+      "question_type": "scale", "question_code": "boredom",
+      "question_text": "Подберите цвет, который наиболее соответствует слову «Скука»",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 7, "label": "Серый", "value": "gray", "score": null }
+    },
+    {
+      "answer_id": 11, "question_id": 11, "question_number": 11,
+      "question_type": "scale", "question_code": "admiration",
+      "question_text": "Подберите цвет, который наиболее соответствует слову «Восхищение»",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 5, "label": "Фиолетовый", "value": "violet", "score": null }
+    },
+    {
+      "answer_id": 12, "question_id": 12, "question_number": 12,
+      "question_type": "scale", "question_code": "soul",
+      "question_text": "Подберите цвет, который наиболее соответствует твоей душе",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 2, "label": "Зеленый", "value": "green", "score": null }
+    },
+    {
+      "answer_id": 13, "question_id": 13, "question_number": 13,
+      "question_type": "scale", "question_code": "school",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению в школе",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 4, "label": "Желтый", "value": "yellow", "score": null }
+    },
+    {
+      "answer_id": 14, "question_id": 14, "question_number": 14,
+      "question_type": "scale", "question_code": "home",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению дома",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 1, "label": "Синий", "value": "blue", "score": null }
+    },
+    {
+      "answer_id": 15, "question_id": 15, "question_number": 15,
+      "question_type": "scale", "question_code": "literature",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению на уроке русского языка и литературы",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 3, "label": "Красный", "value": "red", "score": null }
+    },
+    {
+      "answer_id": 16, "question_id": 16, "question_number": 16,
+      "question_type": "scale", "question_code": "english",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению на уроке английского языка",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 4, "label": "Желтый", "value": "yellow", "score": null }
+    },
+    {
+      "answer_id": 17, "question_id": 17, "question_number": 17,
+      "question_type": "scale", "question_code": "mathematics",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению на уроке математики",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 6, "label": "Коричневый", "value": "brown", "score": null }
+    },
+    {
+      "answer_id": 18, "question_id": 18, "question_number": 18,
+      "question_type": "scale", "question_code": "history",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению на уроке истории",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 2, "label": "Зеленый", "value": "green", "score": null }
+    },
+    {
+      "answer_id": 19, "question_id": 19, "question_number": 19,
+      "question_type": "scale", "question_code": "technology",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению на уроке технологии",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 3, "label": "Красный", "value": "red", "score": null }
+    },
+    {
+      "answer_id": 20, "question_id": 20, "question_number": 20,
+      "question_type": "scale", "question_code": "physical_culture",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению на уроке физкультуры",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 1, "label": "Синий", "value": "blue", "score": null }
+    },
+    {
+      "answer_id": 21, "question_id": 21, "question_number": 21,
+      "question_type": "scale", "question_code": "biology",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению на уроке биологии",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 2, "label": "Зеленый", "value": "green", "score": null }
+    },
+    {
+      "answer_id": 22, "question_id": 22, "question_number": 22,
+      "question_type": "scale", "question_code": "physics",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению на уроке физики",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 7, "label": "Серый", "value": "gray", "score": null }
+    },
+    {
+      "answer_id": 23, "question_id": 23, "question_number": 23,
+      "question_type": "scale", "question_code": "arts",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению на уроке ИЗО",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 5, "label": "Фиолетовый", "value": "violet", "score": null }
+    },
+    {
+      "answer_id": 24, "question_id": 24, "question_number": 24,
+      "question_type": "scale", "question_code": "test",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению на контрольных и проверочных работах",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 6, "label": "Коричневый", "value": "brown", "score": null }
+    },
+    {
+      "answer_id": 25, "question_id": 25, "question_number": 25,
+      "question_type": "scale", "question_code": "board",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению, когда ты отвечаешь у доски",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 5, "label": "Фиолетовый", "value": "violet", "score": null }
+    },
+    {
+      "answer_id": 26, "question_id": 26, "question_number": 26,
+      "question_type": "scale", "question_code": "mentor",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению, когда ты разговариваешь с наставником",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 1, "label": "Синий", "value": "blue", "score": null }
+    },
+    {
+      "answer_id": 27, "question_id": 27, "question_number": 27,
+      "question_type": "scale", "question_code": "classmates",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению, когда ты общаешься со своими одноклассниками",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 3, "label": "Красный", "value": "red", "score": null }
+    },
+    {
+      "answer_id": 28, "question_id": 28, "question_number": 28,
+      "question_type": "scale", "question_code": "homework",
+      "question_text": "Подберите цвет, который наиболее соответствует твоему настроению, когда ты делаешь уроки",
+      "value": null, "selected_option": null, "values": null, "ranking": null, "text": null,
+      "scale_option": { "id": 7, "label": "Серый", "value": "gray", "score": null }
+    }
+  ]
+}

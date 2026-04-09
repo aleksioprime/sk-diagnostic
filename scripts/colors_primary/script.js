@@ -135,7 +135,7 @@ const HOUSE_TITLES = {
   soul: "Твоя душа",
   school_way: "Когда ты идешь в школу",
   reading_lesson: "На уроке литературы",
-  writing_lesson: "На уроке письма",
+  writing_lesson: "На уроке русского языка",
   math_lesson: "На уроке математики",
   teacher_talk: "Когда разговариваешь с учителем",
   classmates: "Когда общаешься с одноклассниками",
@@ -143,6 +143,14 @@ const HOUSE_TITLES = {
   homework: "Когда делаешь уроки",
   custom_house: "Собственный домик"
 };
+
+/**
+ * Коды демо-вопросов, которые не учитываются в расчётах
+ * (но отображаются в тесте и передаются в ответах)
+ */
+const DEMO_QUESTION_CODES = [
+  "color_ranking_demo",
+];
 
 const BASE_POSITIVE_COLORS = ["blue", "green", "red", "yellow"];
 const NEGATIVE_COLORS = ["brown", "black"];
@@ -584,7 +592,7 @@ function buildCompactDomainStatuses(houses, customHouseDescription) {
     { code: "soul", title: "Душа" },
     { code: "school_way", title: "Идти в школу" },
     { code: "reading_lesson", title: "Урок литературы" },
-    { code: "writing_lesson", title: "Урок письма" },
+    { code: "writing_lesson", title: "Урок русского языка" },
     { code: "math_lesson", title: "Урок математики" },
     { code: "teacher_talk", title: "Отношения с учителями" },
     { code: "classmates", title: "Отношения с одноклассниками" },
@@ -638,7 +646,7 @@ function analyzeHouses(answers) {
     "home",
     "homework",
     "custom_house"
-  ];
+  ].filter((code) => !DEMO_QUESTION_CODES.includes(code));
 
   const houses = houseCodes.map((code) => {
     const answer = findAnswerByCode(answers, code);

@@ -6,7 +6,7 @@
  * и состояния ранжирования.
  */
 
-const DOMIKI_CODES = ['domiki_emotion', 'domiki_orekhova']
+const DOMIKI_CODES = ['domiki_emotion_primary', 'domiki_emotion_middle', 'domiki_orekhova']
 const COLOR_CODES = ['blue', 'green', 'red', 'yellow', 'violet', 'brown', 'gray', 'black']
 
 const COLOR_META = {

@@ -46,7 +46,7 @@
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `id` | integer | Первичный ключ |
-| `code` | string | Код диагностики (`domiki_emotion`, `motivation` и т.д.) |
+| `code` | string | Код диагностики (`domiki_emotion_primary`, `motivation` и т.д.) |
 | `name` | string | Название теста |
 | `is_sequential` | boolean | Пошаговый режим прохождения |
 | `is_active` | boolean | Активен ли тест |

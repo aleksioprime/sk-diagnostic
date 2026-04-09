@@ -84,8 +84,8 @@ function buildDomainsAttentionDistribution(rows) {
 }
 
 export const domikiTemplate = {
-  id: 'domiki_emotion',
-  aliases: ['domiki'],
+  id: 'domiki_emotion_primary',
+  aliases: ['domiki', 'domiki_emotion_middle'],
 
   getTableColumns() {
     return [
