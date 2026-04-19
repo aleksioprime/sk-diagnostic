@@ -7,15 +7,7 @@
  */
 
 import api from '../api'
-import { create, destroy, get, list, normalizeId, toFilter, update, dedupe } from './nocobase'
-
-function answerAppends() {
-  return 'option,scale_option,options,question'
-}
-
-async function fetchAnswer(answerId) {
-  return get('answers', answerId, { appends: answerAppends() })
-}
+import { create, destroy, list, normalizeId, toFilter, update, dedupe } from './nocobase'
 
 async function fetchRankingItems(answerId) {
   return list('answer_ranking_items', {
@@ -44,8 +36,7 @@ async function runStrategies(strategies, label = 'runStrategies') {
 }
 
 export async function saveAnswerValue(answerId, payload) {
-  await update('answers', answerId, payload)
-  return fetchAnswer(answerId)
+  return update('answers', answerId, payload)
 }
 
 export async function saveMultipleChoice(answerId, optionIds) {
@@ -67,7 +58,15 @@ export async function saveMultipleChoice(answerId, optionIds) {
     is_skipped: false,
   })
 
-  return fetchAnswer(answerId)
+  return {
+    options: ids.map((id) => ({ id })),
+    option_id: null,
+    scale_option_id: null,
+    text: null,
+    number: null,
+    boolean: null,
+    is_skipped: false,
+  }
 }
 
 export async function saveRanking(answerId, rankedOptionIds) {
@@ -115,7 +114,7 @@ export async function saveRanking(answerId, rankedOptionIds) {
   // 4. Сохраняем ответ + получаем итог параллельно
   t = performance.now()
   const [answer, rankingItems] = await Promise.all([
-    saveAnswerValue(normalizedAnswerId, { is_skipped: false }),
+    update('answers', normalizedAnswerId, { is_skipped: false }),
     fetchRankingItems(normalizedAnswerId),
   ])
   console.log(`[RANKING] 3) saveAnswer + fetchRanking (параллельно) — ${(performance.now() - t).toFixed(1)} ms`)

@@ -305,7 +305,7 @@ class PublicAttemptsService:
         data = payload.model_dump(exclude_unset=True)
         ranking_payload = data.pop('ranking', None)
         options_payload = data.pop('options', None)
-        ranking_items: list[dict[str, Any]] = []
+        ranking_items: list[dict[str, Any]] | None = None
 
         if options_payload is not None:
             t_opt = time.perf_counter()
@@ -342,12 +342,14 @@ class PublicAttemptsService:
         )
         logger.info("[update_answer] get updated answer  %.0f ms", (time.perf_counter() - t_get) * 1000)
 
-        if not ranking_items:
+        if ranking_payload is not None and ranking_items is None:
             t_ri = time.perf_counter()
             ranking_items = await self.list_ranking_items(answer['id'])
             logger.info("[update_answer] list_ranking_items  %.0f ms", (time.perf_counter() - t_ri) * 1000)
 
         logger.info("[update_answer] TOTAL  %.0f ms", (time.perf_counter() - t0) * 1000)
+        if ranking_items is None:
+            return {'answer': updated_answer}
         return {'answer': updated_answer, 'ranking_items': ranking_items}
 
     async def update_answer(self, token: str, question_id: Any, payload: AnswerUpdatePayload) -> dict[str, Any]:

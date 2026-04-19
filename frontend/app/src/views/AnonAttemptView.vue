@@ -40,6 +40,7 @@ const publicToken = computed(() => props.publicToken || null)
 
 const textDrafts = reactive({})
 const numberDrafts = reactive({})
+const rankingDrafts = reactive({})
 const savingState = reactive({})
 const shuffledOrders = reactive({})
 
@@ -113,12 +114,26 @@ const diagnosticCode = computed(() => attempt.value?.test_assignment?.test?.code
 const currentStep = ref(0)
 const isSequential = computed(() => Boolean(attempt.value?.test_assignment?.test?.is_sequential))
 const submitWarning = ref('')
+const rankingResetCandidateId = ref(null)
+const rankingResetCandidate = computed(() => {
+  if (rankingResetCandidateId.value == null) return null
+  return normalizedQuestions.value.find((question) => question.id === rankingResetCandidateId.value) || null
+})
+const rankingResetPending = computed(() => {
+  const question = rankingResetCandidate.value
+  return question ? Boolean(savingState[question.id]?.pending) : false
+})
 
 function goToStep(index) {
   currentStep.value = Math.max(0, Math.min(index, normalizedQuestions.value.length - 1))
 }
 
-function nextStep() {
+async function nextStep() {
+  const question = normalizedQuestions.value[currentStep.value]
+  if (question?.question_type === 'ranking' && isRankingDirty(question) && canPersistRanking(question)) {
+    const saved = await saveRankingDraft(question)
+    if (!saved) return
+  }
   if (currentStep.value < normalizedQuestions.value.length - 1) currentStep.value++
 }
 
@@ -145,6 +160,9 @@ function initDrafts() {
     if (question.answer) {
       textDrafts[question.answer.id] = question.answer.text || ''
       numberDrafts[question.answer.id] = question.answer.number ?? ''
+    }
+    if (question.question_type === 'ranking') {
+      rankingDrafts[question.id] = savedRankingOrder(question)
     }
   })
 }
@@ -222,7 +240,7 @@ function isQuestionAnswered(question) {
   if (!answer) return false
   if (answer.is_skipped) return false
   if (question.question_type === 'ranking') {
-    return question.options.length > 0 && question.rankingItems.length === question.options.length
+    return question.options.length > 0 && savedRankingOrder(question).length === question.options.length
   }
   if (!isNil(answer.option_id)) return true
   if (!isNil(answer.scale_option_id)) return true
@@ -235,6 +253,74 @@ function isQuestionAnswered(question) {
 
 function answerSelectedOptions(answer) {
   return Array.isArray(answer?.options) ? answer.options.map((option) => option.id) : []
+}
+
+function savedRankingOrder(question) {
+  return (question.rankingItems || [])
+    .slice()
+    .sort((left, right) => (left.rank ?? 999) - (right.rank ?? 999))
+    .map((item) => item.option_id)
+}
+
+function sanitizeRankingOrder(question, rawOrder = []) {
+  const allowed = new Set((question.options || []).map((option) => option.id))
+  const unique = []
+  rawOrder.forEach((id) => {
+    if (allowed.has(id) && !unique.includes(id)) unique.push(id)
+  })
+  return unique
+}
+
+function rankingOrder(question) {
+  const draft = rankingDrafts[question.id]
+  if (Array.isArray(draft)) return sanitizeRankingOrder(question, draft)
+  return savedRankingOrder(question)
+}
+
+function isRankingDirty(question) {
+  const draft = rankingOrder(question)
+  const saved = savedRankingOrder(question)
+  if (draft.length !== saved.length) return true
+  return draft.some((id, index) => id !== saved[index])
+}
+
+function canPersistRanking(question) {
+  const length = rankingOrder(question).length
+  return length === 0 || length === (question.options || []).length
+}
+
+function setRankingDraft(question, nextOrder) {
+  rankingDrafts[question.id] = sanitizeRankingOrder(question, nextOrder)
+  if (savingState[question.id]?.error) {
+    savingState[question.id] = { pending: false, error: '' }
+  }
+}
+
+function rankingItemsForDisplay(question) {
+  const order = rankingOrder(question)
+  const orderedIds = order.length ? order : (question.options || []).map((option) => option.id)
+  const optionsById = Object.fromEntries((question.options || []).map((option) => [option.id, option]))
+  return orderedIds.map((optionId, index) => ({
+    option_id: optionId,
+    option: optionsById[optionId] || null,
+    rank: index + 1,
+  }))
+}
+
+function rankingItemsFromOrder(question, orderedIds = []) {
+  const optionsById = Object.fromEntries((question.options || []).map((option) => [option.id, option]))
+  return orderedIds.map((optionId, index) => ({
+    option_id: optionId,
+    option: optionsById[optionId] || null,
+    rank: index + 1,
+  }))
+}
+
+function questionWithRankingDraft(question) {
+  return {
+    ...question,
+    rankingItems: rankingItemsFromOrder(question, rankingOrder(question)),
+  }
 }
 
 function questionDiagnosticMode(question) {
@@ -272,9 +358,11 @@ async function withSaving(questionId, action) {
     await action()
     savingState[questionId] = { pending: false, error: '' }
     globalNotice.value = 'Ответ сохранён'
+    return true
   } catch (error) {
     const details = error.response?.data?.detail || error.response?.data?.errors?.[0]?.message
     savingState[questionId] = { pending: false, error: details || 'Не удалось сохранить ответ' }
+    return false
   }
 }
 
@@ -424,8 +512,8 @@ async function toggleMultiple(question, optionId) {
 
 async function moveRanking(question, optionId, direction) {
   if (!question.answer || isReadOnly.value) return
-  const currentOrder = question.rankingItems.length
-    ? question.rankingItems.map((item) => item.option_id)
+  const currentOrder = rankingOrder(question).length
+    ? [...rankingOrder(question)]
     : question.options.map((option) => option.id)
 
   const index = currentOrder.indexOf(optionId)
@@ -434,63 +522,91 @@ async function moveRanking(question, optionId, direction) {
 
   const next = [...currentOrder]
   ;[next[index], next[targetIndex]] = [next[targetIndex], next[index]]
-
-  await withSaving(question.id, async () => {
-    const result = await saveAnswerValue(question.id, { ranking: next })
-    patchAnswer(result.answer)
-    rankingItems.value = [
-      ...rankingItems.value.filter((item) => item.answer_id !== question.answer.id),
-      ...(result.ranking_items || []),
-    ]
-  })
+  setRankingDraft(question, next)
 }
 
 async function appendRankingSelection(question, optionId) {
   if (!question.answer || isReadOnly.value) return
-  const currentOrder = question.rankingItems.length
-    ? question.rankingItems.map((item) => item.option_id)
+  const currentOrder = rankingOrder(question).length
+    ? [...rankingOrder(question)]
     : []
 
   if (currentOrder.includes(optionId)) return
 
-  await withSaving(question.id, async () => {
-    const result = await saveAnswerValue(question.id, { ranking: [...currentOrder, optionId] })
-    patchAnswer(result.answer)
-    rankingItems.value = [
-      ...rankingItems.value.filter((item) => item.answer_id !== question.answer.id),
-      ...(result.ranking_items || []),
-    ]
-  })
+  setRankingDraft(question, [...currentOrder, optionId])
 }
 
 async function removeRankingSelection(question, optionId) {
   if (!question.answer || isReadOnly.value) return
-  const currentOrder = question.rankingItems.length
-    ? question.rankingItems.map((item) => item.option_id)
+  const currentOrder = rankingOrder(question).length
+    ? [...rankingOrder(question)]
     : []
 
   if (!currentOrder.includes(optionId)) return
 
-  await withSaving(question.id, async () => {
-    const result = await saveAnswerValue(question.id, { ranking: currentOrder.filter((id) => id !== optionId) })
+  setRankingDraft(question, currentOrder.filter((id) => id !== optionId))
+}
+
+async function saveRankingDraft(question) {
+  if (!question.answer || isReadOnly.value) return false
+  if (!isRankingDirty(question)) return true
+
+  const draftOrder = rankingOrder(question)
+  if (!canPersistRanking(question)) {
+    savingState[question.id] = { pending: false, error: 'Сохранение доступно после полного упорядочивания' }
+    return false
+  }
+
+  return withSaving(question.id, async () => {
+    const result = await saveAnswerValue(question.id, { ranking: draftOrder })
     patchAnswer(result.answer)
     rankingItems.value = [
       ...rankingItems.value.filter((item) => item.answer_id !== question.answer.id),
       ...(result.ranking_items || []),
     ]
+    rankingDrafts[question.id] = [...draftOrder]
   })
 }
 
 async function resetRankingSelection(question) {
   if (!question.answer || isReadOnly.value) return
-  await withSaving(question.id, async () => {
+  rankingResetCandidateId.value = question.id
+}
+
+function cancelRankingReset() {
+  if (rankingResetPending.value) return
+  rankingResetCandidateId.value = null
+}
+
+async function confirmRankingReset() {
+  const question = rankingResetCandidate.value
+  if (!question?.answer || isReadOnly.value) {
+    rankingResetCandidateId.value = null
+    return
+  }
+
+  const saved = await withSaving(question.id, async () => {
     const result = await saveAnswerValue(question.id, { ranking: [] })
     patchAnswer(result.answer)
     rankingItems.value = [
       ...rankingItems.value.filter((item) => item.answer_id !== question.answer.id),
       ...(result.ranking_items || []),
     ]
+    rankingDrafts[question.id] = []
   })
+  if (saved) {
+    rankingResetCandidateId.value = null
+  }
+}
+
+async function persistDirtyRankingQuestions() {
+  const rankingQuestions = normalizedQuestions.value.filter((question) => question.question_type === 'ranking')
+  for (const question of rankingQuestions) {
+    if (!isRankingDirty(question) || !canPersistRanking(question)) continue
+    const saved = await saveRankingDraft(question)
+    if (!saved) return false
+  }
+  return true
 }
 
 async function toggleSkip(question) {
@@ -510,6 +626,7 @@ async function toggleSkip(question) {
     textDrafts[question.answer.id] = ''
     numberDrafts[question.answer.id] = ''
     patchAnswer(result.answer)
+    rankingDrafts[question.id] = []
     rankingItems.value = rankingItems.value.filter((item) => item.answer_id !== question.answer.id)
   })
 }
@@ -519,6 +636,12 @@ async function handleSubmit() {
 
   if (!canSubmit.value) {
     submitWarning.value = 'Не на все обязательные вопросы даны ответы'
+    return
+  }
+
+  const rankingSaved = await persistDirtyRankingQuestions()
+  if (!rankingSaved) {
+    submitWarning.value = 'Сначала сохраните изменения в вопросах ранжирования'
     return
   }
 
@@ -596,7 +719,7 @@ onBeforeUnmount(stopTimer)
         <div class="mt-6 grid gap-3 sm:grid-cols-3">
           <div class="rounded-[24px] bg-slate-50/90 p-4">
             <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Формат</div>
-            <div class="mt-2 text-sm font-medium text-slate-900">Ответы сохраняются автоматически</div>
+            <div class="mt-2 text-sm font-medium text-slate-900">Автосохранение + ручное сохранение ранжирования</div>
           </div>
           <div class="rounded-[24px] bg-slate-50/90 p-4">
             <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Важно</div>
@@ -748,27 +871,41 @@ onBeforeUnmount(stopTimer)
                 <p class="mt-2 text-xs text-slate-400">Ответ сохраняется при потере фокуса.</p>
               </div>
 
-              <DomikiColorRankingQuestion
-                v-else-if="questionDiagnosticMode(question) === 'domiki-ranking'"
-                :question="question"
-                :disabled="savingState[question.id]?.pending"
-                @select="appendRankingSelection(question, $event)"
-                @remove="removeRankingSelection(question, $event)"
-                @reset="resetRankingSelection(question)"
-              />
+              <div v-else-if="questionDiagnosticMode(question) === 'domiki-ranking'" class="grid gap-3">
+                <DomikiColorRankingQuestion
+                  :question="questionWithRankingDraft(question)"
+                  :is-saved="!isRankingDirty(question) && canPersistRanking(question)"
+                  :disabled="savingState[question.id]?.pending"
+                  @select="appendRankingSelection(question, $event)"
+                  @remove="removeRankingSelection(question, $event)"
+                  @reset="resetRankingSelection(question)"
+                />
+                <div class="mt-1 flex flex-wrap items-center gap-3">
+                  <button class="primary-button" :disabled="savingState[question.id]?.pending || !isRankingDirty(question) || !canPersistRanking(question)" @click="saveRankingDraft(question)">
+                    Сохранить порядок
+                  </button>
+                  <span v-if="isRankingDirty(question)" class="badge bg-amber-100 text-amber-700">Есть несохранённые изменения</span>
+                </div>
+              </div>
 
               <div v-else-if="question.question_type === 'ranking'" class="grid gap-3">
-                <div v-for="(item, position) in (question.rankingItems.length ? question.rankingItems : question.options.map((option, index) => ({ option_id: option.id, option, rank: index + 1 })))" :key="item.option_id" class="flex items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white/85 px-4 py-4">
+                <div v-for="(item, position) in rankingItemsForDisplay(question)" :key="item.option_id" class="flex items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white/85 px-4 py-4">
                   <div class="flex items-center gap-3">
                     <span class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">{{ position + 1 }}</span>
                     <div class="font-medium text-slate-900">{{ item.option?.label || question.options.find((option) => option.id === item.option_id)?.label }}</div>
                   </div>
                   <div class="flex items-center gap-2">
                     <button class="ghost-button h-10 w-10 !rounded-full !px-0" :disabled="position === 0" @click="moveRanking(question, item.option_id, -1)">↑</button>
-                    <button class="ghost-button h-10 w-10 !rounded-full !px-0" :disabled="position === ((question.rankingItems.length ? question.rankingItems : question.options).length - 1)" @click="moveRanking(question, item.option_id, 1)">↓</button>
+                    <button class="ghost-button h-10 w-10 !rounded-full !px-0" :disabled="position === ((rankingOrder(question).length || question.options.length) - 1)" @click="moveRanking(question, item.option_id, 1)">↓</button>
                   </div>
                 </div>
-                <p class="text-xs text-slate-400">Меняйте порядок кнопками вверх/вниз. Каждое действие сохраняется сразу.</p>
+                <div class="mt-1 flex flex-wrap items-center gap-3">
+                  <button class="primary-button" :disabled="savingState[question.id]?.pending || !isRankingDirty(question) || !canPersistRanking(question)" @click="saveRankingDraft(question)">
+                    Сохранить порядок
+                  </button>
+                  <span v-if="isRankingDirty(question)" class="badge bg-amber-100 text-amber-700">Есть несохранённые изменения</span>
+                </div>
+                <p class="text-xs text-slate-400">Изменения порядка сохраняются по кнопке.</p>
               </div>
 
               <div v-else class="rounded-3xl bg-red-50 px-4 py-3 text-sm text-red-700">Тип вопроса <code>{{ question.question_type }}</code> не поддержан.</div>
@@ -831,6 +968,25 @@ onBeforeUnmount(stopTimer)
         <div class="text-4xl">✓</div>
         <h1 class="mt-4 text-2xl font-semibold text-slate-900">Тест завершён</h1>
         <p class="mt-3 text-sm leading-6 text-slate-600">Ваши ответы успешно отправлены. Спасибо за прохождение!</p>
+      </div>
+    </div>
+
+    <div
+      v-if="rankingResetCandidate"
+      class="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm"
+      @click.self="cancelRankingReset"
+    >
+      <div class="glass-panel w-full max-w-md p-6 sm:p-7">
+        <h3 class="text-xl font-semibold text-slate-900">Сбросить порядок?</h3>
+        <p class="mt-3 text-sm leading-6 text-slate-600">
+          Порядок будет очищен и вопрос станет неотвеченным. После этого нужно будет расставить цвета заново.
+        </p>
+        <div class="mt-6 flex justify-end gap-3">
+          <button class="ghost-button" :disabled="rankingResetPending" @click="cancelRankingReset">Отмена</button>
+          <button class="primary-button" :disabled="rankingResetPending" @click="confirmRankingReset">
+            {{ rankingResetPending ? 'Сбрасываем…' : 'Сбросить' }}
+          </button>
+        </div>
       </div>
     </div>
   </section>
