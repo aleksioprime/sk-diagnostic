@@ -75,12 +75,14 @@ jobs:
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL || 'https://flow.skeducator.ru' }}
           VITE_LOGGING: ${{ vars.VITE_LOGGING || '0' }}
+          VITE_EXPORT_SERVICE_URL: ${{ vars.VITE_EXPORT_SERVICE_URL || 'https://export.skeducator.ru' }}
         run: |
           docker build \
             --target prod \
             --build-arg VITE_LOGGING="${VITE_LOGGING}" \
             --build-arg VITE_API_URL="${VITE_API_URL}" \
             --build-arg VITE_BACKEND_API_URL="/backend" \
+            --build-arg VITE_EXPORT_SERVICE_URL="${VITE_EXPORT_SERVICE_URL}" \
             -t "${BASE_IMAGE}-frontend:latest" \
             -t "${BASE_IMAGE}-frontend:${GITHUB_SHA}" \
             ./frontend

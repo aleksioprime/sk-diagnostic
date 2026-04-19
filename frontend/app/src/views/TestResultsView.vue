@@ -31,6 +31,8 @@ const selectedClassId = ref('')
 const selectedDepartmentId = ref('')
 const selectedIds = ref(new Set())
 const showSummaryModal = ref(false)
+const exportError = ref('')
+const exportBaseUrl = (import.meta.env.VITE_EXPORT_SERVICE_URL || 'https://export.skeducator.ru').replace(/\/$/, '')
 
 const personsById = computed(() => Object.fromEntries(persons.value.map((person) => [person.id, person])))
 const resultByAttemptId = computed(() => Object.fromEntries(results.value.map((result) => [result.attempt_id, result])))
@@ -225,6 +227,36 @@ const summaryContent = computed(() => {
   const template = selectedRows.value[0]?.template
   return template?.buildGroupSummary?.(selectedRows.value) ?? null
 })
+
+function openExportPreview() {
+  exportError.value = ''
+
+  const ids = selectedRows.value
+    .map((row) => normalizeId(row.attempt.id))
+    .filter((id) => id !== null && id !== undefined && id !== '')
+
+  if (!ids.length) {
+    exportError.value = 'Выберите хотя бы одну запись для экспорта.'
+    return
+  }
+
+  const nocoToken = localStorage.getItem('token') || ''
+  if (!nocoToken) {
+    exportError.value = 'Не найден токен авторизации. Перезайдите в систему.'
+    return
+  }
+
+  const params = new URLSearchParams({
+    source: 'diagnostic',
+    id_kind: 'attempt',
+    ids: ids.join(','),
+    scope_kind: 'test',
+    scope_id: String(normalizeId(props.testId)),
+    noco_token: nocoToken,
+  })
+
+  window.open(`${exportBaseUrl}/preview?${params.toString()}`, '_blank', 'noopener')
+}
 
 function toggleSelectRow(id) {
   const next = new Set(selectedIds.value)
@@ -440,8 +472,14 @@ onMounted(loadData)
             <div>
               <h2 class="text-xl font-semibold text-slate-900">Сводная информация</h2>
             </div>
-            <button class="ghost-button shrink-0" @click="showSummaryModal = false">Закрыть</button>
+            <div class="flex items-center gap-2">
+              <button class="ghost-button shrink-0" @click="openExportPreview">Экспорт в Excel</button>
+              <button class="ghost-button shrink-0" @click="showSummaryModal = false">Закрыть</button>
+            </div>
           </div>
+          <p v-if="exportError" class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {{ exportError }}
+          </p>
           <div v-if="summaryContent">
             <div v-if="summaryContent.stub" class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
               {{ summaryContent.stub }}
