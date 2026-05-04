@@ -6,7 +6,6 @@ function motivationColumns() {
     { key: 'level', title: 'Уровень', width: 12 },
     { key: 'total_score', title: 'Суммарный балл', width: 16 },
     { key: 'level_description', title: 'Описание уровня', width: 54 },
-    { key: 'interpretation', title: 'Интерпретация', width: 54 },
     { key: 'pa', title: 'ПА', width: 10 },
     { key: 'md', title: 'МД', width: 10 },
     { key: 'anxiety', title: 'Тревожность', width: 14 },
@@ -15,6 +14,7 @@ function motivationColumns() {
     { key: 'md_level', title: 'МД (уровень нормы)', width: 20 },
     { key: 'anxiety_level', title: 'Тревожность (уровень нормы)', width: 28 },
     { key: 'anger_level', title: 'Гнев (уровень нормы)', width: 20 },
+    { key: 'interpretation', title: 'Интерпретация', width: 54 },
   ]
 }
 

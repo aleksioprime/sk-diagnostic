@@ -414,9 +414,6 @@ onMounted(loadData)
             <option value="">Все подразделения</option>
             <option v-for="option in departmentOptions" :key="`department-${option.id}`" :value="option.id">{{ option.label }}</option>
           </select>
-          <button class="ghost-button" @click="loadData" :disabled="loading">
-            {{ loading ? 'Загрузка…' : 'Обновить' }}
-          </button>
           <button class="ghost-button" @click="resetFilters" :disabled="!hasActiveFilters">
             Сбросить фильтры
           </button>
@@ -454,12 +451,24 @@ onMounted(loadData)
     <div v-else-if="error" class="glass-panel p-10 text-center text-sm text-red-700">{{ error }}</div>
     <div v-else-if="!rows.length" class="glass-panel p-10 text-center text-sm text-slate-500">По этой выдаче пока нет доступных попыток.</div>
     <div v-else>
-      <div class="mb-3 flex flex-wrap items-center gap-3">
-        <button class="ghost-button" :disabled="exportingSelectedRows || !selectedRows.length || !canExportSelectedRows" @click="exportSelectedRowsToExcel">
-          {{ exportingSelectedRows ? 'Экспорт…' : 'Экспорт выбранных в Excel' }}
+      <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div class="flex flex-wrap items-center gap-3">
+          <button class="ghost-button" :disabled="exportingSelectedRows || !selectedRows.length || !canExportSelectedRows" @click="exportSelectedRowsToExcel">
+            <span class="inline-flex items-center gap-2">
+              <span>Экспорт выбранных в Excel</span>
+              <span
+                v-if="exportingSelectedRows"
+                class="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent"
+                aria-hidden="true"
+              ></span>
+            </span>
+          </button>
+          <span class="text-sm text-slate-500">Выбрано: {{ selectedRows.length }}</span>
+          <button class="ghost-button text-slate-400" :disabled="!selectedRows.length" @click="selectedIds = new Set()">Сбросить выбор</button>
+        </div>
+        <button class="ghost-button self-end sm:ml-auto sm:self-auto" @click="loadData" :disabled="loading">
+          {{ loading ? 'Загрузка…' : 'Обновить' }}
         </button>
-        <span class="text-sm text-slate-500">Выбрано: {{ selectedRows.length }}</span>
-        <button class="ghost-button text-slate-400" :disabled="!selectedRows.length" @click="selectedIds = new Set()">Сбросить выбор</button>
       </div>
       <p v-if="selectedExportError" class="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
         {{ selectedExportError }}
