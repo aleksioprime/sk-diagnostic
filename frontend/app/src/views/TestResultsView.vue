@@ -9,6 +9,7 @@ import {
   personDisplayName,
 } from '../utils/format'
 import { resolveTableTemplate } from '../utils/resultTemplates'
+import { exportDomikiSummaryToExcel } from '../utils/export/domikiSummaryExcel'
 
 const props = defineProps({
   testId: {
@@ -37,7 +38,7 @@ const selectedDepartmentId = ref('')
 const selectedIds = ref(new Set())
 const showSummaryModal = ref(false)
 const exportError = ref('')
-const exportBaseUrl = (import.meta.env.VITE_EXPORT_SERVICE_URL || 'https://export.skeducator.ru').replace(/\/$/, '')
+const exporting = ref(false)
 
 const personsById = computed(() => Object.fromEntries(persons.value.map((person) => [person.id, person])))
 const resultByAttemptId = computed(() => Object.fromEntries(results.value.map((result) => [result.attempt_id, result])))
@@ -234,34 +235,29 @@ const summaryContent = computed(() => {
   return template?.buildGroupSummary?.(selectedRows.value) ?? null
 })
 
-function openExportPreview() {
+const canExportDomiki = computed(() => {
+  return summaryContent.value?.kind === 'domiki-distributions' && domikiSummaryTables.value.length > 0
+})
+
+async function exportSummaryToExcel() {
   exportError.value = ''
-
-  const ids = selectedRows.value
-    .map((row) => normalizeId(row.attempt.id))
-    .filter((id) => id !== null && id !== undefined && id !== '')
-
-  if (!ids.length) {
-    exportError.value = 'Выберите хотя бы одну запись для экспорта.'
+  if (!canExportDomiki.value) {
+    exportError.value = 'Экспорт пока реализован только для сводной информации диагностики «Домики».'
     return
   }
 
-  const nocoToken = localStorage.getItem('token') || ''
-  if (!nocoToken) {
-    exportError.value = 'Не найден токен авторизации. Перезайдите в систему.'
-    return
+  exporting.value = true
+  try {
+    // Внешний экспорт-сервис временно отключён. Экспорт выполняется локально в браузере.
+    await exportDomikiSummaryToExcel({
+      summaryContent: summaryContent.value,
+      filePrefix: 'domiki-svod',
+    })
+  } catch (error) {
+    exportError.value = error?.message || 'Не удалось сформировать Excel-файл.'
+  } finally {
+    exporting.value = false
   }
-
-  const params = new URLSearchParams({
-    source: 'diagnostic',
-    id_kind: 'attempt',
-    ids: ids.join(','),
-    scope_kind: 'test',
-    scope_id: String(normalizeId(test.value?.id)),
-    noco_token: nocoToken,
-  })
-
-  window.open(`${exportBaseUrl}/preview?${params.toString()}`, '_blank', 'noopener')
 }
 
 function toggleSelectRow(id) {
@@ -499,7 +495,9 @@ onMounted(loadData)
               <h2 class="text-xl font-semibold text-slate-900">Сводная информация</h2>
             </div>
             <div class="flex items-center gap-2">
-              <button class="ghost-button shrink-0" @click="openExportPreview">Экспорт в Excel</button>
+              <button class="ghost-button shrink-0" :disabled="exporting || !canExportDomiki" @click="exportSummaryToExcel">
+                {{ exporting ? 'Экспорт…' : 'Экспорт в Excel' }}
+              </button>
               <button class="ghost-button shrink-0" @click="showSummaryModal = false">Закрыть</button>
             </div>
           </div>
