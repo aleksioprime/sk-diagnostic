@@ -9,7 +9,8 @@ import {
   personDisplayName,
 } from '../utils/format'
 import { resolveTableTemplate } from '../utils/resultTemplates'
-import { exportDomikiSummaryToExcel } from '../utils/export/domikiSummaryExcel'
+import { canExportSummary, exportSummaryByKindToExcel } from '../utils/export/summaryExcel'
+import { exportSelectedDiagnosticRowsToExcel } from '../utils/export/resultExcel'
 
 const props = defineProps({
   testId: {
@@ -39,6 +40,8 @@ const selectedIds = ref(new Set())
 const showSummaryModal = ref(false)
 const exportError = ref('')
 const exporting = ref(false)
+const selectedExportError = ref('')
+const exportingSelectedRows = ref(false)
 
 const personsById = computed(() => Object.fromEntries(persons.value.map((person) => [person.id, person])))
 const resultByAttemptId = computed(() => Object.fromEntries(results.value.map((result) => [result.attempt_id, result])))
@@ -180,6 +183,13 @@ const activeTemplateColumns = computed(() => {
 })
 
 const selectedRows = computed(() => rows.value.filter((row) => selectedIds.value.has(row.attempt.id)))
+const selectedTemplateId = computed(() => selectedRows.value[0]?.template?.id || null)
+const canExportSelectedRows = computed(() => {
+  if (!selectedRows.value.length) return false
+  const isSingleTemplate = selectedRows.value.every((row) => row.template?.id === selectedTemplateId.value)
+  if (!isSingleTemplate) return false
+  return ['domiki_emotion_primary', 'motivation_learning'].includes(selectedTemplateId.value)
+})
 
 const isAllSelected = computed(() => rows.value.length > 0 && rows.value.every((row) => selectedIds.value.has(row.attempt.id)))
 
@@ -235,28 +245,49 @@ const summaryContent = computed(() => {
   return template?.buildGroupSummary?.(selectedRows.value) ?? null
 })
 
-const canExportDomiki = computed(() => {
-  return summaryContent.value?.kind === 'domiki-distributions' && domikiSummaryTables.value.length > 0
+const canExportSummaryToExcel = computed(() => {
+  if (!summaryContent.value) return false
+  if (summaryContent.value?.kind === 'domiki-distributions' && domikiSummaryTables.value.length === 0) return false
+  return canExportSummary(summaryContent.value)
 })
 
 async function exportSummaryToExcel() {
   exportError.value = ''
-  if (!canExportDomiki.value) {
-    exportError.value = 'Экспорт пока реализован только для сводной информации диагностики «Домики».'
+  if (!canExportSummaryToExcel.value) {
+    exportError.value = 'Экспорт для этой сводной информации пока не реализован.'
     return
   }
 
   exporting.value = true
   try {
-    // Внешний экспорт-сервис временно отключён. Экспорт выполняется локально в браузере.
-    await exportDomikiSummaryToExcel({
+    await exportSummaryByKindToExcel({
       summaryContent: summaryContent.value,
-      filePrefix: 'domiki-svod',
     })
   } catch (error) {
     exportError.value = error?.message || 'Не удалось сформировать Excel-файл.'
   } finally {
     exporting.value = false
+  }
+}
+
+async function exportSelectedRowsToExcel() {
+  selectedExportError.value = ''
+  if (!selectedRows.value.length) {
+    selectedExportError.value = 'Выберите хотя бы одну запись для экспорта.'
+    return
+  }
+  if (!canExportSelectedRows.value) {
+    selectedExportError.value = 'Экспорт доступен только для выделенных записей одного типа: Домики или Мотивация.'
+    return
+  }
+
+  exportingSelectedRows.value = true
+  try {
+    await exportSelectedDiagnosticRowsToExcel({ rows: selectedRows.value })
+  } catch (error) {
+    selectedExportError.value = error?.message || 'Не удалось экспортировать выбранные записи.'
+  } finally {
+    exportingSelectedRows.value = false
   }
 }
 
@@ -422,7 +453,19 @@ onMounted(loadData)
     <div v-if="loading" class="glass-panel p-10 text-center text-sm text-slate-500">Загрузка попыток…</div>
     <div v-else-if="error" class="glass-panel p-10 text-center text-sm text-red-700">{{ error }}</div>
     <div v-else-if="!rows.length" class="glass-panel p-10 text-center text-sm text-slate-500">По этой выдаче пока нет доступных попыток.</div>
-    <div v-else class="overflow-hidden border border-white/60 bg-white/92 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+    <div v-else>
+      <div class="mb-3 flex flex-wrap items-center gap-3">
+        <button class="ghost-button" :disabled="exportingSelectedRows || !selectedRows.length || !canExportSelectedRows" @click="exportSelectedRowsToExcel">
+          {{ exportingSelectedRows ? 'Экспорт…' : 'Экспорт выбранных в Excel' }}
+        </button>
+        <span class="text-sm text-slate-500">Выбрано: {{ selectedRows.length }}</span>
+        <button class="ghost-button text-slate-400" :disabled="!selectedRows.length" @click="selectedIds = new Set()">Сбросить выбор</button>
+      </div>
+      <p v-if="selectedExportError" class="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        {{ selectedExportError }}
+      </p>
+
+      <div class="overflow-hidden border border-white/60 bg-white/92 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
       <div class="overflow-x-auto">
         <table class="min-w-full border-collapse text-left text-sm">
           <thead class="bg-slate-50 text-slate-500">
@@ -476,13 +519,12 @@ onMounted(loadData)
           </tbody>
         </table>
       </div>
+      </div>
     </div>
 
     <!-- Кнопка сводной информации -->
     <div v-if="selectedIds.size >= 2" class="mt-4 flex items-center gap-3">
-      <span class="text-sm text-slate-500">Выбрано: {{ selectedIds.size }}</span>
       <button class="ghost-button" @click="showSummaryModal = true">Сводная информация</button>
-      <button class="ghost-button text-slate-400" @click="selectedIds = new Set()">Сбросить выбор</button>
     </div>
 
     <!-- Модальное окно сводной информации -->
@@ -495,7 +537,7 @@ onMounted(loadData)
               <h2 class="text-xl font-semibold text-slate-900">Сводная информация</h2>
             </div>
             <div class="flex items-center gap-2">
-              <button class="ghost-button shrink-0" :disabled="exporting || !canExportDomiki" @click="exportSummaryToExcel">
+              <button class="ghost-button shrink-0" :disabled="exporting || !canExportSummaryToExcel" @click="exportSummaryToExcel">
                 {{ exporting ? 'Экспорт…' : 'Экспорт в Excel' }}
               </button>
               <button class="ghost-button shrink-0" @click="showSummaryModal = false">Закрыть</button>
