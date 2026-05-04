@@ -21,16 +21,15 @@ const SCALES = {
   anger: [3, 7, 11, 15, 19, 23, 27, 31, 35, 39] // Гнев
 };
 
-// ПРИМЕЧАНИЕ: Применение обратной шкалы (реверса) требует уточнения у психологов.
-// Нормы в Таблице 3 PDF методики эмпирически совпадают с Excel-расчётами при подсчёте
-// RAW-сумм (без реверса). Закомментированный блок REVERSED оставлен для восстановления.
-//
-// const REVERSED = {
-//   cognitive_activity:     [14, 30, 38],          // Вопросы 14, 30, 38 по шкале познавательной активности
-//   achievement_motivation: [4, 12, 20, 28, 32],   // Вопросы 4, 12, 20, 28, 32 по шкале мотивации достижения
-//   anxiety:                [1, 9, 25, 33],        // Вопросы 1, 9, 25, 33 по шкале тревожности
-//   anger:                  [],                    // Нет обратных вопросов по шкале гнева
-// };
+// Обратные пункты по методике motivation_v2.docx:
+// «Для пунктов шкал, в которых высокая оценка отражает отсутствие эмоции,
+// веса считаются в обратном порядке: 1→4, 2→3, 3→2, 4→1».
+const REVERSED = {
+  cognitive_activity: [14, 30, 38], // По шкале познавательной активности
+  achievement_motivation: [4, 20, 32], // По шкале мотивации достижения
+  anxiety: [1, 9, 25, 33], // По шкале тревожности
+  anger: [] // По шкале гнева обратных пунктов нет
+};
 
 /*
  * Нормы для каждой шкалы в зависимости от возрастной группы и пола
@@ -40,8 +39,8 @@ const NORMS = {
     female: {
       cognitive_activity: {
         high: [31, 40],
-        medium: [21, 30],
-        low: [10, 20]
+        medium: [21, 26],
+        low: [10, 25]
       },
       achievement_motivation: {
         high: [32, 40],
@@ -213,60 +212,44 @@ function buildAnswersMap(answers = []) {
 }
 
 /**
- * Получить значение ответа для вопроса (без реверса)
+ * Получить значение ответа для вопроса с учётом обратной шкалы
  */
-function getAnswerValue(questionNumber, answersMap) {
+function getAnswerValue(questionNumber, scaleName, answersMap) {
   const rawValue = answersMap[questionNumber];
 
   if (![1, 2, 3, 4].includes(rawValue)) {
     throw new Error(`Некорректный или отсутствующий ответ для вопроса ${questionNumber}`);
   }
 
-  return rawValue;
+  const isReversed = REVERSED[scaleName].includes(questionNumber);
+  return isReversed ? 5 - rawValue : rawValue;
 }
-
-// Вариант с обратной шкалой (реверсом) — раскомментировать при подтверждении психологами:
-// function getAnswerValue(questionNumber, scaleName, answersMap) {
-//   const rawValue = answersMap[questionNumber];
-//   if (![1, 2, 3, 4].includes(rawValue)) {
-//     throw new Error(`Некорректный или отсутствующий ответ для вопроса ${questionNumber}`);
-//   }
-//   const isReversed = REVERSED[scaleName].includes(questionNumber);
-//   return isReversed ? 5 - rawValue : rawValue;
-// }
 
 /**
  * Подсчёт суммы по одной шкале
  */
 function calcScale(scaleName, answersMap, scales = SCALES) {
   return scales[scaleName].reduce((sum, questionNumber) => {
-    return sum + getAnswerValue(questionNumber, answersMap);
+    return sum + getAnswerValue(questionNumber, scaleName, answersMap);
   }, 0);
 }
 
-// Вариант с реверсом:
-// function calcScale(scaleName, answersMap, scales = SCALES) {
-//   return scales[scaleName].reduce((sum, questionNumber) => {
-//     return sum + getAnswerValue(questionNumber, scaleName, answersMap);
-//   }, 0);
-// }
-
 /**
- * Определение уровня мотивации и текстовой интерпретации
+ * Определение уровня мотивации и описания уровня
  */
-function getInterpretation(total) {
+function getLevelDescription(total) {
   if (total >= 45 && total <= 60) {
     return {
       level: "I",
-      interpretation:
-        "Продуктивная мотивация с выраженным преобладанием познавательной мотивации и положительным отношением к учению"
+      level_description:
+        "Продуктивная мотивация с выраженным преобладанием познавательной мотивации учения и положительным эмоциональным отношением к нему"
     };
   }
 
   if (total >= 29 && total <= 44) {
     return {
       level: "II",
-      interpretation:
+      level_description:
         "Продуктивная мотивация, позитивное отношение к учению, соответствие социальному нормативу"
     };
   }
@@ -274,7 +257,7 @@ function getInterpretation(total) {
   if (total >= 13 && total <= 28) {
     return {
       level: "III",
-      interpretation:
+      level_description:
         "Средний уровень с несколько сниженной познавательной мотивацией"
     };
   }
@@ -282,15 +265,111 @@ function getInterpretation(total) {
   if (total >= -2 && total <= 12) {
     return {
       level: "IV",
-      interpretation:
-        "Сниженная мотивация, переживание школьной скуки, отрицательное эмоциональное отношение к учению"
+      level_description:
+        "Сниженная мотивация, переживание «школьной скуки», отрицательное эмоциональное отношение к учению"
     };
   }
 
   return {
     level: "V",
-    interpretation: "Резко отрицательное отношение к учению"
+    level_description: "Резко отрицательное отношение к учению"
   };
+}
+
+/**
+ * Качественная интерпретация по таблице «Интерпретация данных» из motivation_v2.docx.
+ * Используются уровни норм по шкалам:
+ * - Познавательная активность
+ * - Тревожность
+ * - Гнев
+ */
+const QUALITATIVE_INTERPRETATION_RULES = [
+  {
+    pa: ["high"],
+    anxiety: ["low", "medium"],
+    anger: ["low"],
+    text: "Продуктивная мотивация и позитивное эмоциональное отношение к учению"
+  },
+  {
+    pa: ["medium"],
+    anxiety: ["low", "medium"],
+    anger: ["low"],
+    text: "Позитивное отношение к учению"
+  },
+  {
+    pa: ["low"],
+    anxiety: ["low", "medium"],
+    anger: ["low", "medium"],
+    text: "Переживание «школьной скуки»"
+  },
+  {
+    pa: ["medium"],
+    anxiety: ["low", "medium"],
+    anger: ["low", "medium"],
+    text: "Диффузное эмоциональное отношение"
+  },
+  {
+    pa: ["medium"],
+    anxiety: ["low", "medium"],
+    anger: ["high"],
+    text: "Диффузное эмоциональное отношение при фрустрированности значимых потребностей"
+  },
+  {
+    pa: ["low"],
+    anxiety: ["low"],
+    anger: ["high"],
+    text: "Резко отрицательное отношение к школе и учению"
+  },
+  {
+    pa: ["low"],
+    anxiety: ["low", "medium"],
+    anger: ["high"],
+    text: "Негативное эмоциональное отношение"
+  },
+  {
+    pa: ["high"],
+    anxiety: ["high"],
+    anger: ["high"],
+    text: "Чрезмерно повышенная эмоциональность на уроке, обусловленная неудовлетворением ведущих социогенных потребностей"
+  },
+  {
+    pa: ["high"],
+    anxiety: ["high"],
+    anger: ["medium"],
+    text: "Повышенная эмоциональность на уроке"
+  },
+  {
+    pa: ["medium", "low"],
+    anxiety: ["high"],
+    anger: ["medium", "low"],
+    text: "Школьная тревожность"
+  },
+  {
+    pa: ["high"],
+    anxiety: ["medium", "low"],
+    anger: ["high"],
+    text: "Позитивное отношение при фрустрированности потребностей"
+  },
+  {
+    pa: ["high", "medium"],
+    anxiety: ["high"],
+    anger: ["low", "medium"],
+    text: "Позитивное отношение при повышенной чувствительности к оценочному аспекту."
+  }
+];
+
+function getQualitativeInterpretation(normLevels) {
+  const pa = normLevels.cognitive_activity;
+  const anxiety = normLevels.anxiety;
+  const anger = normLevels.anger;
+
+  const match = QUALITATIVE_INTERPRETATION_RULES.find((rule) => (
+    rule.pa.includes(pa) &&
+    rule.anxiety.includes(anxiety) &&
+    rule.anger.includes(anger)
+  ));
+
+  return match?.text || "Качественная интерпретация для данного сочетания шкал не определена.";
 }
 
 /*
@@ -312,12 +391,15 @@ const LEVEL_LABELS = {
 
 /*
   * Возвращает возрастную группу по возрасту
-  * 10-11, 12-14, 15-16
+  * до 11, 12-14, от 15
  */
 function getAgeGroup(age) {
-  if (age >= 10 && age <= 11) return "10-11";
+  if (age < 0) {
+    throw new Error("Возраст не может быть отрицательным");
+  }
+  if (age <= 11) return "10-11";
   if (age >= 12 && age <= 14) return "12-14";
-  if (age >= 15 && age <= 16) return "15-16";
+  if (age >= 15) return "15-16";
 
   throw new Error("Возраст вне диапазона методики");
 }
@@ -391,8 +473,8 @@ function calculateMotivationResult(data) {
   // Общая формула: ПА + МД + (–Т) + (–Г)
   const total = pa + md - t - g;
 
-  // Получаем уровень мотивации и интерпретацию на основе общей суммы
-  const { level, interpretation } = getInterpretation(total);
+  // Получаем уровень мотивации и описание уровня на основе общей суммы
+  const { level, level_description } = getLevelDescription(total);
 
   const normLevels = calculateNormLevels(
     {
@@ -404,6 +486,7 @@ function calculateMotivationResult(data) {
     data.student.age,
     data.student.gender // "male" / "female"
   );
+  const interpretation = getQualitativeInterpretation(normLevels);
 
   // Формируем итоговый результат в нужном формате
   return {
@@ -427,6 +510,7 @@ function calculateMotivationResult(data) {
     result: {
       level,
       total_score: total,
+      level_description,
       interpretation,
       calculated_at: new Date().toISOString()
     },

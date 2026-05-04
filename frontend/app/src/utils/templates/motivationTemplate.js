@@ -66,8 +66,13 @@ export const motivationTemplate = {
       },
       {
         kind: 'text',
+        title: 'Описание уровня',
+        text: result.level_description || 'Описание уровня не рассчитано',
+      },
+      {
+        kind: 'text',
         title: 'Интерпретация',
-        text: result.interpretation || 'Нет интерпретации',
+        text: result.interpretation || 'Интерпретация не рассчитана',
       },
       {
         kind: 'table',
