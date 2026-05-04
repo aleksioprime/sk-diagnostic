@@ -36,7 +36,8 @@ const navItems = computed(() => {
 function isActive(item) {
   const targetName = item.to.name
   if (targetName === 'assigned-tests' && route.name === 'attempt') return true
-  if (targetName === 'results' && ['results-test', 'result-detail'].includes(route.name)) return true
+  if (targetName === 'assigned-tests' && route.name === 'my-result-detail') return true
+  if (targetName === 'results' && ['results-test', 'results-assignment', 'result-detail', 'result-detail-assignment'].includes(route.name)) return true
   return route.name === targetName
 }
 
@@ -95,6 +96,17 @@ async function logout() {
           <div class="rounded-2xl bg-slate-50/80 px-4 py-3">
             <div class="text-sm font-semibold text-slate-900">{{ auth.displayName }}</div>
             <div class="mt-1 text-xs text-slate-500">{{ auth.isPsycho ? 'Доступ к результатам открыт' : 'Доступ к тестам открыт' }}</div>
+          </div>
+
+          <div class="px-1 py-2">
+            <router-link
+              :to="{ name: 'profile' }"
+              class="block rounded-2xl px-3 py-2 text-sm no-underline transition"
+              :class="route.name === 'profile' ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-100'"
+              @click="menuOpen = false"
+            >
+              Профиль
+            </router-link>
           </div>
 
           <div class="flex flex-col gap-1 px-1 py-2 md:hidden">

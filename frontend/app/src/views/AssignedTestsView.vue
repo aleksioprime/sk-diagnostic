@@ -55,12 +55,45 @@ const decoratedAttempts = computed(() => {
       attemptStatus,
       result,
       resultStatus,
+      assignmentId: normalizeId(attempt.test_assignment_id ?? attempt.test_assignment?.id),
     }
   })
 })
 
-const activeAttempts = computed(() => decoratedAttempts.value.filter((attempt) => !['submitted', 'completed'].includes(attempt.status)))
-const archivedAttempts = computed(() => decoratedAttempts.value.filter((attempt) => ['submitted', 'completed'].includes(attempt.status)))
+const assignmentCards = computed(() => {
+  const grouped = new Map()
+
+  decoratedAttempts.value.forEach((attempt) => {
+    const key = attempt.assignmentId ?? `attempt-${attempt.id}`
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        assignmentId: attempt.assignmentId,
+        assignment: attempt.test_assignment || null,
+        attempts: [],
+      })
+    }
+    grouped.get(key).attempts.push(attempt)
+  })
+
+  return [...grouped.values()].map((group) => {
+    const activeAttempt = group.attempts.find((attempt) => !['submitted', 'completed'].includes(attempt.status)) || null
+    const archivedAttempt = group.attempts.find((attempt) => ['submitted', 'completed'].includes(attempt.status)) || null
+    const primaryAttempt = activeAttempt || archivedAttempt || group.attempts[0]
+
+    return {
+      ...group,
+      primaryAttempt,
+      activeAttempt,
+      archivedAttempt,
+      title: group.assignment?.title || `Выдача #${group.assignmentId ?? primaryAttempt.id}`,
+      testTitle: group.assignment?.test?.title || primaryAttempt.test_assignment?.test?.title || `Тест #${group.assignment?.test_id ?? primaryAttempt.test_assignment?.test_id}`,
+      hasActive: Boolean(activeAttempt),
+    }
+  })
+})
+
+const activeAssignments = computed(() => assignmentCards.value.filter((card) => card.hasActive))
+const archivedAssignments = computed(() => assignmentCards.value.filter((card) => !card.hasActive))
 
 async function loadData() {
   loading.value = true
@@ -128,6 +161,10 @@ function confirmStart() {
   router.push({ name: 'attempt', params: { attemptId: attempt.id }, query: { start: '1' } })
 }
 
+function canOpenResult(attempt) {
+  return Boolean(attempt && ['submitted', 'completed'].includes(attempt.status) && attempt.result?.status === 'calculated')
+}
+
 onMounted(loadData)
 </script>
 
@@ -137,16 +174,16 @@ onMounted(loadData)
       <div>
         <p class="mb-2 text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">Мой кабинет</p>
         <h1 class="section-title">Выданные тесты</h1>
-        <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-500">Здесь собраны все тесты, которые доступны вам сейчас, а также завершённые прохождения.</p>
+        <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-500">Здесь собраны все ваши выдачи тестов и прохождения по ним.</p>
       </div>
       <button class="ghost-button self-start" @click="loadData" :disabled="loading">
         {{ loading ? 'Обновление…' : 'Обновить список' }}
       </button>
     </div>
 
-    <div v-if="loading" class="glass-panel p-8 text-center text-sm text-slate-500">Загрузка попыток…</div>
+    <div v-if="loading" class="glass-panel p-8 text-center text-sm text-slate-500">Загрузка выдач…</div>
     <div v-else-if="error" class="glass-panel p-8 text-center text-sm text-red-700">{{ error }}</div>
-    <div v-else-if="!decoratedAttempts.length" class="glass-panel p-10 text-center">
+    <div v-else-if="!assignmentCards.length" class="glass-panel p-10 text-center">
       <div class="text-xl font-semibold text-slate-900">Пока нет выданных тестов</div>
       <p class="mt-2 text-sm text-slate-500">Когда для вас будет назначен тест, он появится на этой странице.</p>
     </div>
@@ -154,39 +191,42 @@ onMounted(loadData)
     <div v-else class="grid gap-8">
       <div>
         <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-slate-900">Активные прохождения</h2>
-          <span class="badge bg-primary/10 text-primary">{{ activeAttempts.length }}</span>
+          <h2 class="text-lg font-semibold text-slate-900">Активные выдачи</h2>
+          <span class="badge bg-primary/10 text-primary">{{ activeAssignments.length }}</span>
         </div>
 
-        <div v-if="!activeAttempts.length" class="glass-panel p-8 text-sm text-slate-500">Активных тестов нет.</div>
+        <div v-if="!activeAssignments.length" class="glass-panel p-8 text-sm text-slate-500">Активных выдач нет.</div>
         <div v-else class="grid gap-4 lg:grid-cols-2">
           <button
-            v-for="attempt in activeAttempts"
-            :key="attempt.id"
+            v-for="card in activeAssignments"
+            :key="card.assignmentId ?? card.primaryAttempt.id"
             type="button"
             class="glass-panel block cursor-pointer overflow-hidden p-5 text-left transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(15,23,42,0.12)]"
-            @click="openAttempt(attempt)"
+            @click="openAttempt(card.activeAttempt || card.primaryAttempt)"
           >
             <div class="flex items-start justify-between gap-3">
-              <h3 class="text-xl font-semibold text-slate-900">{{ attempt.test_assignment?.test?.title || `Тест #${attempt.test_assignment?.test_id}` }}</h3>
-              <span class="badge" :class="attempt.attemptStatus.className">{{ attempt.attemptStatus.label }}</span>
+              <div>
+                <h3 class="text-xl font-semibold text-slate-900">{{ card.title }}</h3>
+                <p class="mt-1 text-sm text-slate-500">Тест: {{ card.testTitle }}</p>
+              </div>
+              <span class="badge" :class="(card.activeAttempt || card.primaryAttempt).attemptStatus.className">{{ (card.activeAttempt || card.primaryAttempt).attemptStatus.label }}</span>
             </div>
 
             <div class="mt-5 rounded-[24px] bg-slate-50/90 p-4">
               <div class="mb-2 flex items-center justify-between text-sm">
                 <span class="font-medium text-slate-600">Прогресс</span>
-                <span class="font-semibold text-slate-900">{{ attempt.answeredCount }} / {{ attempt.totalCount }}</span>
+                <span class="font-semibold text-slate-900">{{ (card.activeAttempt || card.primaryAttempt).answeredCount }} / {{ (card.activeAttempt || card.primaryAttempt).totalCount }}</span>
               </div>
               <div class="h-2 overflow-hidden rounded-full bg-slate-200">
-                <div class="h-full rounded-full bg-primary transition-all" :style="{ width: `${attempt.progress}%` }"></div>
+                <div class="h-full rounded-full bg-primary transition-all" :style="{ width: `${(card.activeAttempt || card.primaryAttempt).progress}%` }"></div>
               </div>
             </div>
 
             <div class="mt-4 flex items-center justify-between text-sm text-slate-500">
               <span>
-                {{ attempt.status === 'assigned' ? 'Время начнётся после подтверждения' : `Начало: ${formatDateTime(attempt.started_at)}` }}
+                {{ (card.activeAttempt || card.primaryAttempt).status === 'assigned' ? 'Время начнётся после подтверждения' : `Начало: ${formatDateTime((card.activeAttempt || card.primaryAttempt).started_at)}` }}
               </span>
-              <span class="font-medium text-primary">{{ attempt.status === 'assigned' ? 'Начать' : 'Открыть' }}</span>
+              <span class="font-medium text-primary">{{ (card.activeAttempt || card.primaryAttempt).status === 'assigned' ? 'Начать' : 'Открыть' }}</span>
             </div>
           </button>
         </div>
@@ -194,29 +234,37 @@ onMounted(loadData)
 
       <div>
         <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-slate-900">Завершённые прохождения</h2>
-          <span class="badge bg-slate-100 text-slate-600">{{ archivedAttempts.length }}</span>
+          <h2 class="text-lg font-semibold text-slate-900">Завершённые выдачи</h2>
+          <span class="badge bg-slate-100 text-slate-600">{{ archivedAssignments.length }}</span>
         </div>
 
-        <div v-if="!archivedAttempts.length" class="glass-panel p-8 text-sm text-slate-500">Завершённых прохождений пока нет.</div>
+        <div v-if="!archivedAssignments.length" class="glass-panel p-8 text-sm text-slate-500">Завершённых выдач пока нет.</div>
         <div v-else class="grid gap-4">
           <div
-            v-for="attempt in archivedAttempts"
-            :key="attempt.id"
+            v-for="card in archivedAssignments"
+            :key="card.assignmentId ?? card.primaryAttempt.id"
             class="glass-panel flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between"
           >
             <div>
-              <h3 class="text-lg font-semibold text-slate-900">{{ attempt.test_assignment?.test?.title || `Тест #${attempt.test_assignment?.test_id}` }}</h3>
-              <p class="mt-2 text-sm text-slate-500">Отправлен: {{ formatDateTime(attempt.submitted_at) }}</p>
+              <h3 class="text-lg font-semibold text-slate-900">{{ card.title }}</h3>
+              <p class="mt-1 text-sm text-slate-500">Тест: {{ card.testTitle }}</p>
+              <p class="mt-2 text-sm text-slate-500">Отправлен: {{ formatDateTime((card.archivedAttempt || card.primaryAttempt).submitted_at) }}</p>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-              <span class="badge" :class="attempt.attemptStatus.className">{{ attempt.attemptStatus.label }}</span>
-              <span v-if="attempt.resultStatus" class="badge" :class="attempt.resultStatus.className">
-                {{ attempt.resultStatus.label }}
+              <span class="badge" :class="(card.archivedAttempt || card.primaryAttempt).attemptStatus.className">{{ (card.archivedAttempt || card.primaryAttempt).attemptStatus.label }}</span>
+              <span v-if="(card.archivedAttempt || card.primaryAttempt).resultStatus" class="badge" :class="(card.archivedAttempt || card.primaryAttempt).resultStatus.className">
+                {{ (card.archivedAttempt || card.primaryAttempt).resultStatus.label }}
               </span>
-              <RouterLink :to="{ name: 'attempt', params: { attemptId: attempt.id } }" class="ghost-button no-underline">
+              <RouterLink :to="{ name: 'attempt', params: { attemptId: (card.archivedAttempt || card.primaryAttempt).id } }" class="ghost-button no-underline">
                 Смотреть ответы
+              </RouterLink>
+              <RouterLink
+                v-if="canOpenResult(card.archivedAttempt || card.primaryAttempt)"
+                :to="{ name: 'my-result-detail', params: { attemptId: (card.archivedAttempt || card.primaryAttempt).id } }"
+                class="primary-button no-underline"
+              >
+                Результаты
               </RouterLink>
             </div>
           </div>

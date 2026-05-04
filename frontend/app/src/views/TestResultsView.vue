@@ -13,13 +13,18 @@ import { resolveTableTemplate } from '../utils/resultTemplates'
 const props = defineProps({
   testId: {
     type: [String, Number],
-    required: true,
+    default: null,
+  },
+  assignmentId: {
+    type: [String, Number],
+    default: null,
   },
 })
 
 const loading = ref(true)
 const error = ref('')
 const test = ref(null)
+const assignment = ref(null)
 const attempts = ref([])
 const results = ref([])
 const persons = ref([])
@@ -41,6 +46,7 @@ const resultStatusOptions = ['pending', 'processing', 'calculated', 'error'].map
   value,
   label: getResultStatusMeta(value).label,
 }))
+const isAssignmentScope = computed(() => props.assignmentId != null)
 
 function mergePersonData(primary, secondary) {
   if (primary && secondary) {
@@ -251,7 +257,7 @@ function openExportPreview() {
     id_kind: 'attempt',
     ids: ids.join(','),
     scope_kind: 'test',
-    scope_id: String(normalizeId(props.testId)),
+    scope_id: String(normalizeId(test.value?.id)),
     noco_token: nocoToken,
   })
 
@@ -285,11 +291,25 @@ async function loadData() {
   error.value = ''
 
   try {
-    const loadedTest = await get('tests', props.testId)
+    let loadedTest = null
+    let loadedAssignment = null
+    let attemptsFilter = {}
+
+    if (props.assignmentId != null) {
+      loadedAssignment = await get('test_assignments', props.assignmentId, { appends: 'test' })
+      const resolvedTestId = normalizeId(loadedAssignment?.test_id ?? loadedAssignment?.test?.id)
+      if (!resolvedTestId) throw new Error('assignment_has_no_test')
+      loadedTest = loadedAssignment?.test || await get('tests', resolvedTestId)
+      attemptsFilter = { test_assignment_id: normalizeId(props.assignmentId) }
+    } else if (props.testId != null) {
+      loadedTest = await get('tests', props.testId)
+      attemptsFilter = { test_assignment: { test_id: normalizeId(props.testId) } }
+    } else {
+      throw new Error('no_scope')
+    }
+
     const loadedAttempts = await list('attempts', {
-      filter: toFilter({
-        test_assignment: { test_id: normalizeId(props.testId) },
-      }),
+      filter: toFilter(attemptsFilter),
       appends: 'test_assignment,test_assignment.test,person',
       sort: '-submitted_at,-started_at,-id',
     })
@@ -325,13 +345,14 @@ async function loadData() {
     const loadedDepartments = loadedDepartmentsResult.status === 'fulfilled' ? loadedDepartmentsResult.value : []
 
     test.value = loadedTest
+    assignment.value = loadedAssignment
     attempts.value = loadedAttempts
     results.value = loadedResults
     persons.value = loadedPersons
     classes.value = loadedClasses
     departments.value = loadedDepartments
   } catch {
-    error.value = 'Не удалось загрузить прохождения по тесту'
+    error.value = 'Не удалось загрузить прохождения по выдаче'
   } finally {
     loading.value = false
   }
@@ -343,13 +364,16 @@ onMounted(loadData)
 <template>
   <section class="w-full">
     <div class="mb-5 flex flex-wrap items-center gap-3">
-      <RouterLink :to="{ name: 'results' }" class="ghost-button no-underline">← К списку тестов</RouterLink>
+      <RouterLink :to="{ name: 'results' }" class="ghost-button no-underline">← К списку выдач</RouterLink>
     </div>
 
     <div class="mb-6 space-y-4">
       <div>
         <p class="mb-2 text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">Результаты</p>
-        <h1 class="section-title">{{ test?.title || 'Прохождения по тесту' }}</h1>
+        <h1 class="section-title">{{ assignment?.title || test?.title || 'Прохождения по выдаче' }}</h1>
+        <p v-if="assignment?.test?.title || test?.title" class="mt-2 text-sm text-slate-500">
+          Тест: {{ assignment?.test?.title || test?.title }}
+        </p>
       </div>
 
       <div class="glass-panel p-4 sm:p-5">
@@ -401,7 +425,7 @@ onMounted(loadData)
 
     <div v-if="loading" class="glass-panel p-10 text-center text-sm text-slate-500">Загрузка попыток…</div>
     <div v-else-if="error" class="glass-panel p-10 text-center text-sm text-red-700">{{ error }}</div>
-    <div v-else-if="!rows.length" class="glass-panel p-10 text-center text-sm text-slate-500">По этому тесту пока нет доступных попыток.</div>
+    <div v-else-if="!rows.length" class="glass-panel p-10 text-center text-sm text-slate-500">По этой выдаче пока нет доступных попыток.</div>
     <div v-else class="overflow-hidden border border-white/60 bg-white/92 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
       <div class="overflow-x-auto">
         <table class="min-w-full border-collapse text-left text-sm">
@@ -444,7 +468,9 @@ onMounted(loadData)
               </td>
               <td class="px-4 py-4">
                 <RouterLink
-                  :to="{ name: 'result-detail', params: { testId: props.testId, attemptId: row.attempt.id } }"
+                  :to="isAssignmentScope
+                    ? { name: 'result-detail-assignment', params: { assignmentId: props.assignmentId, attemptId: row.attempt.id } }
+                    : { name: 'result-detail', params: { testId: props.testId, attemptId: row.attempt.id } }"
                   class="ghost-button no-underline"
                 >
                   Открыть

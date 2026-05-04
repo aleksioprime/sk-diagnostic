@@ -1,4 +1,4 @@
-import { personDisplayName } from '../format'
+import { formatGenderValue, personDisplayName } from '../format'
 
 export const motivationTemplate = {
   id: 'motivation_learning',
@@ -61,7 +61,7 @@ export const motivationTemplate = {
           { label: 'Уровень', value: result.level || '—' },
           { label: 'Суммарный балл', value: result.total_score ?? '—' },
           { label: 'Возраст', value: student.age ?? '—' },
-          { label: 'Пол', value: student.gender_label || student.gender || '—' },
+          { label: 'Пол', value: formatGenderValue(student.gender_label || student.gender) },
         ],
       },
       {

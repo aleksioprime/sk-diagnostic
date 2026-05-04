@@ -1,22 +1,34 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import JsonResultTable from '../components/results/JsonResultTable.vue'
 import ResultSections from '../components/results/ResultSections.vue'
 import { get, list, normalizeId, toFilter } from '../utils/nocobase'
-import { formatDateTime, formatDuration, getAttemptStatusMeta, getResultStatusMeta } from '../utils/format'
+import { formatDateTime, formatDuration, formatGenderValue, getAttemptStatusMeta, getResultStatusMeta } from '../utils/format'
 import { resolveResultTemplate } from '../utils/resultTemplates'
 
 const props = defineProps({
   testId: {
     type: [String, Number],
-    required: true,
+    default: null,
+  },
+  assignmentId: {
+    type: [String, Number],
+    default: null,
   },
   attemptId: {
     type: [String, Number],
     required: true,
   },
+  mode: {
+    type: String,
+    default: 'psycho',
+    validator: (value) => ['psycho', 'self'].includes(value),
+  },
 })
+
+const auth = useAuthStore()
 
 const loading = ref(true)
 const error = ref('')
@@ -81,6 +93,20 @@ const answersPreview = computed(() => {
 const attemptStatus = computed(() => getAttemptStatusMeta(attempt.value?.status))
 const resultStatus = computed(() => getResultStatusMeta(resultRecord.value?.status))
 const resultStudent = computed(() => resultRecord.value?.json_results?.student || {})
+const resultStudentGender = computed(() => formatGenderValue(
+  resultStudent.value.gender_value || resultStudent.value.gender_label || resultStudent.value.gender,
+))
+const isSelfMode = computed(() => props.mode === 'self')
+const backRoute = computed(() => {
+  if (isSelfMode.value) return { name: 'assigned-tests' }
+  if (props.assignmentId != null) return { name: 'results-assignment', params: { assignmentId: props.assignmentId } }
+  return { name: 'results-test', params: { testId: props.testId } }
+})
+const backLabel = computed(() => {
+  if (isSelfMode.value) return '← К моим тестам'
+  if (props.assignmentId != null) return '← К прохождениям по выдаче'
+  return '← К прохождениям по тесту'
+})
 
 async function loadData() {
   loading.value = true
@@ -91,14 +117,31 @@ async function loadData() {
     if (!loadedAttempt) {
       throw new Error('archived')
     }
-    const attemptTestId = loadedAttempt.test_assignment?.test_id ?? loadedAttempt.test_assignment?.test?.id
-    if (String(attemptTestId) !== String(props.testId)) {
-      throw new Error('wrong_test')
+
+    if (props.testId != null) {
+      const attemptTestId = loadedAttempt.test_assignment?.test_id ?? loadedAttempt.test_assignment?.test?.id
+      if (String(attemptTestId) !== String(props.testId)) {
+        throw new Error('wrong_test')
+      }
+    }
+    if (props.assignmentId != null) {
+      const attemptAssignmentId = normalizeId(loadedAttempt.test_assignment_id ?? loadedAttempt.test_assignment?.id)
+      if (String(attemptAssignmentId) !== String(normalizeId(props.assignmentId))) {
+        throw new Error('wrong_assignment')
+      }
+    }
+
+    if (isSelfMode.value && !auth.isPsycho) {
+      const authPersonId = normalizeId(auth.personId)
+      const attemptPersonId = normalizeId(loadedAttempt.person_id ?? loadedAttempt.person?.id)
+      if (!authPersonId || String(authPersonId) !== String(attemptPersonId)) {
+        throw new Error('forbidden')
+      }
     }
 
     const [loadedQuestions, loadedAnswers, resultRecords] = await Promise.all([
       list('questions', {
-        filter: toFilter({ test_id: normalizeId(props.testId), is_active: true }),
+        filter: toFilter({ test_id: normalizeId(loadedAttempt.test_assignment?.test_id ?? loadedAttempt.test_assignment?.test?.id), is_active: true }),
         sort: 'order,id',
       }),
       list('answers', {
@@ -139,7 +182,7 @@ onMounted(loadData)
 <template>
   <section class="w-full">
     <div class="mb-5 flex flex-wrap items-center gap-3">
-      <RouterLink :to="{ name: 'results-test', params: { testId: props.testId } }" class="ghost-button no-underline">← К прохождениям по тесту</RouterLink>
+      <RouterLink :to="backRoute" class="ghost-button no-underline">{{ backLabel }}</RouterLink>
       <span v-if="attempt" class="badge" :class="attemptStatus.className">{{ attemptStatus.label }}</span>
       <span v-if="resultRecord" class="badge" :class="resultStatus.className">{{ resultStatus.label }}</span>
     </div>
@@ -152,7 +195,7 @@ onMounted(loadData)
         <h1 class="mt-3 text-4xl leading-none font-semibold tracking-tight text-slate-900">{{ hero.title }}</h1>
 
         <div class="mt-6 grid gap-3 text-sm text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
-          <div>Пол: <span class="font-medium text-slate-800">{{ resultStudent.gender_value || resultStudent.gender_label || resultStudent.gender || '—' }}</span></div>
+          <div>Пол: <span class="font-medium text-slate-800">{{ resultStudentGender }}</span></div>
           <div>Возраст: <span class="font-medium text-slate-800">{{ resultStudent.age ?? '—' }}</span></div>
           <div>Отправлен: <span class="font-medium text-slate-800">{{ formatDateTime(attempt.submitted_at) }}</span></div>
           <div>Длительность: <span class="font-medium text-slate-800">{{ formatDuration(attempt.duration) }}</span></div>

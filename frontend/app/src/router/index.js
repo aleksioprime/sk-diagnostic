@@ -7,6 +7,7 @@ import ResultsListView from '../views/ResultsListView.vue'
 import TestResultsView from '../views/TestResultsView.vue'
 import ResultDetailView from '../views/ResultDetailView.vue'
 import AnonAttemptView from '../views/AnonAttemptView.vue'
+import ProfileView from '../views/ProfileView.vue'
 
 const NoAccessView = {
   template: `
@@ -26,10 +27,48 @@ const routes = [
   { path: '/t/:publicToken', name: 'anon-test-intro', component: AnonAttemptView, props: true, meta: { public: true } },
   { path: '/a/:token', name: 'anon-attempt', component: AnonAttemptView, props: true, meta: { public: true } },
   { path: '/', name: 'assigned-tests', component: AssignedTestsView },
+  { path: '/profile', name: 'profile', component: ProfileView },
   { path: '/attempts/:attemptId', name: 'attempt', component: AttemptView, props: true },
   { path: '/results', name: 'results', component: ResultsListView, meta: { requiresPsycho: true } },
+  {
+    path: '/results/assignments/:assignmentId',
+    name: 'results-assignment',
+    component: TestResultsView,
+    props: (route) => ({ assignmentId: route.params.assignmentId }),
+    meta: { requiresPsycho: true },
+  },
+  {
+    path: '/results/assignments/:assignmentId/attempts/:attemptId',
+    name: 'result-detail-assignment',
+    component: ResultDetailView,
+    props: (route) => ({
+      assignmentId: route.params.assignmentId,
+      attemptId: route.params.attemptId,
+      mode: 'psycho',
+    }),
+    meta: { requiresPsycho: true },
+  },
   { path: '/results/tests/:testId', name: 'results-test', component: TestResultsView, props: true, meta: { requiresPsycho: true } },
-  { path: '/results/tests/:testId/attempts/:attemptId', name: 'result-detail', component: ResultDetailView, props: true, meta: { requiresPsycho: true } },
+  {
+    path: '/results/tests/:testId/attempts/:attemptId',
+    name: 'result-detail',
+    component: ResultDetailView,
+    props: (route) => ({
+      testId: route.params.testId,
+      attemptId: route.params.attemptId,
+      mode: 'psycho',
+    }),
+    meta: { requiresPsycho: true },
+  },
+  {
+    path: '/my-results/attempts/:attemptId',
+    name: 'my-result-detail',
+    component: ResultDetailView,
+    props: (route) => ({
+      attemptId: route.params.attemptId,
+      mode: 'self',
+    }),
+  },
 ]
 
 const router = createRouter({

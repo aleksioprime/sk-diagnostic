@@ -76,6 +76,26 @@ export function personDisplayName(person, fallbackId = null) {
   return person.short_name || person.full_name || [person.last_name, person.first_name].filter(Boolean).join(' ') || person.email || person.nickname || person.username || (fallbackId != null ? `#${fallbackId}` : '—')
 }
 
+/** Нормализация отображения пола в интерфейсе. */
+export function formatGenderValue(value) {
+  if (value === null || value === undefined || value === '') return '—'
+
+  const text = String(value).trim()
+  if (!text) return '—'
+
+  const normalized = text.toLowerCase()
+  const map = {
+    male: 'мужской',
+    m: 'мужской',
+    man: 'мужской',
+    female: 'женский',
+    f: 'женский',
+    woman: 'женский',
+  }
+
+  return map[normalized] || text
+}
+
 /** Проверка на null / undefined / пустую строку. */
 export function isNil(value) {
   return value === null || value === undefined || value === ''
@@ -85,6 +105,9 @@ export function isNil(value) {
 export function stringifyValue(value) {
   if (value === null || value === undefined || value === '') return '—'
   if (typeof value === 'boolean') return value ? 'Да' : 'Нет'
+  if (typeof value === 'string') {
+    return formatGenderValue(value)
+  }
   if (Array.isArray(value)) {
     const parts = value.map((item) => stringifyValue(item)).filter((item) => item !== '—')
     return parts.length ? parts.join(', ') : '—'
