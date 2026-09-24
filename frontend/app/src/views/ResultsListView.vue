@@ -8,6 +8,7 @@ const error = ref('')
 const assignments = ref([])
 const attempts = ref([])
 const search = ref('')
+const showArchived = ref(false)
 
 const attemptsByAssignmentId = computed(() => {
   return attempts.value.reduce((map, attempt) => {
@@ -29,6 +30,10 @@ const rows = computed(() => {
   const query = search.value.trim().toLowerCase()
 
   return assignments.value
+    .filter((assignment) => {
+      const isActive = assignment.is_active === true || assignment.is_active === 1 || assignment.is_active === '1' || assignment.is_active === 'true'
+      return showArchived.value ? !isActive : isActive
+    })
     .map((assignment) => {
       const assignmentAttempts = attemptsByAssignmentId.value[assignment.id] || []
       const uniqueStudents = new Set(
@@ -56,6 +61,19 @@ const rows = computed(() => {
         .join(' ')
         .toLowerCase()
       return haystack.includes(query)
+    })
+    .sort((left, right) => {
+      const testOrder = (left.assignment.test?.title || '').localeCompare(
+        right.assignment.test?.title || '',
+        'ru',
+        { sensitivity: 'base', numeric: true },
+      )
+      if (testOrder !== 0) return testOrder
+
+      return (left.assignment.title || '').localeCompare(right.assignment.title || '', 'ru', {
+        sensitivity: 'base',
+        numeric: true,
+      })
     })
 })
 
@@ -101,6 +119,23 @@ onMounted(loadData)
           {{ loading ? 'Загрузка…' : 'Обновить' }}
         </button>
       </div>
+    </div>
+
+    <div class="mb-5 flex gap-2" role="group" aria-label="Статус выдач">
+      <button
+        class="rounded-full border px-4 py-2 text-sm font-medium transition"
+        :class="!showArchived ? 'border-primary bg-primary text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'"
+        @click="showArchived = false"
+      >
+        Активные
+      </button>
+      <button
+        class="rounded-full border px-4 py-2 text-sm font-medium transition"
+        :class="showArchived ? 'border-primary bg-primary text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'"
+        @click="showArchived = true"
+      >
+        Архивные
+      </button>
     </div>
 
     <div v-if="loading" class="glass-panel p-10 text-center text-sm text-slate-500">Загрузка выдач…</div>
