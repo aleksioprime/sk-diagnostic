@@ -355,7 +355,7 @@ async function loadData() {
         .map((attempt) => normalizeId(attempt.person_id)),
     )
 
-    const [loadedPersonsResult, loadedClassesResult, loadedDepartmentsResult] = await Promise.allSettled([
+    const [loadedPersonsResult, currentSchoolYearResult, loadedDepartmentsResult] = await Promise.allSettled([
       missingPersonIds.length
         ? list('persons', {
           filter: toFilter({ id: { $in: missingPersonIds } }),
@@ -363,12 +363,23 @@ async function loadData() {
           appends: 'current_class,departments',
         })
         : Promise.resolve([]),
-      list('classes', { sort: 'grade,letter,id' }),
+      list('school_years', {
+        filter: toFilter({ is_current: true }),
+        sort: '-id',
+      }),
       list('departments', { sort: 'title,id' }),
     ])
 
     const loadedPersons = loadedPersonsResult.status === 'fulfilled' ? loadedPersonsResult.value : []
-    const loadedClasses = loadedClassesResult.status === 'fulfilled' ? loadedClassesResult.value : []
+    const currentSchoolYear = currentSchoolYearResult.status === 'fulfilled'
+      ? currentSchoolYearResult.value[0]
+      : null
+    const loadedClasses = currentSchoolYear
+      ? await list('classes', {
+        filter: toFilter({ school_year_id: normalizeId(currentSchoolYear.id) }),
+        sort: 'grade,letter,id',
+      })
+      : []
     const loadedDepartments = loadedDepartmentsResult.status === 'fulfilled' ? loadedDepartmentsResult.value : []
 
     test.value = loadedTest
