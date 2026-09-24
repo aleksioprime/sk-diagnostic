@@ -363,23 +363,37 @@ async function loadData() {
           appends: 'current_class,departments',
         })
         : Promise.resolve([]),
-      list('school_years', {
-        filter: toFilter({ is_current: true }),
-        sort: '-id',
-      }),
+      list('school_years', { sort: '-id' }),
       list('departments', { sort: 'title,id' }),
     ])
 
     const loadedPersons = loadedPersonsResult.status === 'fulfilled' ? loadedPersonsResult.value : []
-    const currentSchoolYear = currentSchoolYearResult.status === 'fulfilled'
-      ? currentSchoolYearResult.value[0]
-      : null
-    const loadedClasses = currentSchoolYear
-      ? await list('classes', {
-        filter: toFilter({ school_year_id: normalizeId(currentSchoolYear.id) }),
-        sort: 'grade,letter,id',
-      })
+    const schoolYears = currentSchoolYearResult.status === 'fulfilled' ? currentSchoolYearResult.value : []
+    const currentSchoolYear = schoolYears.find((schoolYear) => (
+      schoolYear.is_current === true
+      || schoolYear.is_current === 1
+      || schoolYear.is_current === '1'
+      || schoolYear.is_current === 'true'
+    ))
+    const allClasses = currentSchoolYearResult.status === 'fulfilled'
+      ? await list('classes', { sort: 'grade,letter,id' })
       : []
+    const currentSchoolYearId = normalizeId(currentSchoolYear?.id)
+    const loadedClasses = allClasses.filter((cls) => {
+      const classSchoolYear = cls.school_year || cls.academic_year
+      const classSchoolYearId = normalizeId(
+        cls.school_year_id
+        ?? cls.academic_year_id
+        ?? classSchoolYear?.id,
+      )
+      return currentSchoolYearId != null && String(classSchoolYearId) === String(currentSchoolYearId)
+    })
+    const classesFromPersons = dedupe(
+      loadedPersons
+        .map((person) => person.current_class)
+        .filter((cls) => cls && cls.id != null)
+        .map((cls) => JSON.stringify(cls)),
+    ).map((serializedClass) => JSON.parse(serializedClass))
     const loadedDepartments = loadedDepartmentsResult.status === 'fulfilled' ? loadedDepartmentsResult.value : []
 
     test.value = loadedTest
@@ -387,7 +401,7 @@ async function loadData() {
     attempts.value = loadedAttempts
     results.value = loadedResults
     persons.value = loadedPersons
-    classes.value = loadedClasses
+    classes.value = classesFromPersons.length ? classesFromPersons : loadedClasses
     departments.value = loadedDepartments
   } catch {
     error.value = 'Не удалось загрузить прохождения по выдаче'
