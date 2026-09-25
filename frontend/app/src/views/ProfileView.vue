@@ -33,10 +33,15 @@ async function saveProfile() {
 
   saving.value = true
   try {
-    await update('persons', person.value.id, {
+    const updatedPerson = await update('persons', person.value.id, {
       birth_date: birthDate.value || null,
     })
-    await auth.fetchPerson()
+    const savedBirthDate = birthDate.value || null
+    auth.person = {
+      ...person.value,
+      ...updatedPerson,
+      birth_date: updatedPerson?.birth_date ?? savedBirthDate,
+    }
     const freshBirthDate = auth.person?.birth_date ? String(auth.person.birth_date).slice(0, 10) : ''
     birthDate.value = freshBirthDate
     initialBirthDate.value = freshBirthDate

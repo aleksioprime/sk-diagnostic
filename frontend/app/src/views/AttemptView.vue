@@ -106,6 +106,8 @@ const isReadOnly = computed(() => ['submitted', 'completed'].includes(attempt.va
 const showIntro = computed(() => attempt.value?.status === 'assigned')
 const displayDuration = computed(() => formatDuration(elapsedSeconds.value ?? attempt.value?.duration))
 const diagnosticCode = computed(() => attempt.value?.test_assignment?.test?.code || null)
+const requiresBirthDate = computed(() => ['motivation', 'motivation_learning'].includes(String(diagnosticCode.value || '').toLowerCase()))
+const birthDateRequired = computed(() => requiresBirthDate.value && !attempt.value?.person?.birth_date)
 
 const currentStep = ref(0)
 const isSequential = computed(() => Boolean(attempt.value?.test_assignment?.test?.is_sequential))
@@ -336,6 +338,10 @@ function patchAnswer(answerId, patch) {
 
 async function startAttempt({ silent = false } = {}) {
   if (!attempt.value || attempt.value.status !== 'assigned') return
+  if (birthDateRequired.value) {
+    globalNotice.value = 'Укажите дату рождения в профиле перед началом диагностики.'
+    return
+  }
   starting.value = true
   error.value = ''
 
@@ -801,10 +807,13 @@ onBeforeUnmount(stopTimer)
         <p class="mt-6 text-sm leading-6 text-slate-600">
           После начала прохождения будет зафиксировано время старта, и откроется страница с вопросами.
         </p>
+        <p v-if="birthDateRequired" class="mt-4 text-sm font-medium text-amber-700">
+          Для этой диагностики сначала укажите дату рождения в профиле.
+        </p>
 
         <div class="mt-6 flex flex-wrap justify-end gap-3">
           <RouterLink :to="{ name: 'assigned-tests' }" class="ghost-button no-underline">Вернуться</RouterLink>
-          <button class="primary-button" :disabled="starting" @click="startAttempt()">
+          <button class="primary-button" :disabled="starting || birthDateRequired" @click="startAttempt()">
             {{ starting ? 'Запускаем…' : 'Начать прохождение' }}
           </button>
         </div>

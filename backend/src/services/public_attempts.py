@@ -22,6 +22,7 @@ logger = get_logger(__name__)
 
 # Статусы, означающие завершённую попытку
 FINISHED_STATUSES = {'submitted', 'completed'}
+MOTIVATION_TEST_CODES = {'motivation', 'motivation_learning'}
 
 
 def normalize_id(value: Any) -> Any:
@@ -45,6 +46,21 @@ def calculate_duration(started_at: str | None, fallback: Any = None) -> int | An
         return fallback
     started_ts = datetime.fromisoformat(started_at.replace('Z', '+00:00')).timestamp()
     return max(0, round(datetime.now(timezone.utc).timestamp() - started_ts))
+
+
+def is_motivation_test(attempt: dict[str, Any]) -> bool:
+    """Проверить, относится ли попытка к диагностике мотивации учения."""
+    test = (attempt.get('test_assignment') or {}).get('test') or {}
+    return str(test.get('code') or '').strip().lower() in MOTIVATION_TEST_CODES
+
+
+def validate_birth_date_for_start(attempt: dict[str, Any]) -> None:
+    """Не разрешать старт мотивационной диагностики без даты рождения."""
+    if is_motivation_test(attempt) and not (attempt.get('person') or {}).get('birth_date'):
+        raise HTTPException(
+            status_code=409,
+            detail='Укажите дату рождения в профиле перед началом диагностики.',
+        )
 
 
 class PublicAttemptsService:
@@ -185,6 +201,7 @@ class PublicAttemptsService:
         """Начать попытку: перевести из 'assigned' в 'in_progress'."""
         logger.info("Старт попытки: token=%s", token[:8] + '...')
         attempt = await self.get_attempt_by_token(token)
+        validate_birth_date_for_start(attempt)
         if attempt.get('status') == 'assigned':
             await nocobase_client.update(
                 'attempts',
