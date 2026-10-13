@@ -92,7 +92,7 @@ cp .env.example .env
 
 | Переменная | Описание | По умолчанию |
 |-----------|---------|-------------|
-| `VITE_API_URL` | URL NocoBase для dev-прокси | `https://flow.skeducator.ru` |
+| `VITE_API_URL` | URL NocoBase для dev-прокси | `https://flow.skolhub.ru` |
 | `VITE_BACKEND_API_URL` | URL BFF-бэкенда для фронтенда | `/backend` |
 | `VITE_LOGGING` | Включить логирование на фронтенде (`1` / `0`) | `0` |
 

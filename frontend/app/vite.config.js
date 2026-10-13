@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(() => {
-  const apiUrl = process.env.VITE_API_URL || 'https://flow.skeducator.ru'
+  const apiUrl = process.env.VITE_API_URL || 'https://flow.skolhub.ru'
   const apiOrigin = new URL(apiUrl).origin
   const backendProxyUrl = process.env.VITE_BACKEND_API_PROXY_URL || 'http://localhost:8000/api/v1'
 

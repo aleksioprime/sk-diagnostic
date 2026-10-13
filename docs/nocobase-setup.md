@@ -217,7 +217,7 @@ tests
 3. Запишите в `.env`:
 
 ```env
-NOCOBASE_URL=https://flow.skeducator.ru
+NOCOBASE_URL=https://flow.skolhub.ru
 API_KEY=your_nocobase_api_token
 ```
 

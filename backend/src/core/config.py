@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     # ─── NocoBase ─────────────────────────────────────────────────────────
     nocobase_url: str = Field(alias='NOCOBASE_URL', default='')
-    vite_api_url: str = Field(alias='VITE_API_URL', default='https://flow.skeducator.ru')
+    vite_api_url: str = Field(alias='VITE_API_URL', default='https://flow.skolhub.ru')
     api_key: str = Field(alias='API_KEY', default='')
     nocobase_timeout: float = Field(alias='NOCOBASE_TIMEOUT', default=30.0)
 
@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     @property
     def nocobase_api_url(self) -> str:
         """Базовый URL до ``/api`` эндпоинта NocoBase."""
-        base = (self.nocobase_url or self.vite_api_url or 'https://flow.skeducator.ru').rstrip('/')
+        base = (self.nocobase_url or self.vite_api_url or 'https://flow.skolhub.ru').rstrip('/')
         return base if base.endswith('/api') else f'{base}/api'
 
 

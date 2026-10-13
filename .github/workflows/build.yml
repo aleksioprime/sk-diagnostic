@@ -40,7 +40,7 @@ jobs:
         run: npm run build
         working-directory: frontend/app
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://flow.skeducator.ru' }}
+          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://flow.skolhub.ru' }}
           VITE_BACKEND_API_URL: /backend
 
       - name: Setup Python
@@ -73,7 +73,7 @@ jobs:
 
       - name: Build and push frontend image
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://flow.skeducator.ru' }}
+          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://flow.skolhub.ru' }}
           VITE_LOGGING: ${{ vars.VITE_LOGGING || '0' }}
           VITE_EXPORT_SERVICE_URL: ${{ vars.VITE_EXPORT_SERVICE_URL || 'https://export.skeducator.ru' }}
         run: |
