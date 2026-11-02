@@ -169,3 +169,23 @@ async def test_access_rules(db, client):
 
     assert (await client.get('/api/v1/assignments')).status_code == 200
     assert (await client.get('/api/v1/auth/me')).json()['is_psychologist'] is True
+
+
+async def test_parallel_saves_do_not_duplicate(db, client):
+    """Быстрые клики по цветам: несколько сохранений одного вопроса одновременно."""
+    import asyncio
+
+    await login_psychologist(db, client)
+    test = await ranking_test(db)
+    study_class, students = await school_class(db, students=1)
+    await _assign(db, client, test, study_class)
+    async with other_client(client) as pupil:
+        await login_student(db, pupil, students[0])
+        attempt_id = (await pupil.get('/api/v1/my/attempts')).json()[0]['id']
+        question = (await pupil.post(f'/api/v1/my/attempts/{attempt_id}/start', json={})).json()['questions'][0]
+        ids = [o['id'] for o in question['options']]
+        url = f'/api/v1/my/attempts/{attempt_id}/answers/{question["id"]}'
+        responses = await asyncio.gather(*[pupil.put(url, json={'ranking': ids[: n + 1]}) for n in range(3)])
+        assert [r.status_code for r in responses] == [200, 200, 200]
+        saved = (await pupil.get(f'/api/v1/my/attempts/{attempt_id}')).json()['answers']
+        assert len(saved) == 1 and len(saved[0]['ranking_ids']) in (1, 2, 3)

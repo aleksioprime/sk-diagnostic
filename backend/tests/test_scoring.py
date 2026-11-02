@@ -7,7 +7,11 @@ import pytest
 
 from app.scoring import ScoringError, calculate, domiki
 
-CASES = json.loads((Path(__file__).parent / 'fixtures' / 'nocobase_results.json').read_text())
+FIXTURES = Path(__file__).parent / 'fixtures'
+CASES = json.loads((FIXTURES / 'nocobase_results.json').read_text())
+# Примеры из старого репозитория, прогнанные через скрипты NocoBase (в том числе «Домики» начальной школы,
+# по которым в NocoBase ещё не было результатов)
+EXAMPLES = json.loads((FIXTURES / 'js_examples.json').read_text())
 
 
 def _strip(result: dict) -> dict:
@@ -19,6 +23,15 @@ def _strip(result: dict) -> dict:
 @pytest.mark.parametrize('case', CASES, ids=lambda c: f'{c["input"]["test_code"]}-{c["input"]["attempt_id"]}')
 def test_same_as_nocobase(case):
     assert _strip(calculate(case['input']['test_code'], case['input'])) == case['output']
+
+
+@pytest.mark.parametrize('case', EXAMPLES, ids=lambda c: f'{c["input"]["test_code"]}-{c["input"]["attempt_id"]}')
+def test_same_as_nocobase_scripts(case):
+    if 'error' in case['output']:
+        with pytest.raises(ScoringError):
+            calculate(case['input']['test_code'], case['input'])
+    else:
+        assert _strip(calculate(case['input']['test_code'], case['input'])) == case['output']
 
 
 def test_motivation_needs_age():

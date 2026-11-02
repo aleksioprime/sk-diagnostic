@@ -34,6 +34,11 @@ class Variant:
     # Подписи домиков в итоговой таблице; None — те же названия
     domain_titles: dict[str, str] | None = None
     custom_house: bool = False  # «Придумай сам» с описанием от ученика
+    # Пояснение к пограничному эмоциональному фону: в версиях методики оно сформулировано по-разному
+    borderline_text: str = (
+        'Показатель находится между нормативным диапазоном и зоной преобладания отрицательных эмоций; '
+        'требует дополнительной качественной интерпретации.'
+    )
 
 
 PRIMARY = Variant(
@@ -71,6 +76,10 @@ PRIMARY = Variant(
         'custom_house': 'Придумай сам',
     },
     custom_house=True,
+    borderline_text=(
+        'Показатель находится между нормативным диапазоном и зоной преобладания отрицательных эмоций; '
+        'по описанию методики требует дополнительной качественной интерпретации.'
+    ),
 )
 
 MIDDLE = Variant(
@@ -198,7 +207,7 @@ def total_deviation(order: list[str]) -> int:
     return sum(abs(order.index(color) - index) for index, color in enumerate(AUTOGENIC_NORM))
 
 
-def interpret_deviation(value: int) -> tuple[str, str, str, str]:
+def interpret_deviation(value: int, borderline_text: str) -> tuple[str, str, str, str]:
     """Уровень, короткая подпись, название, интерпретация."""
     if value > 20:
         return (
@@ -213,8 +222,7 @@ def interpret_deviation(value: int) -> tuple[str, str, str, str]:
             'borderline_background',
             'пограничный',
             'Пограничный эмоциональный фон',
-            'Показатель находится между нормативным диапазоном и зоной преобладания отрицательных эмоций; '
-            'требует дополнительной качественной интерпретации.',
+            borderline_text,
         )
     if 10 <= value <= 18:
         return (
@@ -292,7 +300,7 @@ def calculate(data: dict, variant: Variant) -> dict:
     vk = vegetative_coefficient(positions)
     vk_level, vk_title, vk_text = interpret_vegetative(vk)
     deviation = total_deviation(order)
-    dev_level, dev_label, dev_title, dev_text = interpret_deviation(deviation)
+    dev_level, dev_label, dev_title, dev_text = interpret_deviation(deviation, variant.borderline_text)
 
     houses = {code: _color(_find(answers, code), code) for code in variant.houses}
     school = summarize_relations([relation(houses[code]) for code in variant.school_codes])

@@ -87,6 +87,8 @@ async def save_answer(db: AsyncSession, attempt: Attempt, question_id: int, data
     question = await db.get(Question, question_id)
     if question is None or question.test_id != attempt.assignment.test_id or not question.is_active:
         raise HTTPException(status.HTTP_404_NOT_FOUND, 'Вопрос не найден')
+    # Сохранения одной попытки идут по очереди: быстрые клики по цветам иначе создают дубли ответа
+    await db.execute(select(Attempt.id).where(Attempt.id == attempt.id).with_for_update())
 
     answer = await db.scalar(select(Answer).where(Answer.attempt_id == attempt.id, Answer.question_id == question.id))
     if answer is None:
