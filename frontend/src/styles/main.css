@@ -1,0 +1,65 @@
+@import 'tailwindcss';
+
+/* Дизайн-токены SK Diagnostic: индиго психологической службы. */
+@theme {
+  --font-sans: 'Golos Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4338ca;
+  --color-brand-700: #3730a3;
+  --color-brand-900: #1e1b4b;
+
+  --color-surface: #ffffff;
+  --color-canvas: #f6f6fb;
+  --color-line: #e3e3ef;
+  --color-ink: #1b1b2b;
+  --color-ink-muted: #5c5c75;
+
+  --radius-control: 10px;
+  --radius-card: 14px;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+  /* Tailwind 4 убрал cursor: pointer у кнопок — возвращаем для всего кликабельного */
+  button:not(:disabled),
+  [role='button'],
+  [role='tab'],
+  [role='radio'],
+  select:not(:disabled),
+  summary,
+  label:has(> input[type='checkbox']:not(:disabled)),
+  label:has(> input[type='radio']:not(:disabled)),
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled) {
+    cursor: pointer;
+  }
+  :disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+}
+
+/* Текст из конструктора (вступление, благодарность) и форматированные ответы */
+.prose-text p + p {
+  margin-top: 0.75rem;
+}
+.prose-text ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.prose-text ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+}

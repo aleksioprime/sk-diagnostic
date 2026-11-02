@@ -1,0 +1,81 @@
+# Прод SK Diagnostic в Coolify: ресурс «Docker Compose» из этого репозитория.
+# Образы собирает GitHub Actions (.github/workflows/images.yml) при пуше в main, сервер только скачивает их.
+# Домен в интерфейсе Coolify: frontend → https://diagnostic.skolhub.ru (API проксируется nginx на backend).
+# Переменные — из .env.prod (docs/deploy.md).
+
+x-backend: &backend
+  image: ghcr.io/aleksioprime/sk-diagnostic-backend:${IMAGE_TAG:-latest}
+  pull_policy: always
+  restart: unless-stopped
+  environment:
+    ENVIRONMENT: prod
+    SECRET_KEY: ${SECRET_KEY:?}
+    APP_URL: https://diagnostic.skolhub.ru
+    CORS_ORIGINS: '["https://diagnostic.skolhub.ru"]'
+    BOOTSTRAP_ADMIN_EMAILS: ${BOOTSTRAP_ADMIN_EMAILS:?}
+    DB__HOST: postgres
+    DB__PASSWORD: ${DB__PASSWORD:?}
+    REDIS__HOST: redis
+    SMTP__HOST: ${SMTP__HOST:-smtp.yandex.ru}
+    SMTP__PORT: ${SMTP__PORT:-465}
+    SMTP__USE_SSL: ${SMTP__USE_SSL:-true}
+    SMTP__USER: ${SMTP__USER:-}
+    SMTP__PASSWORD: ${SMTP__PASSWORD:-}
+    SMTP__SENDER: ${SMTP__SENDER:-SK Diagnostic <skolstream@yandex.ru>}
+    CAPTCHA__CLIENT_KEY: ${CAPTCHA__CLIENT_KEY:-}
+    CAPTCHA__SERVER_KEY: ${CAPTCHA__SERVER_KEY:-}
+    # Вход через SkolStream и выгрузка справочника (docs/skolstream.md).
+    # Вход включается, когда задан CLIENT_ID; синхронизация — когда задан DIRECTORY_TOKEN.
+    SKOLSTREAM__BASE_URL: ${SKOLSTREAM__BASE_URL:-https://skolstream.sk.ru}
+    SKOLSTREAM__CLIENT_ID: ${SKOLSTREAM__CLIENT_ID:-}
+    SKOLSTREAM__CLIENT_SECRET: ${SKOLSTREAM__CLIENT_SECRET:-}
+    SKOLSTREAM__DIRECTORY_TOKEN: ${SKOLSTREAM__DIRECTORY_TOKEN:-}
+  volumes:
+    - nocobase_data:/data/nocobase
+  # Внутренний DNS гимназии отдаёт для skolstream.sk.ru адрес ingress в k8s, до которого из DMZ нет
+  # маршрута; публичный адрес доступен. Убрать, когда девопсы откроют маршрут DMZ → ingress.
+  extra_hosts:
+    - "skolstream.sk.ru:${SKOLSTREAM__PUBLIC_IP:-91.221.164.121}"
+  depends_on: [postgres, redis]
+
+services:
+  backend:
+    <<: *backend
+    command: api
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 15s
+
+  worker:
+    <<: *backend
+    command: worker
+    healthcheck:
+      disable: true
+
+  frontend:
+    image: ghcr.io/aleksioprime/sk-diagnostic-frontend:${IMAGE_TAG:-latest}
+    pull_policy: always
+    restart: unless-stopped
+    depends_on: [backend]
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sk_diagnostic
+      POSTGRES_PASSWORD: ${DB__PASSWORD:?}
+      POSTGRES_DB: sk_diagnostic
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sk_diagnostic']
+      interval: 10s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes: [redis_data:/data]
+
+volumes:
+  postgres_data:
+  redis_data:
+  nocobase_data:

@@ -1,27 +1,77 @@
+# Окружение разработки: docker compose -p sk-diagnostic up -d --build
+# Приложение: http://localhost:8701 · API: http://localhost:8700/api/docs · Почта: http://localhost:8704
+# PostgreSQL: localhost:8710 · Redis: localhost:8711
+
+x-backend: &backend
+  build:
+    context: ./backend
+    target: dev
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    DB__HOST: postgres
+    DB__PORT: 5432
+    REDIS__HOST: redis
+    REDIS__PORT: 6379
+    SMTP__HOST: mailpit
+    SMTP__PORT: 1025
+    CORS_ORIGINS: '["http://localhost:8701"]'
+    APP_URL: http://localhost:8701
+    RELOAD: '1'
+    BOOTSTRAP_ADMIN_EMAILS: '["admin@example.org"]'
+    BOOTSTRAP_ADMIN_PASSWORD: dev-admin-pass  # только для локальной разработки
+  volumes:
+    - ./backend:/usr/src/app
+    - nocobase_data:/data/nocobase
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_started
+
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sk_diagnostic
+      POSTGRES_PASSWORD: sk_diagnostic
+      POSTGRES_DB: sk_diagnostic
+    ports: ['8710:5432']
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sk_diagnostic']
+      interval: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports: ['8711:6379']
+
+  mailpit:
+    image: axllent/mailpit:v1.24
+    ports: ['8704:8025', '8703:1025']
+
   backend:
-    build:
-      context: ./backend
-    env_file:
-      - ./.env
-    volumes:
-      - ./backend/src:/usr/src/app/src
-    ports:
-      - "8000:8000"
-    restart: unless-stopped
+    <<: *backend
+    command: api
+    ports: ['8700:8000']
+
+  worker:
+    <<: *backend
+    command: worker
 
   frontend:
     build:
       context: ./frontend
       target: dev
-    env_file:
-      - ./.env
     environment:
-      VITE_BACKEND_API_PROXY_URL: http://backend:8000/api/v1
-    depends_on:
-      - backend
+      VITE_API_PROXY: http://backend:8000
     volumes:
-      - ./frontend/app/src:/usr/src/app/src
-    ports:
-      - "3000:5173"
-    restart: unless-stopped
+      - ./frontend/src:/app/src
+    ports: ['8701:5173']
+    depends_on: [backend]
+
+volumes:
+  postgres_data:
+  nocobase_data:
