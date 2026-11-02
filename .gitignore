@@ -1,8 +1,18 @@
 # Dependencies
 node_modules/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
 
 # Build output
 dist/
+.nuxt/
+.output/
+coverage/
+htmlcov/
+.coverage
 
 # Environment variables
 .env
@@ -27,10 +37,5 @@ npm-debug.log*
 # Misc
 swagger.json
 
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.env
-venv/
+# Локальные файлы
+.data/
