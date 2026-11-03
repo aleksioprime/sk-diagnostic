@@ -35,6 +35,11 @@ python3 infra/coolify/deploy.py
 Скрипт создаёт ресурс `sk-diagnostic`, передаёт переменные, задаёт домен и запускает сборку. Домены Coolify
 принимает после первой сборки — тогда скрипт нужно запустить ещё раз.
 
+Дальше выкатка автоматическая: после пуша в `main` workflow «Образы» собирает образы, записывает тег коммита
+в переменную `IMAGE_TAG` ресурса и запускает развёртывание. Секреты репозитория: `COOLIFY_API`
+(`https://devops.skolhub.ru/api/v1`), `COOLIFY_APP` (UUID ресурса), `COOLIFY_TOKEN` (токен панели с правами
+write и deploy). Откат — `git revert` в `main` или в панели `IMAGE_TAG` = SHA прежнего коммита и Redeploy.
+
 ## 4. SkolStream
 
 OAuth-приложение «SK Diagnostic» в админке SkolStream: Confidential, Authorization code, redirect
