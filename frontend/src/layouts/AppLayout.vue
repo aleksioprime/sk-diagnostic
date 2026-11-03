@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
+import BrandMark from '@/components/brand/BrandMark.vue'
+import SchoolFooter from '@/components/brand/SchoolFooter.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
@@ -24,12 +26,11 @@ async function logout() {
 </script>
 
 <template>
-  <div class="min-h-dvh">
+  <div class="flex min-h-dvh flex-col">
     <header class="sticky top-0 z-10 border-b border-line bg-surface/90 backdrop-blur print:hidden">
       <div class="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
-        <RouterLink :to="{ name: 'home' }" class="flex shrink-0 items-center gap-2 font-semibold">
-          <img src="/favicon.svg" alt="" class="size-7" />
-          <span class="hidden sm:inline">SK Diagnostic</span>
+        <RouterLink :to="{ name: 'home' }" class="shrink-0">
+          <BrandMark />
         </RouterLink>
         <nav class="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto text-sm" aria-label="Разделы">
           <RouterLink
@@ -54,8 +55,9 @@ async function logout() {
         </div>
       </div>
     </header>
-    <main class="mx-auto max-w-6xl px-4 py-8">
+    <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
       <RouterView />
     </main>
+    <SchoolFooter />
   </div>
 </template>

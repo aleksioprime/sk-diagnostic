@@ -8,6 +8,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchProviders, loginWithPassword, skolstreamLoginUrl } from '@/api/auth'
 import { errorMessage } from '@/api/http'
+import BrandMark from '@/components/brand/BrandMark.vue'
+import SchoolFooter from '@/components/brand/SchoolFooter.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -54,45 +56,45 @@ async function submitPassword() {
 </script>
 
 <template>
-  <main class="grid min-h-dvh place-items-center px-4 py-10">
-    <div class="w-full max-w-sm">
-      <div class="mb-8 flex items-center gap-2 text-lg font-semibold">
-        <img src="/favicon.svg" alt="" class="size-8" />
-        SK Diagnostic
+  <div class="flex min-h-dvh flex-col">
+    <main class="grid flex-1 place-items-center px-4 py-10">
+      <div class="w-full max-w-sm">
+        <BrandMark class="mb-8" size="lg" />
+
+        <div class="rounded-card border border-line bg-surface p-6">
+          <h1 class="text-xl font-bold">Вход</h1>
+          <p class="mt-1 text-sm text-ink-muted">Для учеников и психологической службы гимназии.</p>
+
+          <p v-if="error" role="alert" class="mt-4 rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ error }}</p>
+
+          <template v-if="providers.skolstream">
+            <a
+              :href="skolstreamLoginUrl(next)"
+              class="mt-5 flex h-11 items-center justify-center rounded-control bg-brand-600 font-medium text-white hover:bg-brand-700"
+            >
+              Войти через SkolStream
+            </a>
+            <p class="mt-2 text-center text-xs text-ink-muted">Логин и пароль — те же, что в SkolStream</p>
+          </template>
+
+          <form v-if="showPassword" class="mt-6 grid gap-4 border-t border-line pt-5" novalidate @submit.prevent="submitPassword">
+            <p class="text-sm text-ink-muted">Вход администратора по паролю этого сервиса. Пароль от SkolStream здесь не подходит.</p>
+            <UiInput v-model="email" label="Электронная почта" type="email" autocomplete="username" />
+            <UiInput v-model="password" label="Пароль" type="password" autocomplete="current-password" />
+            <UiButton type="submit" variant="primary" :loading="sending">Войти</UiButton>
+          </form>
+        </div>
+
+        <button
+          v-if="providers.skolstream && !showPassword"
+          type="button"
+          class="mt-4 w-full text-center text-xs text-ink-muted hover:text-ink"
+          @click="showPassword = true"
+        >
+          Вход для администратора
+        </button>
       </div>
-
-      <div class="rounded-card border border-line bg-surface p-6">
-        <h1 class="text-xl font-bold">Вход</h1>
-        <p class="mt-1 text-sm text-ink-muted">Для учеников и психологической службы гимназии.</p>
-
-        <p v-if="error" role="alert" class="mt-4 rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ error }}</p>
-
-        <template v-if="providers.skolstream">
-          <a
-            :href="skolstreamLoginUrl(next)"
-            class="mt-5 flex h-11 items-center justify-center rounded-control bg-brand-600 font-medium text-white hover:bg-brand-700"
-          >
-            Войти через SkolStream
-          </a>
-          <p class="mt-2 text-center text-xs text-ink-muted">Логин и пароль — те же, что в SkolStream</p>
-        </template>
-
-        <form v-if="showPassword" class="mt-6 grid gap-4 border-t border-line pt-5" novalidate @submit.prevent="submitPassword">
-          <p class="text-sm text-ink-muted">Вход администратора по паролю этого сервиса. Пароль от SkolStream здесь не подходит.</p>
-          <UiInput v-model="email" label="Электронная почта" type="email" autocomplete="username" />
-          <UiInput v-model="password" label="Пароль" type="password" autocomplete="current-password" />
-          <UiButton type="submit" variant="primary" :loading="sending">Войти</UiButton>
-        </form>
-      </div>
-
-      <button
-        v-if="providers.skolstream && !showPassword"
-        type="button"
-        class="mt-4 w-full text-center text-xs text-ink-muted hover:text-ink"
-        @click="showPassword = true"
-      >
-        Вход для администратора
-      </button>
-    </div>
-  </main>
+    </main>
+    <SchoolFooter />
+  </div>
 </template>
