@@ -7,8 +7,11 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { myAttempt, saveAnswer, startAttempt, submitAttempt } from '@/api/diagnostic'
 import { errorMessage } from '@/api/http'
+import BrandMark from '@/components/brand/BrandMark.vue'
+import SchoolFooter from '@/components/brand/SchoolFooter.vue'
 import AnswerField from '@/components/questions/AnswerField.vue'
 import UiButton from '@/components/ui/UiButton.vue'
+import { pageTitle } from '@/brand'
 import { seededShuffle } from '@/utils/shuffle'
 
 const props = defineProps({ id: { type: String, required: true } })
@@ -52,7 +55,7 @@ onMounted(async () => {
   try {
     const data = await myAttempt(props.id)
     apply(data)
-    document.title = data.test.title
+    document.title = pageTitle(data.test.title)
     if (data.status === 'submitted') stage.value = 'done'
     else if (!data.is_open) {
       error.value = 'Диагностика закрыта.'
@@ -134,8 +137,9 @@ async function finish() {
 </script>
 
 <template>
-  <div class="min-h-dvh">
-    <div class="mx-auto max-w-xl px-4 py-8 sm:py-12">
+  <div class="flex min-h-dvh flex-col">
+    <div class="mx-auto w-full max-w-xl flex-1 px-4 py-8 sm:py-12">
+      <BrandMark class="mb-6" />
       <RouterLink :to="{ name: 'my' }" class="text-sm text-ink-muted hover:text-ink">← Мои диагностики</RouterLink>
 
       <p v-if="stage === 'loading'" class="mt-6 text-ink-muted" role="status">Загружаем…</p>
@@ -205,5 +209,6 @@ async function finish() {
         </section>
       </template>
     </div>
+    <SchoolFooter />
   </div>
 </template>
