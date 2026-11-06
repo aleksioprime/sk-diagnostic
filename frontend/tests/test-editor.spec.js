@@ -88,11 +88,6 @@ describe('страница скрипта расчёта', () => {
     expect(wrapper.text()).not.toContain('Не сохранён')
   })
 
-  it('встроенный расчёт не редактируется, но проверяется', async () => {
-    const wrapper = await open({ ...base, scoring: 'builtin' })
-    expect(editor(wrapper, 'Скрипт расчёта').exists()).toBe(false)
-    expect(api.runTestScript.mock.calls[0][1]).toBeNull()
-  })
 })
 
 describe('detailedError', () => {

@@ -95,8 +95,8 @@ class TestAdminBrief(BaseModel):
     is_active: bool
     questions_count: int
     assignments_count: int
-    # script — скрипт в методике, builtin — расчёт в коде приложения, none — результат пока не считается
-    scoring: Literal['script', 'builtin', 'none']
+    # script — скрипт в методике, none — результат пока не считается
+    scoring: Literal['script', 'none']
 
 
 class TestAdminDetail(TestAdminBrief):
@@ -163,7 +163,7 @@ class ContentOut(BaseModel):
     title: str
     description: str
     is_sequential: bool
-    # text — можно менять только тексты: методику уже выдавали или расчёт встроен в приложение
+    # text — можно менять только тексты: методику уже выдавали
     mode: Literal['full', 'text']
     lock_reason: str | None
     questions: list[QuestionOut]
@@ -180,7 +180,7 @@ class ScriptIn(BaseModel):
 
 
 class RunIn(BaseModel):
-    script: str | None = Field(default=None, max_length=MAX_SCRIPT, description='Пусто — встроенный расчёт методики')
+    script: str | None = Field(default=None, max_length=MAX_SCRIPT)
     input: dict
 
 

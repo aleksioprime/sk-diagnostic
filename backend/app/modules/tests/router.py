@@ -7,7 +7,6 @@ from sk_common.audit import record
 from sk_common.deps import AdminUser, Db
 from sqlalchemy import select
 
-from app import scoring
 from app.modules.assignments.service import summary
 from app.modules.attempts.router import question_out
 from app.modules.attempts.schemas import TestOut
@@ -59,7 +58,7 @@ async def _detail(db, test: Test) -> TestAdminDetail:
     return TestAdminDetail(
         **await _brief_fields(db, test),
         description=test.description,
-        needs_birth_date=test.needs_birth_date or test.code in scoring.NEEDS_BIRTH_DATE,
+        needs_birth_date=test.needs_birth_date,
         scoring_script=test.scoring_script,
     )
 
@@ -174,7 +173,6 @@ async def sample_input(
 async def save_script(test_id: int, body: ScriptIn, db: Db, user: AdminUser) -> TestAdminDetail:
     test = await _test(db, test_id)
     script = (body.script or '').strip() or None
-    service.check_script_allowed(test.code, script)
     test.scoring_script = script
     record(db, 'test.script', 'test', test.id, user.id)
     await db.commit()
@@ -194,7 +192,8 @@ def _run_out(run: ScriptRun) -> RunOut:
 
 @router.post('/{test_id}/run', response_model=RunOut, summary='Проверить расчёт на данных, ничего не сохраняя')
 async def run_script(test_id: int, body: RunIn, db: Db, _: AdminUser) -> RunOut:
-    return _run_out(await service.run_scoring(await _test(db, test_id), body.script, body.input))
+    await _test(db, test_id)
+    return _run_out(await service.run_script(body.script, body.input))
 
 
 @router.get('/{test_id}/readiness', response_model=ReadinessOut, summary='Что мешает включить методику')

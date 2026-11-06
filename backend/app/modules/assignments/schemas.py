@@ -1,6 +1,7 @@
 from datetime import date, datetime
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class ORMModel(BaseModel):
@@ -15,8 +16,34 @@ class ClassOut(ORMModel):
     students_count: int = 0
 
 
-class StudentFlagIn(BaseModel):
+class PersonEditIn(BaseModel):
+    """Данные человека не из SkolStream. Меняются только переданные поля, null очищает значение."""
+
+    last_name: str | None = Field(default=None, max_length=100)
+    first_name: str | None = Field(default=None, max_length=100)
+    middle_name: str | None = Field(default=None, max_length=100)
+    email: EmailStr | None = None
+    gender: Literal['male', 'female'] | None = None
+    birth_date: date | None = None
+    class_id: int | None = None
+    is_student: bool | None = None
+    is_employee: bool | None = None
+    password: str | None = Field(default=None, min_length=8, max_length=200)
+
+
+class PersonEditOut(BaseModel):
+    id: int
+    last_name: str
+    first_name: str
+    middle_name: str
+    email: str | None
+    gender: str | None
+    birth_date: date | None
+    class_id: int | None
     is_student: bool
+    is_employee: bool
+    has_account: bool
+    has_password: bool
 
 
 class AssignmentIn(BaseModel):

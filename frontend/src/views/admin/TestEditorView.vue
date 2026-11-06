@@ -40,8 +40,7 @@ const saving = ref(false)
 const notice = ref('')
 const error = ref('')
 
-const isBuiltin = computed(() => test.value?.scoring === 'builtin')
-const dirty = computed(() => !isBuiltin.value && script.value.trim() !== savedScript.value.trim())
+const dirty = computed(() => script.value.trim() !== savedScript.value.trim())
 
 const inputError = computed(() => {
   try {
@@ -72,7 +71,7 @@ async function check() {
   const request = ++lastRequest
   running.value = true
   try {
-    const answer = await runTestScript(route.params.id, isBuiltin.value ? null : script.value, JSON.parse(input.value))
+    const answer = await runTestScript(route.params.id, script.value, JSON.parse(input.value))
     if (request === lastRequest) run.value = answer
   } catch (e) {
     if (request === lastRequest) run.value = { error: errorMessage(e), logs: [], output: null }
@@ -95,7 +94,7 @@ onMounted(async () => {
   try {
     test.value = await getAdminTest(route.params.id)
     savedScript.value = test.value.scoring_script || ''
-    script.value = savedScript.value || (isBuiltin.value ? '' : STARTER)
+    script.value = savedScript.value || STARTER
     await loadSample()
     await check()
   } catch (e) {
@@ -152,7 +151,7 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm('Скрипт не со�
     </p>
     <TestTabs :id="route.params.id" class="mt-4" />
     <label class="mt-4 flex items-center gap-2 text-sm">
-      <input type="checkbox" :checked="test.needs_birth_date" :disabled="isBuiltin" class="size-4 accent-brand-600" @change="toggleBirthDate" />
+      <input type="checkbox" :checked="test.needs_birth_date" class="size-4 accent-brand-600" @change="toggleBirthDate" />
       Перед началом ученик указывает дату рождения (нужен возраст)
     </label>
 
@@ -165,16 +164,9 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm('Скрипт не со�
         <div class="flex min-h-8 flex-wrap items-center gap-2">
           <h2 class="font-semibold">Скрипт расчёта (JavaScript)</h2>
           <UiBadge v-if="dirty" tone="warning">Не сохранён</UiBadge>
-          <UiButton v-if="!isBuiltin" class="ml-auto" size="sm" variant="primary" :loading="saving" :disabled="!dirty" @click="save">Сохранить</UiButton>
+          <UiButton class="ml-auto" size="sm" variant="primary" :loading="saving" :disabled="!dirty" @click="save">Сохранить</UiButton>
         </div>
-        <div v-if="isBuiltin" class="rounded-control border border-line bg-canvas p-4 text-sm">
-          <p class="font-medium">Расчёт этой методики встроен в приложение</p>
-          <p class="mt-2 text-ink-muted">
-            Он написан на Python и сверен с результатами из NocoBase, поэтому заменить его скриптом нельзя. Справа можно посмотреть,
-            какие данные он получает и что возвращает. Чтобы изменить расчёт, сделайте копию методики: у неё будет такой же скрипт на JavaScript.
-          </p>
-        </div>
-        <CodeEditor v-else v-model="script" label="Скрипт расчёта" />
+        <CodeEditor v-model="script" label="Скрипт расчёта" />
       </section>
 
       <!-- Входные данные -->

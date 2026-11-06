@@ -37,7 +37,7 @@ class ScaleOption(IdMixin, TimestampMixin, Base):
 
 
 class Test(IdMixin, TimestampMixin, Base):
-    """Методика. Результат считает скрипт из scoring_script или встроенный расчёт по коду (app.scoring)."""
+    """Методика. Результат считает скрипт из scoring_script (app.scoring)."""
 
     __tablename__ = 'tests'
 
