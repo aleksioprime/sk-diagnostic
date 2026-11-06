@@ -4,6 +4,7 @@
  * { option_id, scale_option_id, text, number, boolean, ranking }.
  * Вопросы с цветами («Домики») показываются цветными плитками без подписей.
  */
+import { UiInput } from 'sk-ui'
 import { computed } from 'vue'
 import { COLOR_HEX, isColorQuestion } from '@/utils/colors'
 
@@ -129,14 +130,14 @@ const tile = (value) => ({ backgroundColor: COLOR_HEX[value.toLowerCase()] })
       @input="set({ text: $event.target.value })"
     />
 
-    <input
+    <UiInput
       v-else-if="question.question_type === 'number'"
+      class="max-w-xs"
       type="number"
-      :value="model.number ?? ''"
+      :model-value="model.number ?? ''"
       :disabled="disabled"
-      class="h-10 max-w-xs rounded-control border border-line bg-surface px-3"
       :aria-label="question.text"
-      @input="set({ number: $event.target.value === '' ? null : Number($event.target.value) })"
+      @update:model-value="set({ number: $event === '' ? null : Number($event) })"
     />
 
     <div v-else-if="question.question_type === 'yes_no'" class="flex gap-2">

@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { listPsychologists, setPsychologists } from '@/api/diagnostic'
-import { errorMessage, UiButton } from 'sk-ui'
+import { errorMessage, UiButton, UiCard } from 'sk-ui'
 import PersonPicker from '@/components/PersonPicker.vue'
 
 const people = ref([])
@@ -38,9 +38,9 @@ async function save() {
     <p class="mt-1 text-ink-muted">Психологи выдают методики классам и видят результаты учеников. Остальные сотрудники и ученики результатов не видят.</p>
     <p v-if="error" role="alert" class="mt-4 rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ error }}</p>
     <p v-if="notice" role="status" class="mt-4 rounded-control bg-brand-50 px-3 py-2 text-sm text-brand-700">{{ notice }}</p>
-    <div class="mt-6 grid gap-4 rounded-card border border-line bg-surface p-5">
+    <UiCard class="mt-6 grid gap-4">
       <PersonPicker v-model="people" label="Психологи" hint="Сотрудники из справочника SkolStream." />
       <UiButton variant="primary" class="justify-self-start" :loading="saving" @click="save">Сохранить</UiButton>
-    </div>
+    </UiCard>
   </div>
 </template>

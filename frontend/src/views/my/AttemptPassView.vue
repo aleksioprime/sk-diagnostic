@@ -6,7 +6,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { myAttempt, saveAnswer, startAttempt, submitAttempt } from '@/api/diagnostic'
-import { BrandMark, errorMessage, SchoolFooter, UiButton } from 'sk-ui'
+import { BrandMark, errorMessage, SchoolFooter, SkeletonPage, UiButton, UiCard, UiInput } from 'sk-ui'
 import AnswerField from '@/components/questions/AnswerField.vue'
 import { pageTitle } from '@/brand'
 import { seededShuffle } from '@/utils/shuffle'
@@ -139,32 +139,35 @@ async function finish() {
       <BrandMark class="mb-6" />
       <RouterLink :to="{ name: 'my' }" class="text-sm text-ink-muted hover:text-ink">← Мои диагностики</RouterLink>
 
-      <p v-if="stage === 'loading'" class="mt-6 text-ink-muted" role="status">Загружаем…</p>
+      <SkeletonPage v-if="stage === 'loading'" class="mt-6" />
 
-      <div v-else-if="stage === 'error'" class="mt-6 rounded-card border border-line bg-surface p-6">
+      <UiCard v-else-if="stage === 'error'" class="mt-6 p-6">
         <h1 class="text-xl font-bold">Диагностика недоступна</h1>
         <p class="mt-2 text-ink-muted">{{ error }}</p>
-      </div>
+      </UiCard>
 
       <template v-else>
         <h1 class="mt-4 text-2xl font-bold">{{ attempt.test.title }}</h1>
 
-        <section v-if="stage === 'intro'" class="mt-6 rounded-card border border-line bg-surface p-6">
+        <UiCard v-if="stage === 'intro'" class="mt-6 p-6">
           <p v-if="attempt.test.description" class="whitespace-pre-line">{{ attempt.test.description }}</p>
           <p class="mt-4 text-sm text-ink-muted">
             Вопросов: {{ questions.length }}. Правильных и неправильных ответов нет — отвечайте так, как чувствуете. Ответы
             сохраняются сразу, можно продолжить позже.
           </p>
-          <label v-if="attempt.needs_birth_date" class="mt-5 grid max-w-xs gap-1.5 text-sm font-medium">
-            Дата рождения
-            <input v-model="birthDate" type="date" class="h-10 rounded-control border border-line bg-surface px-3" />
-            <span class="font-normal text-ink-muted">Нужна, чтобы сравнить ответы с нормами для вашего возраста.</span>
-          </label>
+          <UiInput
+            v-if="attempt.needs_birth_date"
+            v-model="birthDate"
+            class="mt-5 max-w-xs"
+            label="Дата рождения"
+            type="date"
+            hint="Нужна, чтобы сравнить ответы с нормами для вашего возраста."
+          />
           <p v-if="error" role="alert" class="mt-4 rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ error }}</p>
           <UiButton class="mt-6" variant="primary" :loading="busy" @click="begin">
             {{ attempt.status === 'in_progress' ? 'Продолжить' : 'Начать' }}
           </UiButton>
-        </section>
+        </UiCard>
 
         <section v-else-if="stage === 'questions' && question" class="mt-6">
           <div class="flex justify-between text-sm text-ink-muted">
@@ -175,7 +178,7 @@ async function finish() {
             <div class="h-full rounded-full bg-brand-500 transition-all" :style="{ width: `${progress}%` }" />
           </div>
 
-          <article class="mt-6 rounded-card border border-line bg-surface p-5 sm:p-6">
+          <UiCard class="mt-6 sm:p-6">
             <h2 class="text-lg font-semibold">{{ question.text }}</h2>
             <p v-if="question.description" class="mt-1 whitespace-pre-line text-sm text-ink-muted">{{ question.description }}</p>
             <AnswerField
@@ -187,7 +190,7 @@ async function finish() {
               :scale-options="ordered(question.scale_options, question)"
               @update:model-value="onChange(question, $event)"
             />
-          </article>
+          </UiCard>
 
           <p v-if="error" role="alert" class="mt-4 rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ error }}</p>
           <div class="mt-6 flex justify-between gap-3">
@@ -198,12 +201,12 @@ async function finish() {
           </div>
         </section>
 
-        <section v-else-if="stage === 'done'" class="mt-6 rounded-card border border-line bg-surface p-6 text-center">
+        <UiCard v-else-if="stage === 'done'" class="mt-6 p-6 text-center">
           <div class="mx-auto grid size-12 place-items-center rounded-full bg-brand-100 text-2xl text-brand-700" aria-hidden="true">✓</div>
           <h2 class="mt-4 text-xl font-bold">Спасибо!</h2>
           <p class="mt-2 text-ink-muted">Ответы отправлены. Результаты увидит психолог гимназии.</p>
           <RouterLink :to="{ name: 'my' }" class="mt-5 inline-block font-medium text-brand-700">К списку диагностик</RouterLink>
-        </section>
+        </UiCard>
       </template>
     </div>
     <SchoolFooter />

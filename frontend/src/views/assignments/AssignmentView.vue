@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import * as api from '@/api/diagnostic'
-import { errorMessage, UiBadge, UiButton } from 'sk-ui'
+import { errorMessage, UiBadge, UiButton, UiConfirm, UiInput } from 'sk-ui'
 import { STATUS_TITLES, STATUS_TONES, formatDateTime } from '@/utils/format'
 
 const props = defineProps({ id: { type: String, required: true } })
@@ -13,6 +13,7 @@ const notice = ref('')
 const busy = ref('')
 const query = ref('')
 const found = ref([])
+const removal = ref(null) // попытка ученика, которую подтверждают
 
 // Колонки сводки: первые показатели результата (уровень, ВК и т. п.)
 const columns = computed(() => {
@@ -56,8 +57,8 @@ async function addStudent(person) {
   await act('add', () => api.addStudents(props.id, [person.person_id]), `${person.full_name} добавлен(а)`)
 }
 
-async function remove(attempt) {
-  if (!confirm(`Убрать ${attempt.student.full_name} из выдачи?`)) return
+async function remove() {
+  const attempt = removal.value
   await act(
     'remove',
     async () => {
@@ -66,6 +67,7 @@ async function remove(attempt) {
     },
     'Ученик убран',
   )
+  removal.value = null
 }
 
 let timer = null
@@ -138,7 +140,7 @@ watch(query, (value) => {
               </td>
               <td v-for="column in columns" :key="column" class="max-w-56 px-4 py-3">{{ attempt.summary[column] ?? '' }}</td>
               <td class="px-4 py-3 text-right">
-                <button v-if="attempt.status === 'assigned'" type="button" class="text-xs text-ink-muted hover:text-red-600" @click="remove(attempt)">Убрать</button>
+                <button v-if="attempt.status === 'assigned'" type="button" class="text-xs text-ink-muted hover:text-red-600" @click="removal = attempt">Убрать</button>
               </td>
             </tr>
           </tbody>
@@ -146,10 +148,7 @@ watch(query, (value) => {
       </div>
 
       <div class="relative mt-6 max-w-md">
-        <label class="grid gap-1.5 text-sm font-medium">
-          Добавить ученика из другого класса
-          <input v-model="query" type="search" class="h-10 rounded-control border border-line bg-surface px-3" placeholder="Фамилия ученика" />
-        </label>
+        <UiInput v-model="query" label="Добавить ученика из другого класса" type="search" placeholder="Фамилия ученика" />
         <ul v-if="found.length" class="absolute inset-x-0 z-10 mt-1 max-h-64 overflow-auto rounded-control border border-line bg-surface shadow-lg">
           <li v-for="person in found" :key="person.person_id">
             <button type="button" class="w-full px-3 py-2 text-left hover:bg-brand-50" @click="addStudent(person)">
@@ -158,6 +157,18 @@ watch(query, (value) => {
           </li>
         </ul>
       </div>
+
+      <UiConfirm
+        :open="!!removal"
+        title="Убрать ученика из выдачи?"
+        confirm-label="Убрать"
+        variant="danger"
+        :loading="busy === 'remove'"
+        @update:open="removal = null"
+        @confirm="remove"
+      >
+        {{ removal?.student.full_name }}
+      </UiConfirm>
     </template>
   </div>
 </template>

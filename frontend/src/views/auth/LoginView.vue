@@ -7,7 +7,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchProviders, loginWithPassword, skolstreamLoginUrl } from '@/api/auth'
-import { BrandMark, errorMessage, SchoolFooter, UiButton, UiInput } from 'sk-ui'
+import { BrandMark, errorMessage, SchoolFooter, UiButton, UiCard, UiInput } from 'sk-ui'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
@@ -57,7 +57,7 @@ async function submitPassword() {
       <div class="w-full max-w-sm">
         <BrandMark class="mb-8" size="lg" />
 
-        <div class="rounded-card border border-line bg-surface p-6">
+        <UiCard class="p-6">
           <h1 class="text-xl font-bold">Вход</h1>
           <p class="mt-1 text-sm text-ink-muted">Для учеников и психологической службы гимназии.</p>
 
@@ -79,7 +79,7 @@ async function submitPassword() {
             <UiInput v-model="password" label="Пароль" type="password" autocomplete="current-password" />
             <UiButton type="submit" variant="primary" :loading="sending">Войти</UiButton>
           </form>
-        </div>
+        </UiCard>
 
         <button
           v-if="providers.skolstream && !showPassword"

@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
-import { BrandMark, SchoolFooter } from 'sk-ui'
+import { BrandMark, OverflowNav, SchoolFooter, UiButton } from 'sk-ui'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
@@ -31,17 +31,7 @@ async function logout() {
         <RouterLink :to="{ name: 'home' }" class="shrink-0">
           <BrandMark />
         </RouterLink>
-        <nav class="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto text-sm" aria-label="Разделы">
-          <RouterLink
-            v-for="link in links"
-            :key="link.label"
-            :to="link.to"
-            class="shrink-0 rounded-control px-3 py-1.5 text-ink-muted hover:bg-brand-50 hover:text-ink"
-            active-class="bg-brand-50 font-medium text-brand-700"
-          >
-            {{ link.label }}
-          </RouterLink>
-        </nav>
+        <OverflowNav :links="links" />
         <div class="flex shrink-0 items-center gap-3 text-sm">
           <RouterLink
             :to="{ name: 'profile' }"
@@ -50,7 +40,7 @@ async function logout() {
           >
             {{ auth.displayName }}
           </RouterLink>
-          <button type="button" class="rounded-control px-3 py-1.5 hover:bg-brand-50" @click="logout">Выйти</button>
+          <UiButton size="sm" variant="ghost" @click="logout">Выйти</UiButton>
         </div>
       </div>
     </header>
