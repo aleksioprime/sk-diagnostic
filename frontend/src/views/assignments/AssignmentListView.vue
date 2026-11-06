@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { createAssignment, listAssignments, listClasses, listTests } from '@/api/diagnostic'
-import { errorMessage, SkeletonTable, UiBadge, UiButton, UiInput } from 'sk-ui'
+import { errorMessage, SkeletonTable, UiBadge, UiButton, UiInput, UiSelect } from 'sk-ui'
 import { formatDate } from '@/utils/format'
 
 const router = useRouter()
@@ -13,6 +13,7 @@ const loading = ref(true)
 const error = ref('')
 const form = ref(null)
 const saving = ref(false)
+const missing = ref(false)
 const filter = ref('active')
 
 const shown = computed(() => assignments.value.filter((a) => (filter.value === 'active' ? a.is_active : !a.is_active)))
@@ -32,8 +33,11 @@ function openForm() {
 }
 
 async function create() {
+  // UiSelect - кнопка, браузер не проверяет её как обязательное поле
+  missing.value = !form.value.test_id || !form.value.class_id
+  error.value = missing.value ? 'Выберите методику и класс' : ''
+  if (missing.value) return
   saving.value = true
-  error.value = ''
   try {
     const assignment = await createAssignment(form.value)
     await router.push({ name: 'assignment', params: { id: assignment.id } })
@@ -43,8 +47,6 @@ async function create() {
     saving.value = false
   }
 }
-
-const field = 'h-10 rounded-control border border-line bg-surface px-3 outline-none focus:border-brand-500'
 </script>
 
 <template>
@@ -56,17 +58,17 @@ const field = 'h-10 rounded-control border border-line bg-surface px-3 outline-n
 
     <form v-if="form" class="mt-6 grid gap-4 rounded-card border border-brand-200 bg-surface p-5" @submit.prevent="create">
       <div class="grid gap-4 sm:grid-cols-2">
-        <label class="grid gap-1.5 text-sm font-medium">
-          Методика
-          <select v-model="form.test_id" :class="field" required>
+        <label class="grid gap-1.5 text-sm">
+          <span class="font-medium">Методика</span>
+          <UiSelect v-model="form.test_id" :invalid="missing && !form.test_id">
             <option v-for="test in tests" :key="test.id" :value="test.id">{{ test.title }}</option>
-          </select>
+          </UiSelect>
         </label>
-        <label class="grid gap-1.5 text-sm font-medium">
-          Класс
-          <select v-model="form.class_id" :class="field" required>
+        <label class="grid gap-1.5 text-sm">
+          <span class="font-medium">Класс</span>
+          <UiSelect v-model="form.class_id" :invalid="missing && !form.class_id">
             <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }} — учеников: {{ c.students_count }}</option>
-          </select>
+          </UiSelect>
         </label>
       </div>
       <UiInput v-model="form.title" label="Название" hint="Пусто — «методика — класс»." />

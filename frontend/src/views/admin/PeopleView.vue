@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
-import { errorMessage, SkeletonTable, UiBadge, UiButton, UiCard } from 'sk-ui'
+import { errorMessage, SkeletonTable, UiBadge, UiButton, UiCard, UiInput, UiSelect } from 'sk-ui'
 import { createUser, fetchPersons, fetchSyncRuns, fetchUsers, setPersonAdmin, startSync, updateUser } from '@/api/people'
 import { useAuthStore } from '@/stores/auth'
 
@@ -195,12 +195,9 @@ onMounted(() => {
     <UiCard>
       <template #title>Новый пользователь</template>
       <form class="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4" @submit.prevent="create">
-        <label class="grid gap-1"><span class="font-medium">Email</span><input v-model="newUser.email" type="email" required class="h-10 rounded-control border border-line bg-surface px-3" /></label>
-        <label class="grid gap-1"><span class="font-medium">ФИО</span><input v-model="newUser.full_name" class="h-10 rounded-control border border-line bg-surface px-3" /></label>
-        <label class="grid gap-1">
-          <span class="font-medium">Пароль <span class="font-normal text-ink-muted">(необязательно)</span></span>
-          <input v-model="newUser.password" type="text" minlength="8" autocomplete="off" class="h-10 rounded-control border border-line bg-surface px-3" />
-        </label>
+        <UiInput v-model="newUser.email" label="Email" type="email" required />
+        <UiInput v-model="newUser.full_name" label="ФИО" />
+        <UiInput v-model="newUser.password" label="Пароль (необязательно)" type="text" minlength="8" autocomplete="off" />
         <div class="flex flex-wrap items-end gap-3">
           <label class="flex h-10 items-center gap-2"><input v-model="newUser.is_employee" type="checkbox" class="size-4 accent-brand-600" /> Сотрудник</label>
           <label class="flex h-10 items-center gap-2"><input v-model="newUser.is_superuser" type="checkbox" class="size-4 accent-brand-600" /> Админ</label>
@@ -227,16 +224,10 @@ onMounted(() => {
           {{ item.label }}
         </button>
       </div>
-      <input
-        v-model="search"
-        type="search"
-        placeholder="Фамилия или email"
-        aria-label="Поиск"
-        class="h-10 min-w-0 flex-1 rounded-control border border-line bg-surface px-3 sm:max-w-xs"
-      />
-      <select v-if="tab === 'persons'" v-model="kind" aria-label="Тип" class="h-10 rounded-control border border-line bg-surface px-3">
+      <UiInput v-model="search" type="search" placeholder="Фамилия или email" aria-label="Поиск" class="min-w-0 flex-1 sm:max-w-xs" />
+      <UiSelect v-if="tab === 'persons'" v-model="kind" aria-label="Тип">
         <option v-for="item in kinds" :key="item.value" :value="item.value">{{ item.label }}</option>
-      </select>
+      </UiSelect>
       <span class="text-sm text-ink-muted">Найдено: {{ page.total }}</span>
     </div>
 
@@ -306,7 +297,7 @@ onMounted(() => {
             </td>
             <td class="px-4 py-2">
               <form v-if="passwordFor === user.id" class="flex items-center gap-1" @submit.prevent="setPassword(user)">
-                <input v-model="newPassword" minlength="8" required autocomplete="off" aria-label="Новый пароль" class="h-8 w-32 rounded-control border border-line px-2" />
+                <UiInput v-model="newPassword" minlength="8" required autocomplete="off" aria-label="Новый пароль" class="w-32" />
                 <UiButton size="sm" type="submit">OK</UiButton>
               </form>
               <button v-else type="button" class="text-brand-700 hover:underline" @click="(passwordFor = user.id), (newPassword = '')">

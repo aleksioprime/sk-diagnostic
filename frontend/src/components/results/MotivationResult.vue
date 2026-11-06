@@ -1,7 +1,9 @@
 <script setup>
+import { UiBadge } from 'sk-ui'
+
 defineProps({ data: { type: Object, required: true } })
 
-const LEVEL_TONES = { high: 'bg-brand-100 text-brand-700', medium: 'bg-canvas text-ink', low: 'bg-amber-100 text-amber-800' }
+const LEVEL_TONES = { high: 'brand', medium: 'neutral', low: 'warning' }
 </script>
 
 <template>
@@ -45,7 +47,7 @@ const LEVEL_TONES = { high: 'bg-brand-100 text-brand-700', medium: 'bg-canvas te
           <td class="py-2">{{ scale.title }}</td>
           <td class="py-2 tabular-nums">{{ scale.value }}</td>
           <td class="py-2">
-            <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold" :class="LEVEL_TONES[scale.level]">{{ scale.level_label }}</span>
+            <UiBadge :tone="LEVEL_TONES[scale.level]">{{ scale.level_label }}</UiBadge>
           </td>
         </tr>
       </tbody>

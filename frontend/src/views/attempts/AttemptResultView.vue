@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getAttempt, recalculateAttempt, setBirthDate } from '@/api/diagnostic'
-import { errorMessage, UiButton } from 'sk-ui'
+import { errorMessage, UiButton, UiCard, UiInput } from 'sk-ui'
 import DomikiResult from '@/components/results/DomikiResult.vue'
 import MotivationResult from '@/components/results/MotivationResult.vue'
 import { formatDate, formatDateTime, formatDuration } from '@/utils/format'
@@ -64,20 +64,17 @@ async function saveBirthDateAndRecalculate() {
         {{ formatDateTime(attempt.submitted_at) }} · {{ formatDuration(attempt.duration) }}
       </p>
 
-      <section class="mt-6 rounded-card border border-line bg-surface p-5">
+      <UiCard class="mt-6">
         <div v-if="attempt.result_status === 'error'" class="rounded-control bg-amber-50 px-4 py-3 text-amber-900">
           <p class="font-semibold">Результат не рассчитан</p>
           <p class="mt-1 text-sm">{{ attempt.result_error }}</p>
         </div>
         <component :is="template" v-else-if="template && attempt.result" :data="attempt.result" />
         <pre v-else-if="attempt.result" class="overflow-auto text-xs">{{ attempt.result }}</pre>
-      </section>
+      </UiCard>
 
       <form class="mt-4 flex flex-wrap items-end gap-3" @submit.prevent="saveBirthDateAndRecalculate">
-        <label class="grid gap-1.5 text-sm font-medium">
-          Дата рождения ученика
-          <input v-model="birthDate" type="date" class="h-10 rounded-control border border-line bg-surface px-3" />
-        </label>
+        <UiInput v-model="birthDate" label="Дата рождения ученика" type="date" />
         <UiButton type="submit" :loading="busy">Сохранить и пересчитать</UiButton>
       </form>
 

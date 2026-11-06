@@ -1,5 +1,6 @@
 <script setup>
 /** Выбор сотрудников из справочника SkolStream. */
+import { UiInput } from 'sk-ui'
 import { ref, watch } from 'vue'
 import { searchEmployees } from '@/api/diagnostic'
 
@@ -52,13 +53,7 @@ function remove(personId) {
       </li>
     </ul>
     <div class="relative">
-      <input
-        v-model="query"
-        type="search"
-        class="h-10 w-full rounded-control border border-line bg-surface px-3 outline-none focus:border-brand-500"
-        placeholder="Фамилия или email сотрудника"
-        :aria-label="`Добавить: ${props.label}`"
-      />
+      <UiInput v-model="query" type="search" placeholder="Фамилия или email сотрудника" :aria-label="`Добавить: ${props.label}`" />
       <ul v-if="found.length" class="absolute inset-x-0 top-11 z-10 max-h-64 overflow-auto rounded-control border border-line bg-surface shadow-lg">
         <li v-for="person in found" :key="person.id">
           <button type="button" class="w-full px-3 py-2 text-left hover:bg-brand-50" @click="add(person)">
