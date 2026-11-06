@@ -62,7 +62,6 @@ async function setActive(value) {
   <div v-else class="max-w-4xl">
     <RouterLink :to="{ name: 'admin-tests' }" class="text-sm text-brand-700 hover:underline">← Все методики</RouterLink>
     <h1 class="mt-2 text-2xl font-bold">{{ test.title }}</h1>
-    <p class="mt-1 text-sm text-ink-muted"><code>{{ test.code }}</code></p>
     <TestTabs :id="route.params.id" class="mt-4" />
 
     <p v-if="error" role="alert" class="mt-4 rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ error }}</p>

@@ -117,7 +117,7 @@ async function next() {
           :index="index"
           :total="questions.length"
           :answer="answers[question.id]"
-          shuffle-seed="preview"
+          :shuffle-seed="0"
           :busy="busy"
           :error="error"
           @change="answers[question.id] = $event"

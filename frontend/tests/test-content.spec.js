@@ -29,6 +29,7 @@ async function open(content = base) {
 
 const button = (wrapper, text) => wrapper.findAll('button').find((b) => b.text() === text)
 const byLabel = (wrapper, label) => wrapper.find(`button[aria-label="${label}"]`)
+const openQuestion = (wrapper, text) => wrapper.findAll('button[aria-expanded]').find((b) => b.text().includes(text)).trigger('click')
 
 afterEach(() => vi.clearAllMocks())
 
@@ -36,6 +37,7 @@ describe('редактор вопросов', () => {
   it('меняет порядок вопросов и добавляет новый', async () => {
     const wrapper = await open()
     expect(button(wrapper, 'Сохранить вопросы').attributes('disabled')).toBeDefined()
+    await openQuestion(wrapper, 'Второй')
     await byLabel(wrapper, 'Вопрос 2 выше').trigger('click')
     await button(wrapper, 'Добавить вопрос').trigger('click')
     const areas = wrapper.findAll('textarea')
@@ -59,11 +61,66 @@ describe('редактор вопросов', () => {
   it('у выданной методики правятся только тексты', async () => {
     const wrapper = await open({ ...base, mode: 'text', lock_reason: 'Уже выдавали.' })
     expect(wrapper.text()).toContain('Уже выдавали.')
+    await openQuestion(wrapper, 'Первый')
     expect(button(wrapper, 'Добавить вопрос')).toBeUndefined()
     expect(button(wrapper, 'Удалить')).toBeUndefined()
     expect(byLabel(wrapper, 'Удалить вариант 1').exists()).toBe(false)
     expect(wrapper.find('input[aria-label="Баллы варианта 1"]').attributes('disabled')).toBeDefined()
     expect(wrapper.find('input[aria-label="Подпись варианта 1"]').attributes('disabled')).toBeUndefined()
+  })
+})
+
+describe('компактный список вопросов', () => {
+  it('вопросы свёрнуты, раскрыт только один', async () => {
+    const wrapper = await open()
+    expect(wrapper.findAll('input[aria-label^="Подпись"]')).toHaveLength(0)
+    expect(wrapper.text()).toContain('Один вариант · 2')
+    await openQuestion(wrapper, 'Первый')
+    expect(wrapper.findAll('input[aria-label^="Подпись"]')).toHaveLength(2)
+    await openQuestion(wrapper, 'Второй')
+    expect(wrapper.findAll('input[aria-label^="Подпись"]')).toHaveLength(2)
+    expect(wrapper.findAll('button[aria-expanded="true"]')).toHaveLength(1)
+  })
+
+  it('незаполненный вопрос раскрывается сам и выделяется', async () => {
+    const wrapper = await open()
+    const areas = async () => {
+      await openQuestion(wrapper, 'Второй')
+      await wrapper.findAll('textarea').at(-1).setValue(' ')
+    }
+    await areas()
+    await openQuestion(wrapper, 'Первый')
+    await button(wrapper, 'Сохранить вопросы').trigger('click')
+    expect(api.saveTestContent).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Вопрос 2: заполните текст')
+    expect(wrapper.findAll('li.border-red-500')).toHaveLength(1)
+    expect(wrapper.find('button[aria-expanded="true"]').text()).toContain('2')
+  })
+
+  it('перетаскивание меняет порядок', async () => {
+    const wrapper = await open()
+    const rows = wrapper.findAll('ol > li')
+    await rows[1].find('[draggable="true"]').trigger('dragstart', { dataTransfer: { setData: () => {} } })
+    await rows[0].trigger('drop')
+    await button(wrapper, 'Сохранить вопросы').trigger('click')
+    await flushPromises()
+    expect(api.saveTestContent.mock.calls[0][1].questions.map((q) => q.id)).toEqual([11, 10])
+  })
+
+  it('дублирование создаёт новый вопрос без id и кода', async () => {
+    const wrapper = await open({ ...base, questions: [{ ...question(10, 'Первый'), code: 'mood' }, question(11, 'Второй')] })
+    await openQuestion(wrapper, 'Первый')
+    await button(wrapper, 'Дублировать').trigger('click')
+    await button(wrapper, 'Сохранить вопросы').trigger('click')
+    await flushPromises()
+    const saved = api.saveTestContent.mock.calls[0][1].questions
+    expect(saved.map((q) => [q.id, q.text, q.code])).toEqual([[10, 'Первый', 'mood'], [null, 'Первый', null], [11, 'Второй', null]])
+    expect(saved[1].options.map((o) => o.id)).toEqual([null, null])
+  })
+
+  it('у выданной методики нельзя перетаскивать', async () => {
+    const wrapper = await open({ ...base, mode: 'text', lock_reason: 'Уже выдавали.' })
+    expect(wrapper.find('[draggable="true"]').exists()).toBe(false)
   })
 })
 
@@ -84,6 +141,7 @@ describe('черновик', () => {
 describe('поля редактора', () => {
   it('баллы из поля уходят числом, а не строкой', async () => {
     const wrapper = await open()
+    await openQuestion(wrapper, 'Первый')
     await wrapper.find('input[aria-label="Баллы варианта 1"]').setValue('7')
     await button(wrapper, 'Сохранить вопросы').trigger('click')
     await flushPromises()
@@ -92,6 +150,7 @@ describe('поля редактора', () => {
 
   it('смена типа через общий список подставляет варианты', async () => {
     const wrapper = await open({ ...base, questions: [{ ...question(10, 'Первый'), question_type: 'text', options: [] }] })
+    await openQuestion(wrapper, 'Первый')
     await wrapper.find('button[aria-label="Тип ответа"]').trigger('click')
     const item = [...document.body.querySelectorAll('[role="option"]')].find((node) => node.textContent.includes('Один вариант'))
     item.click()

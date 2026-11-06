@@ -106,7 +106,8 @@ class TestAdminDetail(TestAdminBrief):
 
 
 class TestCreateIn(BaseModel):
-    code: str = Field(min_length=1, max_length=100, pattern=r'^[a-z0-9_-]+$')
+    # Обычно пусто: код нужен только файлу JSON и подбирается сам
+    code: str | None = Field(default=None, min_length=1, max_length=100, pattern=r'^[a-z0-9_-]+$')
     title: str = Field(min_length=1, max_length=500)
 
 

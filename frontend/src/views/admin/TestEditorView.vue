@@ -147,7 +147,7 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm('Скрипт не со�
     <RouterLink :to="{ name: 'admin-tests' }" class="text-sm text-brand-700 hover:underline">← Все методики</RouterLink>
     <h1 class="mt-2 text-2xl font-bold">{{ test.title }}</h1>
     <p class="mt-1 text-sm text-ink-muted">
-      <code>{{ test.code }}</code> · вопросов: {{ test.questions_count }} · выдач: {{ test.assignments_count }}
+      Вопросов: {{ test.questions_count }} · выдач: {{ test.assignments_count }}
     </p>
     <TestTabs :id="route.params.id" class="mt-4" />
     <label class="mt-4 flex items-center gap-2 text-sm">

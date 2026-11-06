@@ -3,6 +3,7 @@
 import asyncio
 import json
 import random
+import secrets
 from datetime import UTC, date, datetime
 from types import SimpleNamespace
 
@@ -173,15 +174,21 @@ def export_test(test: Test) -> dict:
 # --- Создание и копирование -----------------------------------------------------------------
 
 
-async def _check_code_free(db: AsyncSession, code: str) -> None:
-    if await db.scalar(select(Test.id).where(Test.code == code)):
-        raise HTTPException(status.HTTP_409_CONFLICT, f'Методика с кодом {code} уже есть')
+async def _new_code(db: AsyncSession, wanted: str | None) -> str:
+    """Код методики нужен файлу JSON. Заданный должен быть свободен, иначе подбираем случайный."""
+    if wanted:
+        if await db.scalar(select(Test.id).where(Test.code == wanted)):
+            raise HTTPException(status.HTTP_409_CONFLICT, f'Методика с кодом {wanted} уже есть')
+        return wanted
+    while True:
+        code = f'method_{secrets.token_hex(3)}'
+        if not await db.scalar(select(Test.id).where(Test.code == code)):
+            return code
 
 
 async def create_test(db: AsyncSession, body: TestCreateIn) -> Test:
     """Пустая методика отключена: психологи увидят её, когда администратор её включит."""
-    await _check_code_free(db, body.code)
-    test = Test(code=body.code, title=body.title, is_active=False, questions=[])
+    test = Test(code=await _new_code(db, body.code), title=body.title, is_active=False, questions=[])
     db.add(test)
     await db.flush()
     return test
@@ -192,13 +199,13 @@ async def copy_test(db: AsyncSession, source: Test, body: TestCreateIn) -> Test:
 
     Копия отключена, пока её не проверят.
     """
-    await _check_code_free(db, body.code)
+    code = await _new_code(db, body.code)
     scales: dict[int, Scale] = {}
 
     def copied_scale(scale: Scale) -> Scale:
         if scale.id not in scales:
             scales[scale.id] = Scale(
-                code=f'{body.code}__{scale.code or scale.id}'[:100],
+                code=f'{code}__{scale.code or scale.id}'[:100],
                 title=scale.title,
                 description=scale.description,
                 options=[
@@ -210,7 +217,7 @@ async def copy_test(db: AsyncSession, source: Test, body: TestCreateIn) -> Test:
         return scales[scale.id]
 
     test = Test(
-        code=body.code,
+        code=code,
         title=body.title,
         description=source.description,
         is_sequential=source.is_sequential,
