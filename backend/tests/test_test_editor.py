@@ -218,3 +218,12 @@ async def test_copy_takes_script_from_database(db, redis_clean, client):
     # У копии свой скрипт: правка не доходит до исходной методики
     await client.put(f'{BASE}/{copy["id"]}/script', json={'script': 'return { total: 2 }'})
     assert (await client.get(f'{BASE}/{source}')).json()['scoring_script'] == script
+
+
+async def test_code_is_generated_for_new_test_and_copy(db, redis_clean, client):
+    await _admin(db, client)
+    created = (await client.post(BASE, json={'title': 'Без кода'})).json()
+    assert created['code'].startswith('method_')
+    copied = (await client.post(f'{BASE}/{created["id"]}/copy', json={'title': 'Копия'})).json()
+    assert copied['code'].startswith('method_') and copied['code'] != created['code']
+    assert (await client.post(BASE, json={'code': 'Плохой код', 'title': 'Х'})).status_code == 422

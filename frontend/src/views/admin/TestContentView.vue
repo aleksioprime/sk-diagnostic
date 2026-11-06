@@ -7,7 +7,20 @@ import OptionsEditor from '@/components/tests/OptionsEditor.vue'
 import ScaleCard from '@/components/tests/ScaleCard.vue'
 import TestTabs from '@/components/tests/TestTabs.vue'
 import { detailedError } from '@/utils/apiErrors'
-import { contentBody, contentProblem, hasOptions, newKey, newQuestion, QUESTION_TYPES, starterOptions, swap, withKeys } from '@/utils/testDraft'
+import {
+  answerSummary,
+  contentBody,
+  contentProblem,
+  copyQuestion,
+  hasOptions,
+  newKey,
+  newQuestion,
+  QUESTION_TYPES,
+  questionProblem,
+  starterOptions,
+  swap,
+  withKeys,
+} from '@/utils/testDraft'
 
 const route = useRoute()
 const content = ref(null)
@@ -18,6 +31,11 @@ const loadError = ref('')
 const error = ref('')
 const notice = ref('')
 const saving = ref(false)
+// Раскрыт один вопрос: в длинной методике остальные остаются одной строкой
+const openKey = ref(null)
+const invalidKey = ref(null)
+const dragFrom = ref(null)
+const dragOver = ref(null)
 
 const locked = computed(() => content.value?.mode === 'text')
 const dirty = computed(() => !!content.value && JSON.stringify(contentBody(content.value)) !== savedBody.value)
@@ -41,7 +59,38 @@ onMounted(async () => {
 })
 
 function addQuestion() {
-  content.value.questions.push(newQuestion())
+  const question = newQuestion()
+  content.value.questions.push(question)
+  openKey.value = question.key
+}
+
+function toggleQuestion(question) {
+  openKey.value = openKey.value === question.key ? null : question.key
+}
+
+function duplicateQuestion(index) {
+  const copy = copyQuestion(content.value.questions[index])
+  content.value.questions.splice(index + 1, 0, copy)
+  openKey.value = copy.key
+}
+
+function startDrag(index, event) {
+  dragFrom.value = index
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('text/plain', String(index))
+}
+
+function dropOn(index) {
+  if (dragFrom.value !== null && dragFrom.value !== index) {
+    const [moved] = content.value.questions.splice(dragFrom.value, 1)
+    content.value.questions.splice(index, 0, moved)
+  }
+  dragFrom.value = dragOver.value = null
+}
+
+function showProblem(number) {
+  const question = content.value.questions[number - 1]
+  if (question) openKey.value = invalidKey.value = question.key
 }
 
 function changeType(question, type) {
@@ -52,7 +101,11 @@ function changeType(question, type) {
 async function save() {
   error.value = contentProblem(content.value)
   notice.value = ''
-  if (error.value) return
+  invalidKey.value = null
+  if (error.value) {
+    showProblem(content.value.questions.findIndex((q) => questionProblem(q)) + 1)
+    return
+  }
   saving.value = true
   try {
     const answer = await saveTestContent(route.params.id, contentBody(content.value))
@@ -60,6 +113,8 @@ async function save() {
     notice.value = 'Сохранено.'
   } catch (e) {
     error.value = detailedError(e)
+    const place = /Вопрос (\d+)/.exec(error.value)
+    if (place) showProblem(Number(place[1]))
   } finally {
     saving.value = false
   }
@@ -104,7 +159,6 @@ onBeforeRouteLeave(() => !anythingDirty.value || window.confirm('Есть нес
   <div v-else class="max-w-4xl">
     <RouterLink :to="{ name: 'admin-tests' }" class="text-sm text-brand-700 hover:underline">← Все методики</RouterLink>
     <h1 class="mt-2 text-2xl font-bold">{{ content.title }}</h1>
-    <p class="mt-1 text-sm text-ink-muted"><code>{{ content.code }}</code></p>
     <TestTabs :id="route.params.id" class="mt-4" />
 
     <p v-if="content.lock_reason" class="mt-4 rounded-control bg-amber-50 px-3 py-2 text-sm text-amber-900">
@@ -121,22 +175,43 @@ onBeforeRouteLeave(() => !anythingDirty.value || window.confirm('Есть нес
 
     <section class="mt-6">
       <h2 class="text-lg font-semibold">Вопросы ({{ content.questions.length }})</h2>
-      <ol class="mt-3 grid gap-3">
-        <li v-for="(question, index) in content.questions" :key="question.key">
-          <UiCard class="grid gap-3">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="font-semibold">Вопрос {{ index + 1 }}</span>
-              <div v-if="!locked" class="ml-auto flex gap-1">
-                <UiButton size="sm" variant="ghost" :disabled="index === 0" :aria-label="`Вопрос ${index + 1} выше`" @click="swap(content.questions, index, index - 1)">↑</UiButton>
-                <UiButton size="sm" variant="ghost" :disabled="index === content.questions.length - 1" :aria-label="`Вопрос ${index + 1} ниже`" @click="swap(content.questions, index, index + 1)">↓</UiButton>
-                <UiButton size="sm" variant="ghost" @click="content.questions.splice(index, 1)">Удалить</UiButton>
-              </div>
-            </div>
+      <ol class="mt-3 grid grid-cols-[minmax(0,1fr)] gap-2">
+        <li
+          v-for="(question, index) in content.questions"
+          :key="question.key"
+          class="rounded-card border bg-surface"
+          :class="[invalidKey === question.key ? 'border-red-500' : 'border-line', { 'border-brand-500': dragOver === index && dragFrom !== index }]"
+          @dragover.prevent="dragFrom !== null && (dragOver = index)"
+          @drop.prevent="dropOn(index)"
+        >
+          <div class="flex items-center gap-1 pr-2">
+            <span
+              v-if="!locked"
+              class="cursor-grab select-none py-3 pl-2 text-ink-muted"
+              draggable="true"
+              title="Перетащить"
+              aria-hidden="true"
+              @dragstart="startDrag(index, $event)"
+              @dragend="dragFrom = dragOver = null"
+            >⠿</span>
+            <button
+              type="button"
+              class="flex min-w-0 flex-1 items-baseline gap-2 py-3 pl-2 text-left"
+              :aria-expanded="openKey === question.key"
+              @click="toggleQuestion(question)"
+            >
+              <span class="text-sm text-ink-muted">{{ index + 1 }}</span>
+              <span class="min-w-0 flex-1 truncate font-medium" :class="{ 'text-ink-muted': !question.text }">{{ question.text || 'Без текста' }}</span>
+              <span class="hidden shrink-0 text-sm text-ink-muted sm:inline">{{ answerSummary(question, savedScales) }}</span>
+              <span class="shrink-0 text-xs text-ink-muted" aria-hidden="true">{{ openKey === question.key ? '▲' : '▼' }}</span>
+            </button>
+          </div>
+
+          <div v-if="openKey === question.key" class="grid gap-3 border-t border-line p-4">
             <label class="grid gap-1 text-sm font-medium">
               Текст вопроса
               <textarea v-model="question.text" rows="2" class="rounded-control border border-line bg-surface p-3 font-normal"></textarea>
             </label>
-            <UiInput v-model="question.description" label="Пояснение для ученика" />
             <div class="grid gap-3 sm:grid-cols-2">
               <div class="grid gap-1.5">
                 <span class="text-sm font-medium">Тип ответа</span>
@@ -154,14 +229,32 @@ onBeforeRouteLeave(() => !anythingDirty.value || window.confirm('Есть нес
               </div>
             </div>
             <OptionsEditor v-if="hasOptions(question.question_type)" v-model="question.options" :fixed="locked" />
-            <div class="flex flex-wrap items-end gap-x-5 gap-y-2 text-sm">
-              <label class="flex h-10 items-center gap-2"><input v-model="question.is_required" type="checkbox" :disabled="locked" class="size-4 accent-brand-600" /> Обязательный</label>
-              <label v-if="hasOptions(question.question_type)" class="flex h-10 items-center gap-2">
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              <label class="flex items-center gap-2"><input v-model="question.is_required" type="checkbox" :disabled="locked" class="size-4 accent-brand-600" /> Обязательный</label>
+              <label v-if="hasOptions(question.question_type)" class="flex items-center gap-2">
                 <input v-model="question.is_random" type="checkbox" :disabled="locked" class="size-4 accent-brand-600" /> Варианты в случайном порядке
               </label>
-              <UiInput v-model="question.code" label="Код для скрипта" :disabled="locked" class="ml-auto w-44 [&_input:disabled]:bg-canvas [&_input:disabled]:text-ink-muted" />
             </div>
-          </UiCard>
+            <details class="text-sm" :open="!!question.description">
+              <summary class="cursor-pointer text-ink-muted">Дополнительно</summary>
+              <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                <UiInput v-model="question.description" label="Пояснение для ученика" />
+                <UiInput
+                  v-model="question.code"
+                  label="Код для скрипта"
+                  hint="Необязательно. Не меняется при перестановке вопросов, в отличие от номера."
+                  :disabled="locked"
+                  class="[&_input:disabled]:bg-canvas [&_input:disabled]:text-ink-muted"
+                />
+              </div>
+            </details>
+            <div v-if="!locked" class="flex flex-wrap gap-1 border-t border-line pt-3">
+              <UiButton size="sm" variant="ghost" :disabled="index === 0" :aria-label="`Вопрос ${index + 1} выше`" @click="swap(content.questions, index, index - 1)">↑</UiButton>
+              <UiButton size="sm" variant="ghost" :disabled="index === content.questions.length - 1" :aria-label="`Вопрос ${index + 1} ниже`" @click="swap(content.questions, index, index + 1)">↓</UiButton>
+              <UiButton size="sm" @click="duplicateQuestion(index)">Дублировать</UiButton>
+              <UiButton size="sm" variant="ghost" class="ml-auto" @click="content.questions.splice(index, 1)">Удалить</UiButton>
+            </div>
+          </div>
         </li>
       </ol>
       <p v-if="!content.questions.length" class="mt-3 text-ink-muted">Вопросов пока нет.</p>

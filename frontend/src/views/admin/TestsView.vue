@@ -76,20 +76,20 @@ const draftOpen = computed({
 function startNew(source = null) {
   createError.value = ''
   draft.value = source
-    ? { copyFrom: source, title: `${source.title} (копия)`, code: `${source.code}_copy` }
-    : { copyFrom: null, title: '', code: '' }
+    ? { copyFrom: source, title: `${source.title} (копия)` }
+    : { copyFrom: null, title: '' }
 }
 
 async function create() {
-  const { copyFrom, title, code } = draft.value
-  if (!title.trim() || !/^[a-z0-9_-]+$/.test(code)) {
-    createError.value = 'Заполните название и код: в коде только строчные латинские буквы, цифры, _ и -'
+  const { copyFrom, title } = draft.value
+  if (!title.trim()) {
+    createError.value = 'Заполните название'
     return
   }
   creating.value = true
   createError.value = ''
   try {
-    const body = { title: title.trim(), code }
+    const body = { title: title.trim() }
     const test = copyFrom ? await copyTest(copyFrom.id, body) : await createTest(body)
     router.push({ name: 'admin-test-questions', params: { id: test.id } })
   } catch (e) {
@@ -197,7 +197,7 @@ async function remove() {
               {{ test.title }}
             </RouterLink>
             <p class="mt-1 text-sm text-ink-muted">
-              <code>{{ test.code }}</code> · вопросов: {{ test.questions_count }} · выдач: {{ test.assignments_count }}
+              Вопросов: {{ test.questions_count }} · выдач: {{ test.assignments_count }}
             </p>
           </div>
           <UiBadge :tone="SCORING[test.scoring].tone">{{ SCORING[test.scoring].label }}</UiBadge>
@@ -254,7 +254,6 @@ async function remove() {
           Копируются вопросы, ответы, шкалы и скрипт расчёта. Правки копии не затронут исходную методику. Копия будет отключена, пока вы её не включите.
         </p>
         <UiInput v-model="draft.title" label="Название" />
-        <UiInput v-model="draft.code" label="Код" hint="Строчные латинские буквы, цифры, _ и -. Потом не меняется." />
         <p v-if="createError" role="alert" class="whitespace-pre-line rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ createError }}</p>
       </div>
     </UiConfirm>

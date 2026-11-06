@@ -77,17 +77,43 @@ export function contentBody(content) {
   }
 }
 
-/** Что не заполнено. Сервер проверит то же, но здесь понятнее, какой вопрос поправить. */
+/** Копия вопроса: новые id появятся при сохранении, код у каждого вопроса свой. */
+export function copyQuestion(question) {
+  return {
+    ...question,
+    id: null,
+    code: null,
+    key: newKey(),
+    options: question.options.map((option) => ({ ...option, id: null, key: newKey() })),
+  }
+}
+
+/** Что не заполнено в вопросе. Сервер проверит то же, но здесь понятнее, какой вопрос поправить. */
+export function questionProblem(q) {
+  if (!q.text.trim()) return 'заполните текст'
+  if (q.question_type === 'scale' && !q.scale_id) return 'выберите шкалу'
+  if (hasOptions(q.question_type)) {
+    if (!q.options.length) return 'добавьте варианты ответа'
+    if (q.options.some((o) => !o.label.trim())) return 'заполните подписи вариантов'
+  }
+  return ''
+}
+
 export function contentProblem(content) {
   if (!content.title.trim()) return 'Заполните название методики'
   for (const [index, q] of content.questions.entries()) {
-    const place = `Вопрос ${index + 1}`
-    if (!q.text.trim()) return `${place}: заполните текст`
-    if (q.question_type === 'scale' && !q.scale_id) return `${place}: выберите шкалу`
-    if (hasOptions(q.question_type)) {
-      if (!q.options.length) return `${place}: добавьте варианты ответа`
-      if (q.options.some((o) => !o.label.trim())) return `${place}: заполните подписи вариантов`
-    }
+    const problem = questionProblem(q)
+    if (problem) return `Вопрос ${index + 1}: ${problem}`
   }
   return ''
+}
+
+/** Короткое описание ответа для свёрнутой строки вопроса. */
+export function answerSummary(question, scales) {
+  const type = QUESTION_TYPES.find((item) => item.value === question.question_type)?.label ?? question.question_type
+  if (question.question_type === 'scale') {
+    const scale = scales.find((item) => item.id === question.scale_id)
+    return scale ? `${type}: ${scale.title}` : `${type}: не выбрана`
+  }
+  return hasOptions(question.question_type) ? `${type} · ${question.options.length}` : type
 }

@@ -83,6 +83,16 @@ describe('предпросмотр', () => {
     expect(button(wrapper, 'Начать')).toBeDefined()
   })
 
+  it('показывает вопрос со случайным порядком вариантов', async () => {
+    api.getTestPreview.mockResolvedValue({ test: { title: 'Опрос', description: '' }, needs_birth_date: false, questions: [{ ...question(356213359902720, 'Цвет'), is_random: true }] })
+    const wrapper = mount(TestPreviewView, { props: { id: '5' } })
+    await flushPromises()
+    await button(wrapper, 'Начать').trigger('click')
+    expect(wrapper.text()).toContain('Цвет')
+    expect(wrapper.text()).toContain('А')
+    expect(wrapper.text()).toContain('Б')
+  })
+
   it('спрашивает дату рождения, если она нужна методике', async () => {
     const wrapper = await openPreview(true)
     await button(wrapper, 'Начать').trigger('click')
