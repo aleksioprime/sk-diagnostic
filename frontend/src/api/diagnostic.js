@@ -1,4 +1,4 @@
-import { http } from './http'
+import { http } from 'sk-ui'
 
 const get = async (url, config) => (await http.get(url, config)).data
 const post = async (url, body) => (await http.post(url, body)).data

@@ -2,10 +2,9 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getAttempt, recalculateAttempt, setBirthDate } from '@/api/diagnostic'
-import { errorMessage } from '@/api/http'
+import { errorMessage, UiButton } from 'sk-ui'
 import DomikiResult from '@/components/results/DomikiResult.vue'
 import MotivationResult from '@/components/results/MotivationResult.vue'
-import UiButton from '@/components/ui/UiButton.vue'
 import { formatDate, formatDateTime, formatDuration } from '@/utils/format'
 
 const props = defineProps({ id: { type: String, required: true } })

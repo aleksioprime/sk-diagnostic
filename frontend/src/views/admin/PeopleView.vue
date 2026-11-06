@@ -1,12 +1,8 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
-import { errorMessage } from '@/api/http'
+import { errorMessage, SkeletonTable, UiBadge, UiButton, UiCard } from 'sk-ui'
 import { createUser, fetchPersons, fetchSyncRuns, fetchUsers, setPersonAdmin, startSync, updateUser } from '@/api/people'
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
 import { useAuthStore } from '@/stores/auth'
-import SkeletonTable from '@/components/skeleton/SkeletonTable.vue'
 
 const auth = useAuthStore()
 const PAGE = 50

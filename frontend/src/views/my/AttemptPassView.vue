@@ -6,11 +6,8 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { myAttempt, saveAnswer, startAttempt, submitAttempt } from '@/api/diagnostic'
-import { errorMessage } from '@/api/http'
-import BrandMark from '@/components/brand/BrandMark.vue'
-import SchoolFooter from '@/components/brand/SchoolFooter.vue'
+import { BrandMark, errorMessage, SchoolFooter, UiButton } from 'sk-ui'
 import AnswerField from '@/components/questions/AnswerField.vue'
-import UiButton from '@/components/ui/UiButton.vue'
 import { pageTitle } from '@/brand'
 import { seededShuffle } from '@/utils/shuffle'
 

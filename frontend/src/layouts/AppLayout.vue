@@ -1,8 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
-import BrandMark from '@/components/brand/BrandMark.vue'
-import SchoolFooter from '@/components/brand/SchoolFooter.vue'
+import { BrandMark, SchoolFooter } from 'sk-ui'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()

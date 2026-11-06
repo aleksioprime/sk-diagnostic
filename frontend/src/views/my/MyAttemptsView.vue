@@ -2,9 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { myAttempts } from '@/api/diagnostic'
-import { errorMessage } from '@/api/http'
-import SkeletonTable from '@/components/skeleton/SkeletonTable.vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
+import { errorMessage, SkeletonTable, UiBadge } from 'sk-ui'
 import { STATUS_TONES, formatDate } from '@/utils/format'
 
 const attempts = ref([])
