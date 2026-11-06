@@ -15,6 +15,10 @@ class ClassOut(ORMModel):
     students_count: int = 0
 
 
+class StudentFlagIn(BaseModel):
+    is_student: bool
+
+
 class AssignmentIn(BaseModel):
     test_id: int
     class_id: int

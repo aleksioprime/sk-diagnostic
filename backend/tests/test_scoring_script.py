@@ -61,7 +61,7 @@ def test_sandbox_reports_errors_with_script_lines():
 
 def test_sandbox_stops_endless_and_greedy_scripts_and_has_no_outside_access():
     assert 'остановлен' in run_script('while (true) {}', {}).error
-    assert 'памяти' in run_script('const a = []; while (true) a.push(new Array(1e6).fill(1))', {}).error
+    assert 'памяти' in run_script('const a = []; while (true) a.push(new Array(1e7).fill(1))', {}).error
     run = run_script('return { kinds: [typeof require, typeof process, typeof fetch] }', {})
     assert run.output == {'kinds': ['undefined', 'undefined', 'undefined']}
 
@@ -137,7 +137,11 @@ async def test_builtin_scoring_can_be_tried_but_not_replaced(db, redis_clean, cl
 
 async def test_attempt_is_scored_by_script_and_recalculated_after_fix(db, redis_clean, client):
     await _admin(db, client)
-    created = (await _import(client, FILE | {'scoring_script': 'throw new Error("черновик")'})).json()
+    created = (await _import(client)).json()
+    assert created['is_active'] is False
+    assert (await client.patch(f'/api/v1/admin/tests/{created["id"]}', json={'is_active': True})).status_code == 200
+    broken = {'script': 'throw new Error("черновик")'}
+    assert (await client.put(f'/api/v1/admin/tests/{created["id"]}/script', json=broken)).status_code == 200
     study_class, persons = await school_class(db, students=1)
     # Администратор и психолог в одном лице: суперпользователю доступны и выдачи
     assignment = (

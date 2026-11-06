@@ -15,6 +15,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.attempts.models import STATUS_ASSIGNED, Assignment, Attempt
+from app.modules.attempts.service import has_scoring
 from app.modules.tests.models import Test
 
 TOKEN_ALPHABET = string.ascii_lowercase + string.digits
@@ -44,6 +45,8 @@ async def create_assignment(db: AsyncSession, user: User, test_id: int, class_id
     test = await db.get(Test, test_id)
     if test is None or not test.is_active:
         raise not_found('Методика не найдена')
+    if not has_scoring(test):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'У методики нет расчёта: результаты учеников не посчитаются')
     study_class = await db.get(StudyClass, class_id)
     if study_class is None:
         raise not_found('Класс не найден')

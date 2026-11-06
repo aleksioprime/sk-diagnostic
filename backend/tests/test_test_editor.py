@@ -5,6 +5,7 @@ from sk_common.testing import login_as
 from tests.helpers import login_psychologist, motivation_test, school_class
 
 BASE = '/api/v1/admin/tests'
+SCRIPT = 'return { total: data.answers.length, summary: { Ответов: data.answers.length } }'
 
 
 async def _admin(db, client):
@@ -54,6 +55,7 @@ async def test_new_test_is_off_until_it_has_questions(db, redis_clean, client):
     assert (await client.patch(f'{BASE}/{test_id}', json={'is_active': True})).status_code == 400
 
     await _with_question(client, test_id)
+    await client.put(f'{BASE}/{test_id}/script', json={'script': SCRIPT})
     assert (await client.patch(f'{BASE}/{test_id}', json={'is_active': True})).json()['is_active'] is True
     content = (await client.get(f'{BASE}/{test_id}/content')).json()
     assert (await client.put(f'{BASE}/{test_id}/content', json=_body(content, []))).status_code == 400
@@ -100,6 +102,7 @@ async def test_issued_test_allows_only_texts(db, redis_clean, client):
     await _admin(db, client)
     test_id = await _create(client)
     content = await _with_question(client, test_id)
+    await client.put(f'{BASE}/{test_id}/script', json={'script': SCRIPT})
     await client.patch(f'{BASE}/{test_id}', json={'is_active': True})
     study_class, _ = await school_class(db, students=1)
     assignment = {'test_id': test_id, 'class_id': study_class.id}

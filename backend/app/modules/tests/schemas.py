@@ -1,8 +1,13 @@
 """Методика в файле JSON: импорт и выгрузка в одном формате. Скрипт расчёта — отдельным полем."""
 
+from datetime import date
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from app.modules.attempts.schemas import AnswerIn
+from app.modules.attempts.schemas import QuestionOut as StudentQuestion
+from app.modules.attempts.schemas import TestOut as StudentTest
 
 # multiple_choice не поддерживается формой ученика и хранением ответа
 ImportedType = Literal['single_choice', 'scale', 'ranking', 'text', 'number', 'yes_no']
@@ -186,3 +191,31 @@ class RunOut(BaseModel):
     logs: list[str]
     duration_ms: int
     summary: dict
+
+
+class Problem(BaseModel):
+    # error — включить нельзя, warning — можно, но стоит посмотреть
+    level: Literal['error', 'warning']
+    text: str
+    # Вкладка, на которой это исправляется
+    tab: Literal['questions', 'scoring']
+
+
+class ReadinessOut(BaseModel):
+    ready: bool
+    problems: list[Problem]
+
+
+class PreviewOut(BaseModel):
+    test: StudentTest
+    needs_birth_date: bool
+    questions: list[StudentQuestion]
+
+
+class PreviewAnswer(AnswerIn):
+    question_id: int
+
+
+class PreviewResultIn(BaseModel):
+    answers: list[PreviewAnswer]
+    birth_date: date | None = None

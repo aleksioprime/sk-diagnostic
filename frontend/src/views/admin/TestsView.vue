@@ -148,6 +148,11 @@ async function download(test) {
 
 async function toggle(test) {
   error.value = ''
+  // Включение идёт через проверку готовности
+  if (!test.is_active) {
+    router.push({ name: 'admin-test-check', params: { id: test.id } })
+    return
+  }
   try {
     const updated = await patchAdminTest(test.id, { is_active: !test.is_active })
     test.is_active = updated.is_active
@@ -233,7 +238,7 @@ async function remove() {
         </div>
         <p class="text-sm text-ink-muted">
           Типы вопросов: <code>scale</code>, <code>single_choice</code>, <code>ranking</code>, <code>text</code>, <code>number</code>,
-          <code>yes_no</code>. Номера вопросов (<code>order</code>) проставятся по порядку, если их не указать. Скрипт можно не задавать сразу: он пишется на странице методики.
+          <code>yes_no</code>. Номера вопросов (<code>order</code>) проставятся по порядку, если их не указать. Скрипт можно не задавать сразу: он пишется на странице методики. Загруженная методика отключена, пока не пройдёт проверку готовности.
         </p>
       </UiCard>
     </section>

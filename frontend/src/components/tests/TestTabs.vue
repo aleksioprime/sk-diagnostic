@@ -6,6 +6,7 @@ defineProps({ id: { type: [String, Number], required: true } })
 const tabs = [
   { name: 'admin-test-questions', label: 'Вопросы и ответы' },
   { name: 'admin-test', label: 'Расчёт' },
+  { name: 'admin-test-check', label: 'Проверка и запуск' },
 ]
 </script>
 

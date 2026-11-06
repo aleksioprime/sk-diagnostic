@@ -1,6 +1,5 @@
 """Администратор: методики, импорт из JSON, скрипт расчёта и его проверка."""
 
-import asyncio
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -10,12 +9,18 @@ from sqlalchemy import select
 
 from app import scoring
 from app.modules.assignments.service import summary
+from app.modules.attempts.router import question_out
+from app.modules.attempts.schemas import TestOut
+from app.modules.attempts.service import needs_birth_date
 from app.modules.tests import service
 from app.modules.tests.models import Scale, Test
 from app.modules.tests.schemas import (
     ContentIn,
     ContentOut,
     ImportIn,
+    PreviewOut,
+    PreviewResultIn,
+    ReadinessOut,
     RunIn,
     RunOut,
     ScaleIn,
@@ -26,7 +31,7 @@ from app.modules.tests.schemas import (
     TestCreateIn,
     TestPatch,
 )
-from app.scoring import sandbox
+from app.scoring.sandbox import ScriptRun
 
 router = APIRouter(prefix='/v1/admin/tests', tags=['admin-tests'])
 
@@ -89,8 +94,10 @@ async def get_test(test_id: int, db: Db, _: AdminUser) -> TestAdminDetail:
 @router.patch('/{test_id}', response_model=TestAdminDetail, summary='Изменить настройки методики')
 async def patch_test(test_id: int, body: TestPatch, db: Db, user: AdminUser) -> TestAdminDetail:
     test = await _test(db, test_id)
-    if body.is_active and not any(q.is_active for q in test.questions):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Сначала добавьте вопросы: без них методику нельзя пройти')
+    if body.is_active and not test.is_active:
+        errors = [p.text for p in await service.readiness(test) if p.level == 'error']
+        if errors:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, f'Методику нельзя включить. {"; ".join(errors[:3])}')
     for key, value in body.model_dump(exclude_none=True).items():
         setattr(test, key, value)
     record(db, 'test.update', 'test', test.id, user.id)
@@ -174,20 +181,7 @@ async def save_script(test_id: int, body: ScriptIn, db: Db, user: AdminUser) -> 
     return await _detail(db, test)
 
 
-@router.post('/{test_id}/run', response_model=RunOut, summary='Проверить расчёт на данных, ничего не сохраняя')
-async def run_script(test_id: int, body: RunIn, db: Db, _: AdminUser) -> RunOut:
-    test = await _test(db, test_id)
-    script = (body.script or '').strip()
-    if script:
-        run = await asyncio.to_thread(sandbox.run_script, script, body.input)
-    else:
-        run = sandbox.ScriptRun()
-        try:
-            run.output = scoring.calculate(test.code, body.input)
-        except scoring.ScoringError as exc:
-            run.error = str(exc)
-        except Exception as exc:  # входные данные правят вручную: расчёт может упасть на любой их форме
-            run.error = f'{type(exc).__name__}: {exc}'
+def _run_out(run: ScriptRun) -> RunOut:
     return RunOut(
         output=run.output,
         error=run.error,
@@ -196,3 +190,29 @@ async def run_script(test_id: int, body: RunIn, db: Db, _: AdminUser) -> RunOut:
         duration_ms=run.duration_ms,
         summary=summary(run.output),
     )
+
+
+@router.post('/{test_id}/run', response_model=RunOut, summary='Проверить расчёт на данных, ничего не сохраняя')
+async def run_script(test_id: int, body: RunIn, db: Db, _: AdminUser) -> RunOut:
+    return _run_out(await service.run_scoring(await _test(db, test_id), body.script, body.input))
+
+
+@router.get('/{test_id}/readiness', response_model=ReadinessOut, summary='Что мешает включить методику')
+async def readiness(test_id: int, db: Db, _: AdminUser) -> ReadinessOut:
+    problems = await service.readiness(await _test(db, test_id))
+    return ReadinessOut(ready=not any(p.level == 'error' for p in problems), problems=problems)
+
+
+@router.get('/{test_id}/preview', response_model=PreviewOut, summary='Методика глазами ученика')
+async def preview(test_id: int, db: Db, _: AdminUser) -> PreviewOut:
+    test = await _test(db, test_id)
+    return PreviewOut(
+        test=TestOut.model_validate(test),
+        needs_birth_date=needs_birth_date(test),
+        questions=[question_out(q) for q in sorted(test.questions, key=lambda q: q.order) if q.is_active],
+    )
+
+
+@router.post('/{test_id}/preview/result', response_model=RunOut, summary='Результат предпросмотра, ничего не сохраняя')
+async def preview_result(test_id: int, body: PreviewResultIn, db: Db, _: AdminUser) -> RunOut:
+    return _run_out(await service.preview_result(await _test(db, test_id), body))

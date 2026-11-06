@@ -32,6 +32,7 @@ export const deleteAttempt = (id) => http.delete(`/v1/attempts/${id}`)
 // Администратор
 export const listPsychologists = () => get('/v1/psychologists')
 export const setPsychologists = (personIds) => put('/v1/psychologists', { person_ids: personIds })
+export const setPersonStudent = (personId, isStudent) => put(`/v1/persons/${personId}/student`, { is_student: isStudent })
 export const searchEmployees = (q) => get('/v1/directory/employees', { params: { q } })
 
 // Администратор: методики и скрипты расчёта
@@ -43,6 +44,9 @@ export const getTestContent = (id) => get(`/v1/admin/tests/${id}/content`)
 export const saveTestContent = (id, body) => put(`/v1/admin/tests/${id}/content`, body)
 export const createScale = (testId, body) => post(`/v1/admin/tests/${testId}/scales`, body)
 export const saveScale = (testId, scaleId, body) => put(`/v1/admin/tests/${testId}/scales/${scaleId}`, body)
+export const getTestReadiness = (id) => get(`/v1/admin/tests/${id}/readiness`)
+export const getTestPreview = (id) => get(`/v1/admin/tests/${id}/preview`)
+export const previewResult = (id, body) => post(`/v1/admin/tests/${id}/preview/result`, body)
 export const importTest = (test, replace = false) => post('/v1/admin/tests/import', { test, replace })
 export const exportTest = (id) => get(`/v1/admin/tests/${id}/export`)
 export const patchAdminTest = (id, body) => patch(`/v1/admin/tests/${id}`, body)

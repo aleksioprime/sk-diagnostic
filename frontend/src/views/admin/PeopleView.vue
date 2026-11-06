@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { errorMessage, SkeletonTable, UiBadge, UiButton, UiCard, UiInput, UiSelect } from 'sk-ui'
 import { createUser, fetchPersons, fetchSyncRuns, fetchUsers, setPersonAdmin, startSync, updateUser } from '@/api/people'
+import { setPersonStudent } from '@/api/diagnostic'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
@@ -106,7 +107,7 @@ function personAdminLocked(person) {
   return ''
 }
 
-const newUser = ref({ email: '', full_name: '', password: '', is_employee: true, is_superuser: false })
+const newUser = ref({ email: '', full_name: '', password: '', is_employee: true, is_student: false, is_superuser: false })
 const creating = ref(false)
 const notice = ref('')
 const passwordFor = ref(null)
@@ -117,10 +118,11 @@ async function create() {
   notice.value = ''
   creating.value = true
   try {
-    const payload = { ...newUser.value, password: newUser.value.password || null }
-    const user = await createUser(payload)
+    const { is_student: isStudent, ...fields } = newUser.value
+    const user = await createUser({ ...fields, password: fields.password || null })
+    if (isStudent && user.person) await setPersonStudent(user.person.id, true)
     notice.value = `Создан ${user.email}${user.has_password ? ': можно входить по паролю' : ''}`
-    newUser.value = { email: '', full_name: '', password: '', is_employee: true, is_superuser: false }
+    newUser.value = { email: '', full_name: '', password: '', is_employee: true, is_student: false, is_superuser: false }
     tab.value = 'users'
     await load()
   } catch (e) {
@@ -199,12 +201,13 @@ onMounted(() => {
         <UiInput v-model="newUser.full_name" label="ФИО" />
         <UiInput v-model="newUser.password" label="Пароль (необязательно)" type="text" minlength="8" autocomplete="off" />
         <div class="flex flex-wrap items-end gap-3">
-          <label class="flex h-10 items-center gap-2"><input v-model="newUser.is_employee" type="checkbox" class="size-4 accent-brand-600" /> Сотрудник</label>
+          <label class="flex h-10 items-center gap-2"><input v-model="newUser.is_employee" type="checkbox" class="size-4 accent-brand-600" @change="newUser.is_student = false" /> Сотрудник</label>
+          <label class="flex h-10 items-center gap-2"><input v-model="newUser.is_student" type="checkbox" class="size-4 accent-brand-600" @change="newUser.is_employee = false" /> Ученик</label>
           <label class="flex h-10 items-center gap-2"><input v-model="newUser.is_superuser" type="checkbox" class="size-4 accent-brand-600" /> Админ</label>
           <UiButton type="submit" variant="primary" :loading="creating">Создать</UiButton>
         </div>
       </form>
-      <p class="mt-3 text-sm text-ink-muted">Сотрудников в психологическую службу добавляет администратор в разделе «Психологи». Пароль нужен, пока не настроена отправка писем.</p>
+      <p class="mt-3 text-sm text-ink-muted">Сотрудников в психологическую службу добавляет администратор в разделе «Психологи». Пароль нужен, пока не настроена отправка писем. Ученика не из SkolStream психолог добавляет в выдачу поиском; войти он может по паролю.</p>
     </UiCard>
 
     <p v-if="notice" role="status" class="rounded-control bg-green-100 px-4 py-3 text-green-800">{{ notice }}</p>

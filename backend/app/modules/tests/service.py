@@ -1,5 +1,7 @@
 """Импорт и выгрузка методик, пример входных данных для проверки расчёта."""
 
+import asyncio
+import json
 import random
 from datetime import UTC, date, datetime
 from types import SimpleNamespace
@@ -9,6 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import scoring
+from app.modules.assignments.service import summary
 from app.modules.attempts.models import Assignment
 from app.modules.attempts.scoring_input import build_input
 from app.modules.tests.models import Option, Question, Scale, ScaleOption, Test
@@ -16,6 +19,8 @@ from app.modules.tests.schemas import (
     ContentIn,
     ContentOut,
     OptionIn,
+    PreviewResultIn,
+    Problem,
     QuestionIn,
     QuestionOut,
     ScaleFile,
@@ -24,6 +29,7 @@ from app.modules.tests.schemas import (
     TestCreateIn,
     TestFile,
 )
+from app.scoring import sandbox
 
 CHOICE_TYPES = ('single_choice', 'ranking')
 # multiple_choice не поддерживается формой ученика и хранением ответа
@@ -101,6 +107,8 @@ async def import_test(db: AsyncSession, file: TestFile, replace: bool) -> Test:
         is_sequential=file.is_sequential,
         needs_birth_date=file.needs_birth_date,
         scoring_script=file.scoring_script or None,
+        # Психологи увидят методику, когда она пройдёт проверку готовности
+        is_active=False,
     )
     test.questions = [
         Question(
@@ -479,12 +487,160 @@ def _sample_answer(question: Question, pick) -> SimpleNamespace | None:
     return answer
 
 
-def sample_input(test: Test, mode: str) -> dict:
+def _input_without_attempt(test: Test, answers: list, birth_date: date | None = None) -> dict:
     """Входные данные как у настоящей попытки, но с выдуманным учеником: реальные ответы сюда не попадают."""
+    person = SimpleNamespace(
+        id=0, last_name='Пример', first_name='Ученик', birth_date=birth_date or _sample_birth_date(), gender='female'
+    )
+    attempt = SimpleNamespace(id=0, answers=answers, person=person, submitted_at=datetime.now(UTC))
+    return build_input(attempt, test)
+
+
+def sample_input(test: Test, mode: str) -> dict:
     pick = {'random': random.choice, 'first': lambda items: items[0], 'last': lambda items: items[-1]}[mode]
     answers = [_sample_answer(q, pick) for q in test.questions if q.is_active]
-    person = SimpleNamespace(
-        id=0, last_name='Пример', first_name='Ученик', birth_date=_sample_birth_date(), gender='female'
+    return _input_without_attempt(test, [a for a in answers if a])
+
+
+async def run_scoring(test: Test, script: str | None, data: dict) -> sandbox.ScriptRun:
+    """Запустить расчёт на данных, ничего не сохраняя. Пустой скрипт — встроенный расчёт методики."""
+    if script and script.strip():
+        return await asyncio.to_thread(sandbox.run_script, script, data)
+    run = sandbox.ScriptRun()
+    try:
+        run.output = scoring.calculate(test.code, data)
+    except scoring.ScoringError as exc:
+        run.error = str(exc)
+    except Exception as exc:  # входные данные правят вручную: расчёт может упасть на любой их форме
+        run.error = f'{type(exc).__name__}: {exc}'
+    return run
+
+
+# --- Предпросмотр ---------------------------------------------------------------------------
+
+
+def _preview_answer(question: Question, data) -> SimpleNamespace:
+    answer = SimpleNamespace(
+        question_id=question.id, option_id=None, scale_option_id=None, text=None, number=None, boolean=None, ranking=[]
     )
-    attempt = SimpleNamespace(id=0, answers=[a for a in answers if a], person=person, submitted_at=datetime.now(UTC))
-    return build_input(attempt, test)
+    options = {o.id for o in question.options if o.is_active}
+    kind = question.question_type
+    if kind == 'scale':
+        allowed = {o.id for o in question.scale.options if o.is_active} if question.scale else set()
+        if data.scale_option_id is not None and data.scale_option_id not in allowed:
+            raise _bad('Такого значения нет')
+        answer.scale_option_id = data.scale_option_id
+    elif kind == 'single_choice':
+        if data.option_id is not None and data.option_id not in options:
+            raise _bad('Такого варианта нет')
+        answer.option_id = data.option_id
+    elif kind == 'ranking':
+        if set(data.ranking) - options:
+            raise _bad('Такого варианта нет')
+        answer.ranking = [SimpleNamespace(rank=n, option_id=oid) for n, oid in enumerate(data.ranking, 1)]
+    elif kind == 'text':
+        answer.text = (data.text or '').strip() or None
+    elif kind == 'number':
+        answer.number = data.number
+    elif kind == 'yes_no':
+        answer.boolean = data.boolean
+    return answer
+
+
+async def preview_result(test: Test, body: PreviewResultIn) -> sandbox.ScriptRun:
+    """Расчёт по ответам из предпросмотра: в базу ничего не попадает."""
+    questions = {q.id: q for q in test.questions if q.is_active}
+    answers = []
+    for item in body.answers:
+        if item.question_id not in questions:
+            raise _bad('Вопрос не найден: возможно, методику уже изменили. Откройте предпросмотр заново')
+        answers.append(_preview_answer(questions[item.question_id], item))
+    if not (test.scoring_script or test.code in scoring.CALCULATORS):
+        return sandbox.ScriptRun(error='У методики пока нет расчёта')
+    return await run_scoring(test, test.scoring_script, _input_without_attempt(test, answers, body.birth_date))
+
+
+# --- Проверка готовности --------------------------------------------------------------------
+
+SAMPLE_MODES = {'first': 'первых вариантах', 'last': 'последних вариантах', 'random': 'случайных ответах'}
+
+
+def _option_problems(options: list, place: str) -> list[Problem]:
+    problems = []
+    bare = [o.label for o in options if not o.value and o.score is None]
+    if bare:
+        text = f'{place}: у вариантов нет ни значения, ни баллов ({", ".join(bare[:3])}), расчёту не на что опереться'
+        problems.append(Problem(level='warning', text=text, tab='questions'))
+    values = [o.value for o in options if o.value]
+    if len(set(values)) != len(values):
+        problems.append(Problem(level='warning', text=f'{place}: значения вариантов повторяются', tab='questions'))
+    return problems
+
+
+def _question_problems(questions: list[Question]) -> list[Problem]:
+    problems = []
+    texts = [q.text.strip().lower() for q in questions]
+    for number, question in enumerate(questions, 1):
+        place = f'Вопрос {number}'
+        kind = question.question_type
+        if kind not in EDITABLE_TYPES:
+            text = f'{place}: тип {kind} не показывается ученику'
+            problems.append(Problem(level='error', text=text, tab='questions'))
+        elif kind == 'scale':
+            options = [o for o in question.scale.options if o.is_active] if question.scale else []
+            if len(options) < 2:
+                text = f'{place}: в шкале должно быть хотя бы два варианта'
+                problems.append(Problem(level='error', text=text, tab='questions'))
+            problems += _option_problems(options, place)
+        elif kind in CHOICE_TYPES:
+            options = [o for o in question.options if o.is_active]
+            if len(options) < 2:
+                text = f'{place}: нужно хотя бы два варианта ответа'
+                problems.append(Problem(level='error', text=text, tab='questions'))
+            problems += _option_problems(options, place)
+        if texts.count(texts[number - 1]) > 1 and texts.index(texts[number - 1]) == number - 1:
+            text = f'{place}: такой же текст есть в другом вопросе'
+            problems.append(Problem(level='warning', text=text, tab='questions'))
+    return problems
+
+
+def _without_time(output: dict | None) -> str:
+    data = json.loads(json.dumps(output or {}))
+    data.pop('calculated_at', None)
+    if isinstance(data.get('result'), dict):
+        data['result'].pop('calculated_at', None)
+    return json.dumps(data, sort_keys=True)
+
+
+async def _scoring_problems(test: Test) -> list[Problem]:
+    if scoring_kind(test) == 'none':
+        return [Problem(level='error', text='Нет расчёта: результаты учеников не посчитаются', tab='scoring')]
+    outputs = {}
+    for mode, title in SAMPLE_MODES.items():
+        run = await run_scoring(test, test.scoring_script, sample_input(test, mode))
+        if run.error:
+            place = f' (строка {run.line})' if run.line else ''
+            text = f'Расчёт падает на {title}{place}: {run.error}'
+            return [Problem(level='error', text=text, tab='scoring')]
+        outputs[mode] = run.output
+    problems = []
+    if not summary(outputs['first']):
+        text = 'Скрипт не возвращает summary: в таблице класса и Excel не будет колонок с результатом'
+        problems.append(Problem(level='warning', text=text, tab='scoring'))
+    if _without_time(outputs['first']) == _without_time(outputs['last']):
+        text = 'Результат одинаков при первых и последних вариантах: возможно, расчёт не использует ответы'
+        problems.append(Problem(level='warning', text=text, tab='scoring'))
+    return problems
+
+
+async def readiness(test: Test) -> list[Problem]:
+    questions = _active_sorted(test.questions)
+    if not questions:
+        return [Problem(level='error', text='В методике нет вопросов', tab='questions')]
+    problems = _question_problems(questions)
+    # Если вопросы заполнены неверно, запускать расчёт на них незачем: ошибка будет не про расчёт
+    if any(p.level == 'error' for p in problems):
+        if scoring_kind(test) == 'none':
+            problems += await _scoring_problems(test)
+        return problems
+    return problems + await _scoring_problems(test)

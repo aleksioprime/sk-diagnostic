@@ -3,9 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getAttempt, recalculateAttempt, setBirthDate } from '@/api/diagnostic'
 import { errorMessage, UiButton, UiCard, UiInput } from 'sk-ui'
-import DomikiResult from '@/components/results/DomikiResult.vue'
-import MotivationResult from '@/components/results/MotivationResult.vue'
-import SummaryResult from '@/components/results/SummaryResult.vue'
+import { resultComponent } from '@/components/results/resultComponent'
 import { formatDate, formatDateTime, formatDuration } from '@/utils/format'
 
 const props = defineProps({ id: { type: String, required: true } })
@@ -17,13 +15,7 @@ const busy = ref(false)
 const birthDate = ref('')
 const showAnswers = ref(false)
 
-const template = computed(() => {
-  // По форме результата, а не по коду: так копия методики выглядит как исходная
-  const result = attempt.value?.result?.result || {}
-  if ('level' in result) return MotivationResult
-  if ('vegetative_coefficient' in result) return DomikiResult
-  return SummaryResult
-})
+const template = computed(() => resultComponent(attempt.value?.result))
 
 onMounted(async () => {
   try {

@@ -30,6 +30,10 @@ def _bad(message: str) -> HTTPException:
     return HTTPException(status.HTTP_400_BAD_REQUEST, message)
 
 
+def has_scoring(test: Test) -> bool:
+    return bool(test.scoring_script) or test.code in scoring.CALCULATORS
+
+
 def needs_birth_date(test: Test) -> bool:
     return test.needs_birth_date or test.code in scoring.NEEDS_BIRTH_DATE
 
