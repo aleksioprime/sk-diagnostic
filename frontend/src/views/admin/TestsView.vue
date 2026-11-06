@@ -223,7 +223,7 @@ async function remove() {
         ></textarea>
         <input type="file" accept="application/json,.json" aria-label="Файл JSON" class="text-sm" @change="pickFile" />
         <label class="flex items-center gap-2 text-sm">
-          <input v-model="replace" type="checkbox" />
+          <input v-model="replace" type="checkbox" class="size-4 accent-brand-600" />
           Заменить методику с таким же кодом, если её ещё не выдавали
         </label>
         <p v-if="importError" role="alert" class="whitespace-pre-line rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ importError }}</p>

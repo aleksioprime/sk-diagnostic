@@ -51,6 +51,12 @@ describe('страница скрипта расчёта', () => {
     expect(wrapper.text()).toContain('Сумма')
   })
 
+  it('проверка на лету включена сразу', async () => {
+    const wrapper = await open()
+    const toggle = wrapper.findAll('label').find((l) => l.text().includes('Проверять на лету')).find('input')
+    expect(toggle.element.checked).toBe(true)
+  })
+
   it('запускает скрипт на лету и один раз после паузы в наборе', async () => {
     const wrapper = await open()
     api.runTestScript.mockClear()

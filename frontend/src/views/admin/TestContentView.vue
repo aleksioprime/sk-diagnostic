@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { onBeforeRouteLeave, RouterLink, useRoute } from 'vue-router'
 import { getTestContent, saveTestContent } from '@/api/diagnostic'
-import { errorMessage, SkeletonPage, UiBadge, UiButton, UiCard, UiInput } from 'sk-ui'
+import { errorMessage, SkeletonPage, UiBadge, UiButton, UiCard, UiInput, UiSelect } from 'sk-ui'
 import OptionsEditor from '@/components/tests/OptionsEditor.vue'
 import ScaleCard from '@/components/tests/ScaleCard.vue'
 import TestTabs from '@/components/tests/TestTabs.vue'
@@ -138,36 +138,28 @@ onBeforeRouteLeave(() => !anythingDirty.value || window.confirm('Есть нес
             </label>
             <UiInput v-model="question.description" label="Пояснение для ученика" />
             <div class="grid gap-3 sm:grid-cols-2">
-              <label class="grid gap-1 text-sm font-medium">
-                Тип ответа
-                <select
-                  :value="question.question_type"
-                  :disabled="locked"
-                  class="h-10 rounded-control border border-line bg-surface px-2 font-normal disabled:bg-canvas"
-                  @change="changeType(question, $event.target.value)"
-                >
+              <div class="grid gap-1.5">
+                <span class="text-sm font-medium">Тип ответа</span>
+                <UiSelect :model-value="question.question_type" :disabled="locked" aria-label="Тип ответа" class="w-full" @update:model-value="changeType(question, $event)">
                   <option v-for="type in QUESTION_TYPES" :key="type.value" :value="type.value">{{ type.label }}</option>
                   <option v-if="!QUESTION_TYPES.some((t) => t.value === question.question_type)" :value="question.question_type">{{ question.question_type }}</option>
-                </select>
-              </label>
-              <label v-if="question.question_type === 'scale'" class="grid gap-1 text-sm font-medium">
-                Шкала
-                <select v-model="question.scale_id" :disabled="locked" class="h-10 rounded-control border border-line bg-surface px-2 font-normal disabled:bg-canvas">
+                </UiSelect>
+              </div>
+              <div v-if="question.question_type === 'scale'" class="grid gap-1.5">
+                <span class="text-sm font-medium">Шкала</span>
+                <UiSelect v-model="question.scale_id" :disabled="locked" aria-label="Шкала" class="w-full">
                   <option :value="null" disabled>Выберите шкалу</option>
                   <option v-for="scale in savedScales" :key="scale.id" :value="scale.id">{{ scale.title }}</option>
-                </select>
-              </label>
+                </UiSelect>
+              </div>
             </div>
             <OptionsEditor v-if="hasOptions(question.question_type)" v-model="question.options" :fixed="locked" />
-            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-              <label class="flex items-center gap-2"><input v-model="question.is_required" type="checkbox" :disabled="locked" /> Обязательный</label>
-              <label v-if="hasOptions(question.question_type)" class="flex items-center gap-2">
-                <input v-model="question.is_random" type="checkbox" :disabled="locked" /> Варианты в случайном порядке
+            <div class="flex flex-wrap items-end gap-x-5 gap-y-2 text-sm">
+              <label class="flex h-10 items-center gap-2"><input v-model="question.is_required" type="checkbox" :disabled="locked" class="size-4 accent-brand-600" /> Обязательный</label>
+              <label v-if="hasOptions(question.question_type)" class="flex h-10 items-center gap-2">
+                <input v-model="question.is_random" type="checkbox" :disabled="locked" class="size-4 accent-brand-600" /> Варианты в случайном порядке
               </label>
-              <label class="ml-auto flex items-center gap-2 text-ink-muted">
-                Код для скрипта
-                <input v-model="question.code" :disabled="locked" class="h-8 w-36 rounded-control border border-line bg-surface px-2 disabled:bg-canvas" />
-              </label>
+              <UiInput v-model="question.code" label="Код для скрипта" :disabled="locked" class="ml-auto w-44 [&_input:disabled]:bg-canvas [&_input:disabled]:text-ink-muted" />
             </div>
           </UiCard>
         </li>

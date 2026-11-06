@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, RouterLink, useRoute } from 'vue-router'
 import { getAdminTest, getSampleInput, patchAdminTest, runTestScript, saveTestScript } from '@/api/diagnostic'
-import { errorMessage, SkeletonPage, UiBadge, UiButton } from 'sk-ui'
+import { errorMessage, SkeletonPage, UiBadge, UiButton, UiSelect } from 'sk-ui'
 import CodeEditor from '@/components/CodeEditor.vue'
 import TestTabs from '@/components/tests/TestTabs.vue'
 
@@ -152,7 +152,7 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm('Скрипт не со�
     </p>
     <TestTabs :id="route.params.id" class="mt-4" />
     <label class="mt-4 flex items-center gap-2 text-sm">
-      <input type="checkbox" :checked="test.needs_birth_date" :disabled="isBuiltin" @change="toggleBirthDate" />
+      <input type="checkbox" :checked="test.needs_birth_date" :disabled="isBuiltin" class="size-4 accent-brand-600" @change="toggleBirthDate" />
       Перед началом ученик указывает дату рождения (нужен возраст)
     </label>
 
@@ -181,11 +181,11 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm('Скрипт не со�
       <section class="grid min-w-0 grid-rows-[auto_34rem] gap-2">
         <div class="flex min-h-8 flex-wrap items-center gap-2">
           <h2 class="font-semibold">Входные данные (data)</h2>
-          <select v-model="mode" aria-label="Какие ответы подставить" class="ml-auto h-8 rounded-control border border-line bg-surface px-2 text-sm">
+          <UiSelect v-model="mode" size="sm" aria-label="Какие ответы подставить" class="ml-auto">
             <option value="random">Случайные ответы</option>
             <option value="first">Первые варианты</option>
             <option value="last">Последние варианты</option>
-          </select>
+          </UiSelect>
           <UiButton size="sm" @click="loadSample">Сгенерировать</UiButton>
         </div>
         <CodeEditor v-model="input" language="json" label="Входные данные расчёта" />
@@ -198,7 +198,7 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm('Скрипт не со�
       <div class="flex flex-wrap items-center gap-3">
         <h2 class="font-semibold">Результат</h2>
         <label class="flex items-center gap-2 text-sm">
-          <input v-model="live" type="checkbox" />
+          <input v-model="live" type="checkbox" class="size-4 accent-brand-600" />
           Проверять на лету
         </label>
         <UiButton size="sm" :loading="running" :disabled="!!inputError" @click="check">Запустить</UiButton>

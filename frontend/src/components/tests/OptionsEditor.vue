@@ -1,5 +1,5 @@
 <script setup>
-import { UiButton } from 'sk-ui'
+import { UiButton, UiInput } from 'sk-ui'
 import { newKey, swap } from '@/utils/testDraft'
 
 // Варианты ответа. fixed — только подписи, readonly — только просмотр.
@@ -21,10 +21,10 @@ function add() {
     <div class="hidden grid-cols-[1fr_7rem_5rem_6.5rem] gap-2 text-xs text-ink-muted sm:grid">
       <span>Подпись</span><span>Значение</span><span>Баллы</span>
     </div>
-    <div v-for="(option, index) in options" :key="option.key" class="grid gap-2 sm:grid-cols-[1fr_7rem_5rem_6.5rem]">
-      <input v-model="option.label" :disabled="readonly" :aria-label="`Подпись варианта ${index + 1}`" class="field" />
-      <input v-model="option.value" :disabled="fixed || readonly" :aria-label="`Значение варианта ${index + 1}`" class="field" />
-      <input v-model.number="option.score" type="number" step="any" :disabled="fixed || readonly" :aria-label="`Баллы варианта ${index + 1}`" class="field" />
+    <div v-for="(option, index) in options" :key="option.key" class="grid items-center gap-2 sm:grid-cols-[1fr_7rem_5rem_6.5rem]">
+      <UiInput v-model="option.label" :disabled="readonly" :aria-label="`Подпись варианта ${index + 1}`" class="[&_input:disabled]:bg-canvas [&_input:disabled]:text-ink-muted" />
+      <UiInput v-model="option.value" :disabled="fixed || readonly" :aria-label="`Значение варианта ${index + 1}`" class="[&_input:disabled]:bg-canvas [&_input:disabled]:text-ink-muted" />
+      <UiInput v-model="option.score" type="number" step="any" :disabled="fixed || readonly" :aria-label="`Баллы варианта ${index + 1}`" class="[&_input:disabled]:bg-canvas [&_input:disabled]:text-ink-muted" />
       <div v-if="canRestructure()" class="flex gap-1">
         <UiButton size="sm" variant="ghost" :disabled="index === 0" :aria-label="`Вариант ${index + 1} выше`" @click="swap(options, index, index - 1)">↑</UiButton>
         <UiButton size="sm" variant="ghost" :disabled="index === options.length - 1" :aria-label="`Вариант ${index + 1} ниже`" @click="swap(options, index, index + 1)">↓</UiButton>
@@ -35,19 +35,3 @@ function add() {
   </div>
 </template>
 
-<style scoped>
-.field {
-  height: 2.25rem;
-  width: 100%;
-  min-width: 0;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-control, 0.5rem);
-  background: var(--color-surface);
-  padding: 0 0.625rem;
-  font-size: 0.875rem;
-}
-.field:disabled {
-  background: var(--color-canvas);
-  color: var(--color-ink-muted);
-}
-</style>

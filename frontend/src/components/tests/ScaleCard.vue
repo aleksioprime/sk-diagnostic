@@ -55,7 +55,7 @@ async function save() {
 <template>
   <UiCard class="grid gap-3">
     <div class="flex flex-wrap items-center gap-2">
-      <UiInput v-model="draft.title" label="Название шкалы" class="min-w-64 flex-1" :disabled="scale.mode === 'none'" />
+      <UiInput v-model="draft.title" label="Название шкалы" class="min-w-64 flex-1 [&_input:disabled]:bg-canvas [&_input:disabled]:text-ink-muted" :disabled="scale.mode === 'none'" />
       <UiBadge v-if="dirty && !isNew" tone="warning">Не сохранена</UiBadge>
     </div>
     <p v-if="NOTES[scale.mode]" class="text-sm text-ink-muted">{{ NOTES[scale.mode] }}</p>

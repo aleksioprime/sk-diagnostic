@@ -80,3 +80,23 @@ describe('черновик', () => {
     expect(contentProblem({ title: 'Т', questions: [q] })).toBe('Вопрос 1: выберите шкалу')
   })
 })
+
+describe('поля редактора', () => {
+  it('баллы из поля уходят числом, а не строкой', async () => {
+    const wrapper = await open()
+    await wrapper.find('input[aria-label="Баллы варианта 1"]').setValue('7')
+    await button(wrapper, 'Сохранить вопросы').trigger('click')
+    await flushPromises()
+    expect(api.saveTestContent.mock.calls[0][1].questions[0].options[0].score).toBe(7)
+  })
+
+  it('смена типа через общий список подставляет варианты', async () => {
+    const wrapper = await open({ ...base, questions: [{ ...question(10, 'Первый'), question_type: 'text', options: [] }] })
+    await wrapper.find('button[aria-label="Тип ответа"]').trigger('click')
+    const item = [...document.body.querySelectorAll('[role="option"]')].find((node) => node.textContent.includes('Один вариант'))
+    item.click()
+    await flushPromises()
+    expect(wrapper.find('input[aria-label="Подпись варианта 2"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+})

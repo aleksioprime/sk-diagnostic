@@ -51,7 +51,7 @@ export function newQuestion() {
 }
 
 function optionBody({ id, label, description, value, score }) {
-  return { id, label, description, value: String(value ?? ''), score: score === '' || score === undefined ? null : score }
+  return { id, label, description, value: String(value ?? ''), score: score === '' || score === null || score === undefined ? null : Number(score) }
 }
 
 export function scaleBody(scale) {
