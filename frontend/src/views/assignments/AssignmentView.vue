@@ -2,9 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import * as api from '@/api/diagnostic'
-import { errorMessage } from '@/api/http'
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import { errorMessage, UiBadge, UiButton } from 'sk-ui'
 import { STATUS_TITLES, STATUS_TONES, formatDateTime } from '@/utils/format'
 
 const props = defineProps({ id: { type: String, required: true } })

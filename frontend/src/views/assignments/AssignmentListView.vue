@@ -2,11 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { createAssignment, listAssignments, listClasses, listTests } from '@/api/diagnostic'
-import { errorMessage } from '@/api/http'
-import SkeletonTable from '@/components/skeleton/SkeletonTable.vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiInput from '@/components/ui/UiInput.vue'
+import { errorMessage, SkeletonTable, UiBadge, UiButton, UiInput } from 'sk-ui'
 import { formatDate } from '@/utils/format'
 
 const router = useRouter()

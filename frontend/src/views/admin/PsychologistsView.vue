@@ -1,9 +1,8 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { listPsychologists, setPsychologists } from '@/api/diagnostic'
-import { errorMessage } from '@/api/http'
+import { errorMessage, UiButton } from 'sk-ui'
 import PersonPicker from '@/components/PersonPicker.vue'
-import UiButton from '@/components/ui/UiButton.vue'
 
 const people = ref([])
 const error = ref('')
