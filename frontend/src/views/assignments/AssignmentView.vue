@@ -130,7 +130,7 @@ watch(query, (value) => {
                   {{ attempt.student.full_name }}
                 </RouterLink>
                 <span v-else>{{ attempt.student.full_name }}</span>
-                <span v-if="!attempt.student.birth_date && assignment.test_code === 'motivation_learning'" class="block text-xs text-amber-700">нет даты рождения</span>
+                <span v-if="!attempt.student.birth_date && assignment.needs_birth_date" class="block text-xs text-amber-700">нет даты рождения</span>
               </td>
               <td class="px-4 py-3">
                 <UiBadge :tone="attempt.result_status === 'error' ? 'danger' : STATUS_TONES[attempt.status]">

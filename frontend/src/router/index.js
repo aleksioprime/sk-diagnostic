@@ -46,6 +46,18 @@ export const routes = [
       },
       { path: 'profile', name: 'profile', component: () => import('@/views/profile/ProfileView.vue') },
       {
+        path: 'admin/tests',
+        name: 'admin-tests',
+        component: () => import('@/views/admin/TestsView.vue'),
+        meta: { admin: true },
+      },
+      {
+        path: 'admin/tests/:id',
+        name: 'admin-test',
+        component: () => import('@/views/admin/TestEditorView.vue'),
+        meta: { admin: true },
+      },
+      {
         path: 'admin/people',
         name: 'admin-people',
         component: () => import('@/views/admin/PeopleView.vue'),

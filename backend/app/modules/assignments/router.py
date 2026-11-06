@@ -139,6 +139,7 @@ def _assignment_out(assignment: Assignment, counts) -> AssignmentOut:
         test_id=assignment.test_id,
         test_title=assignment.test.title,
         test_code=assignment.test.code,
+        needs_birth_date=attempts_service.needs_birth_date(assignment.test),
         class_id=assignment.class_id,
         class_name=assignment.study_class.name if assignment.study_class else None,
         is_active=assignment.is_active,

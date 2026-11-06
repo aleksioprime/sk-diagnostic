@@ -26,3 +26,6 @@ email-validator==2.2.0
 # Выгрузка в Excel
 openpyxl==3.1.5
 
+# Песочница для скриптов расчёта
+mini-racer==0.14.1
+

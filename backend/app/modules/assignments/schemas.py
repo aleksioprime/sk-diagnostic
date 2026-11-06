@@ -33,6 +33,7 @@ class AssignmentOut(BaseModel):
     test_id: int
     test_title: str
     test_code: str
+    needs_birth_date: bool = False
     class_id: int | None
     class_name: str | None
     is_active: bool

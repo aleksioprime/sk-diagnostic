@@ -12,6 +12,7 @@ const links = computed(() => [
   { to: { name: 'my' }, label: 'Мои диагностики' },
   ...(auth.isAdmin
     ? [
+        { to: { name: 'admin-tests' }, label: 'Методики' },
         { to: { name: 'admin-psychologists' }, label: 'Психологи' },
         { to: { name: 'admin-people' }, label: 'Люди' },
       ]

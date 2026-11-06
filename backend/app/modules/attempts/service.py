@@ -31,7 +31,7 @@ def _bad(message: str) -> HTTPException:
 
 
 def needs_birth_date(test: Test) -> bool:
-    return test.code in scoring.NEEDS_BIRTH_DATE
+    return test.needs_birth_date or test.code in scoring.NEEDS_BIRTH_DATE
 
 
 # --- Ученик ---------------------------------------------------------------------------------
@@ -169,7 +169,7 @@ async def calculate(db: AsyncSession, attempt: Attempt) -> Result:
     await db.refresh(attempt, ['answers', 'result'])
     result = attempt.result or Result(attempt_id=attempt.id)
     try:
-        result.data = scoring.calculate(test.code, build_input(attempt, test))
+        result.data = await scoring.calculate_test(test.code, test.scoring_script, build_input(attempt, test))
         result.status, result.error = RESULT_CALCULATED, None
     except scoring.ScoringError as exc:
         result.data, result.status, result.error = None, RESULT_ERROR, str(exc)

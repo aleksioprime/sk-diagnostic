@@ -1,5 +1,6 @@
 """Выдачи методик и результаты — для психологов."""
 
+import json
 import secrets
 import string
 from collections import Counter
@@ -115,6 +116,8 @@ def summary(data: dict | None) -> dict[str, str]:
     """Главные показатели результата одной строкой на ученика. Формат зависит от методики."""
     if not data:
         return {}
+    if isinstance(data.get('summary'), dict):  # скрипт расчёта сам задаёт колонки
+        return {str(key): _cell(value) for key, value in data['summary'].items()}
     result = data.get('result') or {}
     if 'level' in result:  # мотивация учения
         items = {
@@ -125,6 +128,8 @@ def summary(data: dict | None) -> dict[str, str]:
         for scale in data.get('scales') or []:
             items[scale['title']] = f'{scale["value"]} ({scale["level_label"]})'
         return items
+    if 'vegetative_coefficient' not in result:
+        return {}
     items = {
         'Вегетативный коэффициент': _value_label(result.get('vegetative_coefficient')),
         'Эмоциональный фон': _value_label(result.get('emotional_background'), 'title'),
@@ -134,6 +139,13 @@ def summary(data: dict | None) -> dict[str, str]:
     attention = [d['title'] for d in data.get('domains') or [] if d.get('status') == 'attention']
     items['Обратить внимание'] = ', '.join(attention) or 'нет'
     return items
+
+
+def _cell(value):
+    """В ячейку таблицы — только простое значение."""
+    if value is None or isinstance(value, str | int | float | bool):
+        return value
+    return json.dumps(value, ensure_ascii=False)
 
 
 def _value_label(item: dict | None, key: str = 'label') -> str | None:

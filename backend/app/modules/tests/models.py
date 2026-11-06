@@ -37,7 +37,7 @@ class ScaleOption(IdMixin, TimestampMixin, Base):
 
 
 class Test(IdMixin, TimestampMixin, Base):
-    """Методика. Код определяет расчёт результата (app.scoring)."""
+    """Методика. Результат считает скрипт из scoring_script или встроенный расчёт по коду (app.scoring)."""
 
     __tablename__ = 'tests'
 
@@ -47,6 +47,10 @@ class Test(IdMixin, TimestampMixin, Base):
     # Вопросы по одному на экране
     is_sequential: Mapped[bool] = mapped_column(Boolean, default=True, server_default='true')
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default='true')
+    # Нормы зависят от возраста: перед началом ученик указывает дату рождения
+    needs_birth_date: Mapped[bool] = mapped_column(Boolean, default=False, server_default='false')
+    # Расчёт на JavaScript (app.scoring.sandbox)
+    scoring_script: Mapped[str | None] = mapped_column(Text)
 
     questions: Mapped[list['Question']] = relationship(
         back_populates='test', cascade='all, delete-orphan', order_by='Question.order', lazy='selectin'
