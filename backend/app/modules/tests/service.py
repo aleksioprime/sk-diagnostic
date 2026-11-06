@@ -10,7 +10,6 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app import scoring
 from app.modules.assignments.service import summary
 from app.modules.attempts.models import Assignment
 from app.modules.attempts.scoring_input import build_input
@@ -37,19 +36,11 @@ EDITABLE_TYPES = ('single_choice', 'scale', 'ranking', 'text', 'number', 'yes_no
 
 
 def scoring_kind(test: Test) -> str:
-    if test.scoring_script:
-        return 'script'
-    return 'builtin' if test.code in scoring.CALCULATORS else 'none'
+    return 'script' if test.scoring_script else 'none'
 
 
 async def assignments_count(db: AsyncSession, test_id: int) -> int:
     return await db.scalar(select(func.count()).select_from(Assignment).where(Assignment.test_id == test_id)) or 0
-
-
-def check_script_allowed(code: str, script: str | None) -> None:
-    """Встроенные методики сверены с результатами NocoBase: скрипт не должен их подменять."""
-    if script and code in scoring.CALCULATORS:
-        raise HTTPException(status.HTTP_409_CONFLICT, f'У методики {code} встроенный расчёт, скрипт ей задать нельзя')
 
 
 # --- Импорт ---------------------------------------------------------------------------------
@@ -86,7 +77,6 @@ async def _resolve_scales(db: AsyncSession, file: TestFile) -> dict[str, Scale]:
 
 
 async def import_test(db: AsyncSession, file: TestFile, replace: bool) -> Test:
-    check_script_allowed(file.code, file.scoring_script)
     test = await db.scalar(select(Test).where(Test.code == file.code))
     if test is not None:
         if not replace:
@@ -200,7 +190,7 @@ async def create_test(db: AsyncSession, body: TestCreateIn) -> Test:
 async def copy_test(db: AsyncSession, source: Test, body: TestCreateIn) -> Test:
     """Независимая копия: свои вопросы и шкалы, правки не затрагивают исходную методику и её результаты.
 
-    Копия отключена, пока её не проверят. Встроенный расчёт переносится скриптом, который можно менять.
+    Копия отключена, пока её не проверят.
     """
     await _check_code_free(db, body.code)
     scales: dict[int, Scale] = {}
@@ -225,8 +215,8 @@ async def copy_test(db: AsyncSession, source: Test, body: TestCreateIn) -> Test:
         description=source.description,
         is_sequential=source.is_sequential,
         is_active=False,
-        needs_birth_date=source.needs_birth_date or source.code in scoring.NEEDS_BIRTH_DATE,
-        scoring_script=source.scoring_script or scoring.builtin_script(source.code),
+        needs_birth_date=source.needs_birth_date,
+        scoring_script=source.scoring_script,
         questions=[
             Question(
                 order=q.order,
@@ -261,8 +251,6 @@ async def lock_reason(db: AsyncSession, test: Test) -> str | None:
     """Почему нельзя менять состав и баллы: от них зависят ответы учеников и расчёт."""
     if await assignments_count(db, test.id):
         return 'Методику уже выдавали классам: можно менять только тексты, чтобы результаты остались сопоставимы.'
-    if test.code in scoring.CALCULATORS:
-        return 'Расчёт встроен в приложение и опирается на номера вопросов и значения: можно менять только тексты.'
     return None
 
 
@@ -502,18 +490,11 @@ def sample_input(test: Test, mode: str) -> dict:
     return _input_without_attempt(test, [a for a in answers if a])
 
 
-async def run_scoring(test: Test, script: str | None, data: dict) -> sandbox.ScriptRun:
-    """Запустить расчёт на данных, ничего не сохраняя. Пустой скрипт — встроенный расчёт методики."""
-    if script and script.strip():
-        return await asyncio.to_thread(sandbox.run_script, script, data)
-    run = sandbox.ScriptRun()
-    try:
-        run.output = scoring.calculate(test.code, data)
-    except scoring.ScoringError as exc:
-        run.error = str(exc)
-    except Exception as exc:  # входные данные правят вручную: расчёт может упасть на любой их форме
-        run.error = f'{type(exc).__name__}: {exc}'
-    return run
+async def run_script(script: str | None, data: dict) -> sandbox.ScriptRun:
+    """Запустить скрипт на данных, ничего не сохраняя."""
+    if not script or not script.strip():
+        return sandbox.ScriptRun(error='Скрипт пуст')
+    return await asyncio.to_thread(sandbox.run_script, script, data)
 
 
 # --- Предпросмотр ---------------------------------------------------------------------------
@@ -555,9 +536,9 @@ async def preview_result(test: Test, body: PreviewResultIn) -> sandbox.ScriptRun
         if item.question_id not in questions:
             raise _bad('Вопрос не найден: возможно, методику уже изменили. Откройте предпросмотр заново')
         answers.append(_preview_answer(questions[item.question_id], item))
-    if not (test.scoring_script or test.code in scoring.CALCULATORS):
+    if not test.scoring_script:
         return sandbox.ScriptRun(error='У методики пока нет расчёта')
-    return await run_scoring(test, test.scoring_script, _input_without_attempt(test, answers, body.birth_date))
+    return await run_script(test.scoring_script, _input_without_attempt(test, answers, body.birth_date))
 
 
 # --- Проверка готовности --------------------------------------------------------------------
@@ -617,7 +598,7 @@ async def _scoring_problems(test: Test) -> list[Problem]:
         return [Problem(level='error', text='Нет расчёта: результаты учеников не посчитаются', tab='scoring')]
     outputs = {}
     for mode, title in SAMPLE_MODES.items():
-        run = await run_scoring(test, test.scoring_script, sample_input(test, mode))
+        run = await run_script(test.scoring_script, sample_input(test, mode))
         if run.error:
             place = f' (строка {run.line})' if run.line else ''
             text = f'Расчёт падает на {title}{place}: {run.error}'

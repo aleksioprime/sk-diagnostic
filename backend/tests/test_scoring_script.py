@@ -6,7 +6,7 @@ from sk_common.testing import login_as
 
 from app.scoring.sandbox import run_script
 from tests.conftest import other_client
-from tests.helpers import login_psychologist, login_student, motivation_test, school_class
+from tests.helpers import login_psychologist, login_student, school_class
 
 SCRIPT = """
 const total = data.answers.reduce((sum, a) => sum + (a.scale_option?.score ?? 0), 0)
@@ -94,9 +94,6 @@ async def test_import_rejects_bad_files(db, redis_clean, client):
     assert (await _import(client, typo)).status_code == 422
     no_scale = copy.deepcopy(FILE) | {'scales': []}
     assert 'short_scale' in (await _import(client, no_scale)).json()['detail']
-    await motivation_test(db)
-    builtin = copy.deepcopy(FILE) | {'code': 'motivation_learning'}
-    assert (await _import(client, builtin)).status_code == 409
 
 
 async def test_other_scale_with_same_code_is_not_overwritten(db, redis_clean, client):
@@ -121,18 +118,6 @@ async def test_run_on_sample_input_saves_nothing(db, redis_clean, client):
     bad = (await client.post(f'/api/v1/admin/tests/{test_id}/run', json={'script': 'throw 1', 'input': {}})).json()
     assert bad['error'] and bad['output'] is None
     assert (await client.get(f'/api/v1/admin/tests/{test_id}')).json()['scoring_script'] == SCRIPT
-
-
-async def test_builtin_scoring_can_be_tried_but_not_replaced(db, redis_clean, client):
-    await _admin(db, client)
-    test = await motivation_test(db)
-    url = f'/api/v1/admin/tests/{test.id}'
-    assert (await client.get(url)).json()['scoring'] == 'builtin'
-    assert (await client.put(f'{url}/script', json={'script': 'return {a: 1}'})).status_code == 409
-    sample = (await client.get(f'{url}/sample-input', params={'mode': 'first'})).json()
-    run = (await client.post(f'{url}/run', json={'input': sample})).json()
-    assert run['error'] is None and run['output']['result']['total_score'] is not None
-    assert (await client.post(f'{url}/run', json={'input': {'answers': 1}})).json()['error']
 
 
 async def test_attempt_is_scored_by_script_and_recalculated_after_fix(db, redis_clean, client):

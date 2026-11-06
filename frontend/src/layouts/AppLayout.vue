@@ -17,6 +17,7 @@ const links = computed(() => [
         { to: { name: 'admin-people' }, label: 'Люди' },
       ]
     : []),
+  { to: { name: 'profile' }, label: 'Профиль' },
 ])
 
 async function logout() {

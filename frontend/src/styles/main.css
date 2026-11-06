@@ -30,3 +30,10 @@
   list-style: decimal;
   padding-left: 1.25rem;
 }
+
+/* Скрытый ряд измерения в OverflowNav (sk-ui) шире экрана и даёт странице горизонтальную прокрутку.
+   Нулевая ширина с обрезкой не мешает измерять пункты: они не сжимаются из-за whitespace-nowrap. */
+nav[aria-label='Основное меню'] > [aria-hidden='true'] {
+  width: 0;
+  overflow: hidden;
+}

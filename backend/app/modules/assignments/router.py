@@ -8,7 +8,8 @@ from fastapi import APIRouter, HTTPException, Query, Response, status
 from sk_common.audit import record
 from sk_common.deps import AdminUser, Db
 from sk_common.people.models import PERSON_SOURCE_SKOLSTREAM, AcademicYear, Person, StudyClass, User
-from sk_common.people.service import ensure_user
+from sk_common.people.service import ensure_user, normalize_email
+from sk_common.security import hash_password
 from sqlalchemy import func, or_, select
 
 from app.modules.assignments import service
@@ -23,9 +24,10 @@ from app.modules.assignments.schemas import (
     AttemptRow,
     BirthDateIn,
     ClassOut,
+    PersonEditIn,
+    PersonEditOut,
     PsychologistOut,
     PsychologistsIn,
-    StudentFlagIn,
     StudentOut,
 )
 from app.modules.attempts import service as attempts_service
@@ -108,18 +110,80 @@ async def search_students(
     return [_student(p) for p in rows.unique()]
 
 
-@router.put('/persons/{person_id}/student', response_model=StudentOut, summary='Отметить внешнего участника учеником')
-async def set_student(person_id: int, payload: StudentFlagIn, db: Db, user: AdminUser) -> StudentOut:
-    """Человека не из SkolStream иначе не найти при выдаче: у остальных признак приходит из синхронизации."""
+async def _external_person(db, person_id: int) -> Person:
     person = await db.get(Person, person_id)
     if person is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, 'Человек не найден')
     if person.source == PERSON_SOURCE_SKOLSTREAM:
-        raise HTTPException(status.HTTP_409_CONFLICT, 'Ученика из SkolStream меняет синхронизация')
-    person.is_student = payload.is_student
-    record(db, 'person.student', 'person', person.id, user.id, is_student=payload.is_student)
+        raise HTTPException(status.HTTP_409_CONFLICT, 'Данные этого человека приходят из SkolStream')
+    return person
+
+
+def _person_edit_out(person: Person, user: User | None) -> PersonEditOut:
+    return PersonEditOut(
+        id=person.id,
+        last_name=person.last_name,
+        first_name=person.first_name,
+        middle_name=person.middle_name,
+        email=person.email,
+        gender=person.gender,
+        birth_date=person.birth_date,
+        class_id=person.class_id,
+        is_student=person.is_student,
+        is_employee=person.is_employee,
+        has_account=user is not None,
+        has_password=bool(user and user.password_hash),
+    )
+
+
+async def _person_user(db, person: Person) -> User | None:
+    return await db.scalar(select(User).where(User.person_id == person.id))
+
+
+@router.get('/persons/{person_id}', response_model=PersonEditOut, summary='Человек не из SkolStream')
+async def get_person(person_id: int, db: Db, _: AdminUser) -> PersonEditOut:
+    person = await _external_person(db, person_id)
+    return _person_edit_out(person, await _person_user(db, person))
+
+
+@router.patch('/persons/{person_id}', response_model=PersonEditOut, summary='Изменить человека не из SkolStream')
+async def edit_person(person_id: int, payload: PersonEditIn, db: Db, admin: AdminUser) -> PersonEditOut:
+    person = await _external_person(db, person_id)
+    user = await _person_user(db, person)
+    changes = payload.model_dump(exclude_unset=True)
+    password = changes.pop('password', None)
+    if changes.get('class_id') is not None and await db.get(StudyClass, changes['class_id']) is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Класс не найден')
+
+    if 'email' in changes:
+        email = normalize_email(changes['email']) if changes['email'] else None
+        if email is None and user is not None:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, 'У учётной записи должен быть email')
+        taken = await db.scalar(select(User).where(User.email == email)) if email else None
+        if taken is not None and taken.id != (user.id if user else None):
+            raise HTTPException(status.HTTP_409_CONFLICT, 'Этот email уже занят другой учётной записью')
+        changes['email'] = email
+        if user is not None:
+            user.email = email
+    for name in ('last_name', 'first_name', 'middle_name'):
+        if name in changes:
+            changes[name] = (changes[name] or '').strip()
+    for name in ('is_student', 'is_employee'):
+        if name in changes and changes[name] is None:
+            changes.pop(name)
+    for name, value in changes.items():
+        setattr(person, name, value)
+
+    if password:
+        if user is None:
+            if not person.email:
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Чтобы задать пароль, укажите email')
+            user = await ensure_user(db, person, person.email)
+        user.password_hash = hash_password(password)
+    # Значения в журнал не пишем: это личные данные
+    record(db, 'person.update', 'person', person.id, admin.id, fields=sorted(changes), password_set=bool(password))
     await db.commit()
-    return _student(person)
+    return _person_edit_out(person, user)
 
 
 def _student(person: Person) -> StudentOut:

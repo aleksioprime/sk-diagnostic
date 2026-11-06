@@ -8,7 +8,6 @@ import { saveJsonFile } from '@/utils/download'
 
 const SCORING = {
   script: { label: 'Скрипт', tone: 'brand' },
-  builtin: { label: 'Встроенный расчёт', tone: 'neutral' },
   none: { label: 'Нет расчёта', tone: 'warning' },
 }
 
@@ -193,7 +192,7 @@ async function remove() {
     <ul v-else class="mt-6 grid gap-3">
       <li v-for="test in tests" :key="test.id">
         <UiCard class="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <div class="min-w-64 flex-1">
+          <div class="min-w-0 flex-1 basis-64">
             <RouterLink :to="{ name: 'admin-test-questions', params: { id: test.id } }" class="font-semibold text-brand-700 hover:underline">
               {{ test.title }}
             </RouterLink>
@@ -216,7 +215,7 @@ async function remove() {
 
     <section class="mt-8">
       <h2 class="text-lg font-semibold">Загрузить методику из JSON</h2>
-      <UiCard class="mt-3 grid gap-3">
+      <UiCard class="mt-3 grid grid-cols-[minmax(0,1fr)] gap-3">
         <label for="test-source" class="text-sm font-medium">Содержимое файла</label>
         <textarea
           id="test-source"
@@ -226,7 +225,7 @@ async function remove() {
           class="w-full rounded-control border border-line bg-surface p-3 font-mono text-xs"
           placeholder="Вставьте JSON или выберите файл"
         ></textarea>
-        <input type="file" accept="application/json,.json" aria-label="Файл JSON" class="text-sm" @change="pickFile" />
+        <input type="file" accept="application/json,.json" aria-label="Файл JSON" class="w-full min-w-0 text-sm" @change="pickFile" />
         <label class="flex items-center gap-2 text-sm">
           <input v-model="replace" type="checkbox" class="size-4 accent-brand-600" />
           Заменить методику с таким же кодом, если её ещё не выдавали

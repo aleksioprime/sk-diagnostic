@@ -1,6 +1,5 @@
 """Проверка готовности перед включением и предпросмотр глазами ученика."""
 
-from sk_common.people.models import PERSON_SOURCE_SKOLSTREAM, Person
 from sk_common.testing import login_as
 from sqlalchemy import func, select
 
@@ -78,7 +77,7 @@ async def test_warnings_do_not_block(db, redis_clean, client):
     assert (await client.patch(f'{BASE}/{test_id}', json={'is_active': True})).status_code == 200
 
 
-async def test_builtin_is_checked_too(db, redis_clean, client):
+async def test_nocobase_script_is_checked_too(db, redis_clean, client):
     await _admin(db, client)
     test = await motivation_test(db)
     ready, problems = await _problems(client, test.id)
@@ -129,7 +128,7 @@ async def test_preview_rejects_foreign_answers_and_reports_missing_scoring(db, r
     assert 'нет расчёта' in run['error']
 
 
-async def test_preview_uses_birth_date_for_builtin(db, redis_clean, client):
+async def test_preview_uses_birth_date(db, redis_clean, client):
     await _admin(db, client)
     test = await motivation_test(db)
     preview = (await client.get(f'{BASE}/{test.id}/preview')).json()
@@ -155,7 +154,7 @@ async def test_student_outside_skolstream_passes_issued_test(db, redis_clean, cl
     assignment = await client.post('/api/v1/assignments', json={'test_id': test_id, 'class_id': study_class.id})
     assignment_id = assignment.json()['id']
     assert (await client.get('/api/v1/students', params={'q': 'Гостева'})).json() == []
-    marked = await client.put(f'/api/v1/persons/{person_id}/student', json={'is_student': True})
+    marked = await client.patch(f'/api/v1/persons/{person_id}', json={'is_student': True})
     assert marked.status_code == 200
     assert len((await client.get('/api/v1/students', params={'q': 'Гостева'})).json()) == 1
     added = await client.post(f'/api/v1/assignments/{assignment_id}/students', json={'person_ids': [person_id]})
@@ -174,12 +173,3 @@ async def test_student_outside_skolstream_passes_issued_test(db, redis_clean, cl
 
     detail = (await client.get(f'/api/v1/attempts/{attempt_id}')).json()
     assert detail['result']['total'] == 2 and detail['summary'] == {'Балл': 2}
-
-
-async def test_skolstream_student_flag_is_not_changed_by_hand(db, redis_clean, client):
-    await _admin(db, client)
-    person = Person(last_name='Из', first_name='Школы', email='s@example.org', source=PERSON_SOURCE_SKOLSTREAM)
-    db.add(person)
-    await db.commit()
-    response = await client.put(f'/api/v1/persons/{person.id}/student', json={'is_student': True})
-    assert response.status_code == 409

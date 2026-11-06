@@ -22,6 +22,7 @@ from sk_common.people.models import PERSON_SOURCE_SKOLSTREAM, Person
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app import scoring
 from app.modules.attempts import service as attempts_service
 from app.modules.attempts.models import (
     STATUS_ASSIGNED,
@@ -210,6 +211,8 @@ class Loader:
                 code=_text(row.get('code'), 100),
                 description=_text(row.get('description')),
                 is_sequential=row.get('is_sequential') is not False,
+                needs_birth_date=row.get('code') == 'motivation_learning',
+                scoring_script=scoring.nocobase_script(_text(row.get('code'), 100)),
             )
         await self.session.flush()
         for row in self.data['questions']:

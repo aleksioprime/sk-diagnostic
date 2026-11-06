@@ -2,7 +2,8 @@
 import { onMounted, ref, watch } from 'vue'
 import { errorMessage, SkeletonTable, UiBadge, UiButton, UiCard, UiInput, UiSelect } from 'sk-ui'
 import { createUser, fetchPersons, fetchSyncRuns, fetchUsers, setPersonAdmin, startSync, updateUser } from '@/api/people'
-import { setPersonStudent } from '@/api/diagnostic'
+import { updatePerson } from '@/api/diagnostic'
+import PersonEditCard from '@/components/PersonEditCard.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
@@ -111,16 +112,29 @@ const newUser = ref({ email: '', full_name: '', password: '', is_employee: true,
 const creating = ref(false)
 const notice = ref('')
 const passwordFor = ref(null)
+// Редактируется человек не из SkolStream: id персоны
+const editing = ref(null)
+
+async function personSaved(person) {
+  notice.value = `Сохранено: ${[person.last_name, person.first_name].filter(Boolean).join(' ') || person.email}`
+  editing.value = null
+  await load()
+}
 const newPassword = ref('')
 
 async function create() {
   error.value = ''
   notice.value = ''
+  // Ученик не из SkolStream входит только по паролю: без него он не попадёт в сервис
+  if (newUser.value.is_student && !newUser.value.password) {
+    error.value = 'Задайте пароль: ученик не из SkolStream входит только по нему'
+    return
+  }
   creating.value = true
   try {
     const { is_student: isStudent, ...fields } = newUser.value
     const user = await createUser({ ...fields, password: fields.password || null })
-    if (isStudent && user.person) await setPersonStudent(user.person.id, true)
+    if (isStudent && user.person) await updatePerson(user.person.id, { is_student: true })
     notice.value = `Создан ${user.email}${user.has_password ? ': можно входить по паролю' : ''}`
     newUser.value = { email: '', full_name: '', password: '', is_employee: true, is_student: false, is_superuser: false }
     tab.value = 'users'
@@ -199,7 +213,7 @@ onMounted(() => {
       <form class="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4" @submit.prevent="create">
         <UiInput v-model="newUser.email" label="Email" type="email" required />
         <UiInput v-model="newUser.full_name" label="ФИО" />
-        <UiInput v-model="newUser.password" label="Пароль (необязательно)" type="text" minlength="8" autocomplete="off" />
+        <UiInput v-model="newUser.password" :label="newUser.is_student ? 'Пароль' : 'Пароль (необязательно)'" type="text" minlength="8" :required="newUser.is_student" autocomplete="off" />
         <div class="flex flex-wrap items-end gap-3">
           <label class="flex h-10 items-center gap-2"><input v-model="newUser.is_employee" type="checkbox" class="size-4 accent-brand-600" @change="newUser.is_student = false" /> Сотрудник</label>
           <label class="flex h-10 items-center gap-2"><input v-model="newUser.is_student" type="checkbox" class="size-4 accent-brand-600" @change="newUser.is_employee = false" /> Ученик</label>
@@ -207,7 +221,7 @@ onMounted(() => {
           <UiButton type="submit" variant="primary" :loading="creating">Создать</UiButton>
         </div>
       </form>
-      <p class="mt-3 text-sm text-ink-muted">Сотрудников в психологическую службу добавляет администратор в разделе «Психологи». Пароль нужен, пока не настроена отправка писем. Ученика не из SkolStream психолог добавляет в выдачу поиском; войти он может по паролю.</p>
+      <p class="mt-3 text-sm text-ink-muted">Сотрудников в психологическую службу добавляет администратор в разделе «Психологи». Пароль нужен, пока не настроена отправка писем. Ученика не из SkolStream психолог добавляет в выдачу поиском; войти он может по паролю. Данные внешних людей меняются по клику на имя в списке.</p>
     </UiCard>
 
     <p v-if="notice" role="status" class="rounded-control bg-green-100 px-4 py-3 text-green-800">{{ notice }}</p>
@@ -236,6 +250,8 @@ onMounted(() => {
 
     <p v-if="error" role="alert" class="rounded-control bg-red-100 px-4 py-3 text-red-800">{{ error }}</p>
 
+    <PersonEditCard v-if="editing" :key="editing" :person-id="editing" @saved="personSaved" @cancel="editing = null" />
+
     <div class="overflow-x-auto rounded-card border border-line bg-surface" :aria-busy="loading">
       <SkeletonTable v-if="loading && !page.items.length" :rows="6" :columns="5" />
       <table v-if="tab === 'persons'" class="w-full text-sm">
@@ -244,7 +260,12 @@ onMounted(() => {
         </thead>
         <tbody>
           <tr v-for="person in page.items" :key="person.id" class="border-t border-line" :class="{ 'opacity-50': !person.is_active }">
-            <td class="px-4 py-2 font-medium">{{ person.full_name || '—' }}</td>
+            <td class="px-4 py-2 font-medium">
+              <button v-if="person.is_external" type="button" class="text-left text-brand-700 hover:underline" title="Изменить данные" @click="editing = person.id">
+                {{ person.full_name || person.email || 'Без имени' }}
+              </button>
+              <template v-else>{{ person.full_name || '—' }}</template>
+            </td>
             <td class="px-4 py-2">
               <div class="flex flex-wrap gap-1">
                 <UiBadge v-if="person.is_student" tone="brand">ученик</UiBadge>
@@ -278,7 +299,12 @@ onMounted(() => {
         </thead>
         <tbody>
           <tr v-for="user in page.items" :key="user.id" class="border-t border-line">
-            <td class="px-4 py-2 font-medium">{{ user.email }}</td>
+            <td class="px-4 py-2 font-medium">
+              <button v-if="user.person?.is_external" type="button" class="text-left text-brand-700 hover:underline" title="Изменить данные" @click="editing = user.person.id">
+                {{ user.email }}
+              </button>
+              <template v-else>{{ user.email }}</template>
+            </td>
             <td class="px-4 py-2">{{ user.person?.full_name || '—' }}</td>
             <td class="px-4 py-2 text-ink-muted">{{ formatDate(user.last_login_at) }}</td>
             <td class="px-4 py-2">

@@ -32,7 +32,8 @@ export const deleteAttempt = (id) => http.delete(`/v1/attempts/${id}`)
 // Администратор
 export const listPsychologists = () => get('/v1/psychologists')
 export const setPsychologists = (personIds) => put('/v1/psychologists', { person_ids: personIds })
-export const setPersonStudent = (personId, isStudent) => put(`/v1/persons/${personId}/student`, { is_student: isStudent })
+export const getPerson = (id) => get(`/v1/persons/${id}`)
+export const updatePerson = (id, body) => patch(`/v1/persons/${id}`, body)
 export const searchEmployees = (q) => get('/v1/directory/employees', { params: { q } })
 
 // Администратор: методики и скрипты расчёта

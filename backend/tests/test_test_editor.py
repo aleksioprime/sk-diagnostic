@@ -142,18 +142,14 @@ async def test_issued_test_allows_only_texts(db, redis_clean, client):
     assert len(final['questions']) == 2 and final['questions'][0]['options'][0]['score'] == 1
 
 
-async def test_builtin_allows_only_texts(db, redis_clean, client):
+async def test_former_builtin_is_edited_like_any_other(db, redis_clean, client):
     await _admin(db, client)
     test = await motivation_test(db)
     content = (await client.get(f'{BASE}/{test.id}/content')).json()
-    assert content['mode'] == 'text' and 'встроен' in content['lock_reason']
-    assert content['scales'][0]['mode'] == 'text'
-    scale = content['scales'][0]
-    scale['options'][0]['label'] = 'Редко'
-    url = f'{BASE}/{test.id}/scales/{scale["id"]}'
-    assert (await client.put(url, json=scale)).json()['options'][0]['label'] == 'Редко'
-    scale['options'][0]['score'] = 9
-    assert (await client.put(url, json=scale)).status_code == 409
+    assert content['mode'] == 'full' and content['lock_reason'] is None
+    detail = (await client.get(f'{BASE}/{test.id}')).json()
+    assert detail['scoring'] == 'script' and detail['needs_birth_date'] is True
+    assert (await client.put(f'{BASE}/{test.id}/script', json={'script': 'return { a: 1 }'})).status_code == 200
 
 
 async def test_scale_shared_with_other_test_is_protected(db, redis_clean, client):

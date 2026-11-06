@@ -3,6 +3,7 @@ from sk_common.testing import login_as
 
 from app.modules.staff.models import Psychologist
 from app.modules.tests.models import Option, Question, Scale, ScaleOption, Test
+from app.scoring import nocobase_script
 
 FREQUENCY = ['Почти никогда', 'Иногда', 'Часто', 'Почти всегда']
 
@@ -11,7 +12,12 @@ async def motivation_test(db) -> Test:
     """Методика «Мотивация учения»: 40 вопросов со шкалой частоты 1–4."""
     scale = Scale(title='Частота переживания', code='freq_1_4')
     scale.options = [ScaleOption(label=label, value=str(n), score=n, order=n) for n, label in enumerate(FREQUENCY, 1)]
-    test = Test(title='Диагностика мотивации учения', code='motivation_learning')
+    test = Test(
+        title='Диагностика мотивации учения',
+        code='motivation_learning',
+        needs_birth_date=True,
+        scoring_script=nocobase_script('motivation_learning'),
+    )
     test.questions = [
         Question(order=n, text=f'Утверждение {n}', question_type='scale', scale=scale) for n in range(1, 41)
     ]
