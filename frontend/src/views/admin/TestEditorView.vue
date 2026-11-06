@@ -4,6 +4,7 @@ import { onBeforeRouteLeave, RouterLink, useRoute } from 'vue-router'
 import { getAdminTest, getSampleInput, patchAdminTest, runTestScript, saveTestScript } from '@/api/diagnostic'
 import { errorMessage, SkeletonPage, UiBadge, UiButton } from 'sk-ui'
 import CodeEditor from '@/components/CodeEditor.vue'
+import TestTabs from '@/components/tests/TestTabs.vue'
 
 const LIVE_DELAY_MS = 600
 
@@ -149,7 +150,8 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm('Скрипт не со�
     <p class="mt-1 text-sm text-ink-muted">
       <code>{{ test.code }}</code> · вопросов: {{ test.questions_count }} · выдач: {{ test.assignments_count }}
     </p>
-    <label class="mt-3 flex items-center gap-2 text-sm">
+    <TestTabs :id="route.params.id" class="mt-4" />
+    <label class="mt-4 flex items-center gap-2 text-sm">
       <input type="checkbox" :checked="test.needs_birth_date" :disabled="isBuiltin" @change="toggleBirthDate" />
       Перед началом ученик указывает дату рождения (нужен возраст)
     </label>
@@ -169,7 +171,7 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm('Скрипт не со�
           <p class="font-medium">Расчёт этой методики встроен в приложение</p>
           <p class="mt-2 text-ink-muted">
             Он написан на Python и сверен с результатами из NocoBase, поэтому заменить его скриптом нельзя. Справа можно посмотреть,
-            какие данные он получает и что возвращает.
+            какие данные он получает и что возвращает. Чтобы изменить расчёт, сделайте копию методики: у неё будет такой же скрипт на JavaScript.
           </p>
         </div>
         <CodeEditor v-else v-model="script" label="Скрипт расчёта" />

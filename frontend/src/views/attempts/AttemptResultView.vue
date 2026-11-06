@@ -18,9 +18,10 @@ const birthDate = ref('')
 const showAnswers = ref(false)
 
 const template = computed(() => {
-  const code = attempt.value?.test_code || ''
-  if (code === 'motivation_learning') return MotivationResult
-  if (code.startsWith('domiki')) return DomikiResult
+  // По форме результата, а не по коду: так копия методики выглядит как исходная
+  const result = attempt.value?.result?.result || {}
+  if ('level' in result) return MotivationResult
+  if ('vegetative_coefficient' in result) return DomikiResult
   return SummaryResult
 })
 

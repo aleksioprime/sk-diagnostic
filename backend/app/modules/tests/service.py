@@ -12,7 +12,22 @@ from app import scoring
 from app.modules.attempts.models import Assignment
 from app.modules.attempts.scoring_input import build_input
 from app.modules.tests.models import Option, Question, Scale, ScaleOption, Test
-from app.modules.tests.schemas import ScaleFile, TestFile
+from app.modules.tests.schemas import (
+    ContentIn,
+    ContentOut,
+    OptionIn,
+    QuestionIn,
+    QuestionOut,
+    ScaleFile,
+    ScaleIn,
+    ScaleOut,
+    TestCreateIn,
+    TestFile,
+)
+
+CHOICE_TYPES = ('single_choice', 'ranking')
+# multiple_choice не поддерживается формой ученика и хранением ответа
+EDITABLE_TYPES = ('single_choice', 'scale', 'ranking', 'text', 'number', 'yes_no')
 
 
 def scoring_kind(test: Test) -> str:
@@ -155,6 +170,280 @@ def export_test(test: Test) -> dict:
             for q in questions
         ],
     }
+
+
+# --- Создание и копирование -----------------------------------------------------------------
+
+
+async def _check_code_free(db: AsyncSession, code: str) -> None:
+    if await db.scalar(select(Test.id).where(Test.code == code)):
+        raise HTTPException(status.HTTP_409_CONFLICT, f'Методика с кодом {code} уже есть')
+
+
+async def create_test(db: AsyncSession, body: TestCreateIn) -> Test:
+    """Пустая методика отключена: психологи увидят её, когда администратор её включит."""
+    await _check_code_free(db, body.code)
+    test = Test(code=body.code, title=body.title, is_active=False, questions=[])
+    db.add(test)
+    await db.flush()
+    return test
+
+
+async def copy_test(db: AsyncSession, source: Test, body: TestCreateIn) -> Test:
+    """Независимая копия: свои вопросы и шкалы, правки не затрагивают исходную методику и её результаты.
+
+    Копия отключена, пока её не проверят. Встроенный расчёт переносится скриптом, который можно менять.
+    """
+    await _check_code_free(db, body.code)
+    scales: dict[int, Scale] = {}
+
+    def copied_scale(scale: Scale) -> Scale:
+        if scale.id not in scales:
+            scales[scale.id] = Scale(
+                code=f'{body.code}__{scale.code or scale.id}'[:100],
+                title=scale.title,
+                description=scale.description,
+                options=[
+                    ScaleOption(label=o.label, description=o.description, value=o.value, score=o.score, order=o.order)
+                    for o in scale.options
+                    if o.is_active
+                ],
+            )
+        return scales[scale.id]
+
+    test = Test(
+        code=body.code,
+        title=body.title,
+        description=source.description,
+        is_sequential=source.is_sequential,
+        is_active=False,
+        needs_birth_date=source.needs_birth_date or source.code in scoring.NEEDS_BIRTH_DATE,
+        scoring_script=source.scoring_script or scoring.builtin_script(source.code),
+        questions=[
+            Question(
+                order=q.order,
+                code=q.code,
+                text=q.text,
+                description=q.description,
+                question_type=q.question_type,
+                is_required=q.is_required,
+                is_random=q.is_random,
+                min_selections=q.min_selections,
+                max_selections=q.max_selections,
+                scale=copied_scale(q.scale) if q.scale else None,
+                options=[
+                    Option(label=o.label, description=o.description, value=o.value, score=o.score, order=o.order)
+                    for o in q.options
+                    if o.is_active
+                ],
+            )
+            for q in source.questions
+            if q.is_active
+        ],
+    )
+    db.add(test)
+    await db.flush()
+    return test
+
+
+# --- Редактор вопросов и шкал ---------------------------------------------------------------
+
+
+async def lock_reason(db: AsyncSession, test: Test) -> str | None:
+    """Почему нельзя менять состав и баллы: от них зависят ответы учеников и расчёт."""
+    if await assignments_count(db, test.id):
+        return 'Методику уже выдавали классам: можно менять только тексты, чтобы результаты остались сопоставимы.'
+    if test.code in scoring.CALCULATORS:
+        return 'Расчёт встроен в приложение и опирается на номера вопросов и значения: можно менять только тексты.'
+    return None
+
+
+async def _scale_modes(db: AsyncSession, test: Test, locked: bool) -> dict[int, str]:
+    used = select(Question.scale_id, Question.test_id).where(Question.scale_id.is_not(None)).distinct()
+    rows = await db.execute(used)
+    users: dict[int, set[int]] = {}
+    for scale_id, test_id in rows:
+        users.setdefault(scale_id, set()).add(test_id)
+    scales = await db.scalars(select(Scale.id))
+    modes = {}
+    for scale_id in scales:
+        used_by = users.get(scale_id, set())
+        if used_by - {test.id}:
+            modes[scale_id] = 'none'
+        else:
+            modes[scale_id] = 'text' if locked and test.id in used_by else 'full'
+    return modes
+
+
+def _options_out(options) -> list[OptionIn]:
+    return [
+        OptionIn(id=o.id, label=o.label, description=o.description, value=o.value, score=o.score)
+        for o in sorted(options, key=lambda item: item.order)
+        if o.is_active
+    ]
+
+
+def scale_out(scale: Scale, mode: str) -> ScaleOut:
+    return ScaleOut(
+        id=scale.id,
+        code=scale.code,
+        title=scale.title,
+        description=scale.description,
+        mode=mode,
+        options=_options_out(scale.options),
+    )
+
+
+async def content(db: AsyncSession, test: Test) -> ContentOut:
+    reason = await lock_reason(db, test)
+    modes = await _scale_modes(db, test, reason is not None)
+    scales = await db.scalars(select(Scale).where(Scale.is_active.is_(True)).order_by(Scale.title))
+    return ContentOut(
+        id=test.id,
+        code=test.code,
+        title=test.title,
+        description=test.description,
+        is_sequential=test.is_sequential,
+        mode='text' if reason else 'full',
+        lock_reason=reason,
+        questions=[
+            QuestionOut(
+                id=q.id,
+                code=q.code,
+                text=q.text,
+                description=q.description,
+                question_type=q.question_type,
+                is_required=q.is_required,
+                is_random=q.is_random,
+                scale_id=q.scale_id,
+                options=_options_out(q.options),
+            )
+            for q in sorted(test.questions, key=lambda item: item.order)
+            if q.is_active
+        ],
+        scales=[scale_out(s, modes.get(s.id, 'full')) for s in scales.unique()],
+    )
+
+
+def _bad(message: str) -> HTTPException:
+    return HTTPException(status.HTTP_400_BAD_REQUEST, message)
+
+
+def _locked(what: str) -> HTTPException:
+    return HTTPException(status.HTTP_409_CONFLICT, f'Изменить можно только тексты: {what}')
+
+
+def _active_sorted(items) -> list:
+    return sorted((item for item in items if item.is_active), key=lambda item: item.order)
+
+
+def _apply_option_texts(existing: list, incoming: list[OptionIn], place: str) -> None:
+    if [o.id for o in incoming] != [o.id for o in existing]:
+        raise _locked(f'{place} — состав и порядок вариантов менять нельзя')
+    for item, new in zip(existing, incoming, strict=True):
+        if item.value != new.value or item.score != new.score:
+            raise _locked(f'{place} — значения и баллы менять нельзя')
+        item.label, item.description = new.label, new.description
+
+
+def _sync_options(owner, incoming: list[OptionIn], factory, place: str) -> None:
+    """Варианты как на форме: новые создаются, убранные удаляются, отключённые из NocoBase не трогаем."""
+    known = {o.id: o for o in owner.options if o.is_active}
+    kept = []
+    for number, new in enumerate(incoming, 1):
+        if new.id is not None and new.id not in known:
+            raise _bad(f'{place}: вариант {new.id} не найден')
+        item = known[new.id] if new.id is not None else factory()
+        item.label, item.description, item.value, item.score = new.label, new.description, new.value, new.score
+        item.order = number
+        kept.append(item)
+    owner.options = kept + [o for o in owner.options if not o.is_active]
+
+
+def _check_question(new: QuestionIn, number: int, previous: Question | None, scale_ids: set[int]) -> None:
+    place = f'Вопрос {number}'
+    unchanged = previous is not None and previous.question_type == new.question_type
+    if new.question_type not in EDITABLE_TYPES and not unchanged:
+        raise _bad(f'{place}: тип {new.question_type} не поддерживается')
+    if new.question_type == 'scale' and new.scale_id not in scale_ids:
+        raise _bad(f'{place}: выберите шкалу')
+    if new.question_type in CHOICE_TYPES and not new.options:
+        raise _bad(f'{place}: добавьте варианты ответа')
+
+
+def _apply_question_texts(test: Test, body: ContentIn) -> None:
+    existing = _active_sorted(test.questions)
+    if [q.id for q in body.questions] != [q.id for q in existing]:
+        raise _locked('состав и порядок вопросов менять нельзя')
+    for number, (question, new) in enumerate(zip(existing, body.questions, strict=True), 1):
+        place = f'вопрос {number}'
+        if (
+            question.question_type != new.question_type
+            or question.scale_id != new.scale_id
+            or question.is_required != new.is_required
+            or question.is_random != new.is_random
+            or question.code != new.code
+        ):
+            raise _locked(f'{place} — тип, шкалу, код и обязательность менять нельзя')
+        question.text, question.description = new.text, new.description
+        _apply_option_texts(_active_sorted(question.options), new.options, place)
+
+
+async def _sync_questions(db: AsyncSession, test: Test, body: ContentIn) -> None:
+    if test.is_active and not body.questions:
+        raise _bad('В включённой методике должен быть хотя бы один вопрос: сначала отключите её')
+    known = {q.id: q for q in test.questions if q.is_active}
+    scale_ids = set(await db.scalars(select(Scale.id)))
+    kept = []
+    for number, new in enumerate(body.questions, 1):
+        if new.id is not None and new.id not in known:
+            raise _bad(f'Вопрос {number}: не найден в этой методике')
+        question = known[new.id] if new.id is not None else Question(test_id=test.id, options=[])
+        _check_question(new, number, known.get(new.id), scale_ids)
+        question.order = number
+        question.code = new.code or None
+        question.text, question.description = new.text, new.description
+        question.question_type = new.question_type
+        question.is_required, question.is_random = new.is_required, new.is_random
+        question.scale_id = new.scale_id if new.question_type == 'scale' else None
+        options = new.options if new.question_type in CHOICE_TYPES else []
+        _sync_options(question, options, Option, f'Вопрос {number}')
+        kept.append(question)
+    test.questions = kept + [q for q in test.questions if not q.is_active]
+
+
+async def save_content(db: AsyncSession, test: Test, body: ContentIn) -> None:
+    test.title, test.description, test.is_sequential = body.title, body.description, body.is_sequential
+    if await lock_reason(db, test):
+        _apply_question_texts(test, body)
+    else:
+        await _sync_questions(db, test, body)
+    await db.flush()
+
+
+async def create_scale(db: AsyncSession, body: ScaleIn) -> Scale:
+    scale = Scale(title=body.title, description=body.description, options=[])
+    _sync_options(scale, body.options, ScaleOption, 'Шкала')
+    db.add(scale)
+    await db.flush()
+    return scale
+
+
+async def save_scale(db: AsyncSession, test: Test, scale: Scale, body: ScaleIn) -> str:
+    """Шкалу меняем только в той мере, в какой это не задевает ответы и другие методики."""
+    reason = await lock_reason(db, test)
+    mode = (await _scale_modes(db, test, reason is not None)).get(scale.id, 'full')
+    if mode == 'none':
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, 'Шкалу используют и другие методики: создайте для этой методики свою'
+        )
+    scale.title, scale.description = body.title, body.description
+    if mode == 'text':
+        _apply_option_texts(_active_sorted(scale.options), body.options, 'шкала')
+    else:
+        _sync_options(scale, body.options, ScaleOption, 'Шкала')
+    await db.flush()
+    return mode
 
 
 # --- Пример входных данных ------------------------------------------------------------------

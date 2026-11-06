@@ -1,8 +1,8 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { deleteAdminTest, exportTest, importTest, listAdminTests, patchAdminTest } from '@/api/diagnostic'
-import { errorMessage, SkeletonList, UiBadge, UiButton, UiCard, UiConfirm } from 'sk-ui'
+import { copyTest, createTest, deleteAdminTest, exportTest, importTest, listAdminTests, patchAdminTest } from '@/api/diagnostic'
+import { errorMessage, SkeletonList, UiBadge, UiButton, UiCard, UiConfirm, UiInput } from 'sk-ui'
 import { detailedError } from '@/utils/apiErrors'
 import { saveJsonFile } from '@/utils/download'
 
@@ -62,6 +62,43 @@ const confirmOpen = computed({
     if (!value) toDelete.value = null
   },
 })
+
+// Новая методика: пустая или копия существующей (copyFrom)
+const draft = ref(null)
+const creating = ref(false)
+const createError = ref('')
+const draftOpen = computed({
+  get: () => draft.value !== null,
+  set: (value) => {
+    if (!value) draft.value = null
+  },
+})
+
+function startNew(source = null) {
+  createError.value = ''
+  draft.value = source
+    ? { copyFrom: source, title: `${source.title} (копия)`, code: `${source.code}_copy` }
+    : { copyFrom: null, title: '', code: '' }
+}
+
+async function create() {
+  const { copyFrom, title, code } = draft.value
+  if (!title.trim() || !/^[a-z0-9_-]+$/.test(code)) {
+    createError.value = 'Заполните название и код: в коде только строчные латинские буквы, цифры, _ и -'
+    return
+  }
+  creating.value = true
+  createError.value = ''
+  try {
+    const body = { title: title.trim(), code }
+    const test = copyFrom ? await copyTest(copyFrom.id, body) : await createTest(body)
+    router.push({ name: 'admin-test-questions', params: { id: test.id } })
+  } catch (e) {
+    createError.value = detailedError(e)
+  } finally {
+    creating.value = false
+  }
+}
 
 async function load() {
   try {
@@ -137,8 +174,13 @@ async function remove() {
 
 <template>
   <div>
-    <h1 class="text-2xl font-bold">Методики</h1>
-    <p class="mt-1 text-ink-muted">Загрузка методик из JSON и настройка расчёта результатов.</p>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold">Методики</h1>
+        <p class="mt-1 text-ink-muted">Вопросы, ответы и расчёт результатов.</p>
+      </div>
+      <UiButton variant="primary" @click="startNew()">Новая методика</UiButton>
+    </div>
     <p v-if="error" role="alert" class="mt-4 rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ error }}</p>
     <p v-if="notice" role="status" class="mt-4 rounded-control bg-brand-50 px-3 py-2 text-sm text-brand-700">{{ notice }}</p>
 
@@ -147,7 +189,7 @@ async function remove() {
       <li v-for="test in tests" :key="test.id">
         <UiCard class="flex flex-wrap items-center gap-x-4 gap-y-2">
           <div class="min-w-64 flex-1">
-            <RouterLink :to="{ name: 'admin-test', params: { id: test.id } }" class="font-semibold text-brand-700 hover:underline">
+            <RouterLink :to="{ name: 'admin-test-questions', params: { id: test.id } }" class="font-semibold text-brand-700 hover:underline">
               {{ test.title }}
             </RouterLink>
             <p class="mt-1 text-sm text-ink-muted">
@@ -157,6 +199,7 @@ async function remove() {
           <UiBadge :tone="SCORING[test.scoring].tone">{{ SCORING[test.scoring].label }}</UiBadge>
           <UiBadge v-if="!test.is_active" tone="danger">Отключена</UiBadge>
           <div class="flex flex-wrap gap-2">
+            <UiButton size="sm" @click="startNew(test)">Копировать</UiButton>
             <UiButton size="sm" @click="download(test)">Скачать JSON</UiButton>
             <UiButton size="sm" @click="toggle(test)">{{ test.is_active ? 'Отключить' : 'Включить' }}</UiButton>
             <UiButton v-if="!test.assignments_count" size="sm" variant="ghost" @click="toDelete = test">Удалить</UiButton>
@@ -194,6 +237,23 @@ async function remove() {
         </p>
       </UiCard>
     </section>
+
+    <UiConfirm
+      v-model:open="draftOpen"
+      :title="draft?.copyFrom ? 'Копия методики' : 'Новая методика'"
+      :confirm-label="draft?.copyFrom ? 'Создать копию' : 'Создать'"
+      :loading="creating"
+      @confirm="create"
+    >
+      <div v-if="draft" class="grid gap-3">
+        <p v-if="draft.copyFrom" class="text-sm text-ink-muted">
+          Копируются вопросы, ответы, шкалы и скрипт расчёта. Правки копии не затронут исходную методику. Копия будет отключена, пока вы её не включите.
+        </p>
+        <UiInput v-model="draft.title" label="Название" />
+        <UiInput v-model="draft.code" label="Код" hint="Строчные латинские буквы, цифры, _ и -. Потом не меняется." />
+        <p v-if="createError" role="alert" class="whitespace-pre-line rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ createError }}</p>
+      </div>
+    </UiConfirm>
 
     <UiConfirm v-model:open="confirmOpen" title="Удалить методику?" confirm-label="Удалить" variant="danger" :loading="deleting" @confirm="remove">
       «{{ toDelete?.title }}» и её вопросы будут удалены. Классам она ещё не выдавалась.

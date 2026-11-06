@@ -2,6 +2,7 @@
 
 import asyncio
 from collections.abc import Callable
+from pathlib import Path
 
 from app.scoring import domiki, motivation, sandbox
 from app.scoring.common import ScoringError
@@ -14,6 +15,15 @@ CALCULATORS: dict[str, Callable[[dict], dict]] = {
 
 # Методики, которым нужны возраст и пол ученика
 NEEDS_BIRTH_DATE = {'motivation_learning'}
+
+
+# Те же расчёты на JavaScript: основа для копии встроенной методики, которую можно менять
+SCRIPTS_DIR = Path(__file__).parent / 'scripts'
+
+
+def builtin_script(test_code: str) -> str | None:
+    path = SCRIPTS_DIR / f'{test_code}.js'
+    return path.read_text(encoding='utf-8') if test_code in CALCULATORS and path.exists() else None
 
 
 def calculate(test_code: str, data: dict) -> dict:
@@ -30,4 +40,4 @@ async def calculate_test(test_code: str, script: str | None, data: dict) -> dict
     return calculate(test_code, data)
 
 
-__all__ = ['CALCULATORS', 'NEEDS_BIRTH_DATE', 'ScoringError', 'calculate', 'calculate_test']
+__all__ = ['CALCULATORS', 'NEEDS_BIRTH_DATE', 'ScoringError', 'builtin_script', 'calculate', 'calculate_test']

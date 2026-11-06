@@ -100,6 +100,71 @@ class TestAdminDetail(TestAdminBrief):
     scoring_script: str | None
 
 
+class TestCreateIn(BaseModel):
+    code: str = Field(min_length=1, max_length=100, pattern=r'^[a-z0-9_-]+$')
+    title: str = Field(min_length=1, max_length=500)
+
+
+class OptionIn(BaseModel):
+    id: int | None = None
+    label: str = Field(min_length=1, max_length=500)
+    description: str = ''
+    value: str = Field(default='', max_length=100)
+    score: float | None = None
+
+
+class QuestionIn(BaseModel):
+    id: int | None = None
+    code: str | None = Field(default=None, max_length=100)
+    text: str = Field(min_length=1)
+    description: str = ''
+    question_type: str
+    is_required: bool = True
+    is_random: bool = False
+    scale_id: int | None = None
+    options: list[OptionIn] = []
+
+
+class ContentIn(BaseModel):
+    title: str = Field(min_length=1, max_length=500)
+    description: str = ''
+    is_sequential: bool = True
+    questions: list[QuestionIn]
+
+
+class ScaleIn(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: str = ''
+    options: list[OptionIn] = Field(min_length=1)
+
+
+class ScaleOut(BaseModel):
+    id: int
+    code: str | None
+    title: str
+    description: str
+    # full — можно всё, text — только подписи, none — шкала общая с другой методикой
+    mode: Literal['full', 'text', 'none']
+    options: list[OptionIn]
+
+
+class QuestionOut(QuestionIn):
+    id: int
+
+
+class ContentOut(BaseModel):
+    id: int
+    code: str
+    title: str
+    description: str
+    is_sequential: bool
+    # text — можно менять только тексты: методику уже выдавали или расчёт встроен в приложение
+    mode: Literal['full', 'text']
+    lock_reason: str | None
+    questions: list[QuestionOut]
+    scales: list[ScaleOut]
+
+
 class TestPatch(BaseModel):
     is_active: bool | None = None
     needs_birth_date: bool | None = None

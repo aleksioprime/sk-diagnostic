@@ -52,6 +52,12 @@ export const routes = [
         meta: { admin: true },
       },
       {
+        path: 'admin/tests/:id/questions',
+        name: 'admin-test-questions',
+        component: () => import('@/views/admin/TestContentView.vue'),
+        meta: { admin: true },
+      },
+      {
         path: 'admin/tests/:id',
         name: 'admin-test',
         component: () => import('@/views/admin/TestEditorView.vue'),

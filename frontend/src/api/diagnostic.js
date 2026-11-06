@@ -37,6 +37,12 @@ export const searchEmployees = (q) => get('/v1/directory/employees', { params: {
 // Администратор: методики и скрипты расчёта
 export const listAdminTests = () => get('/v1/admin/tests')
 export const getAdminTest = (id) => get(`/v1/admin/tests/${id}`)
+export const createTest = (body) => post('/v1/admin/tests', body)
+export const copyTest = (id, body) => post(`/v1/admin/tests/${id}/copy`, body)
+export const getTestContent = (id) => get(`/v1/admin/tests/${id}/content`)
+export const saveTestContent = (id, body) => put(`/v1/admin/tests/${id}/content`, body)
+export const createScale = (testId, body) => post(`/v1/admin/tests/${testId}/scales`, body)
+export const saveScale = (testId, scaleId, body) => put(`/v1/admin/tests/${testId}/scales/${scaleId}`, body)
 export const importTest = (test, replace = false) => post('/v1/admin/tests/import', { test, replace })
 export const exportTest = (id) => get(`/v1/admin/tests/${id}/export`)
 export const patchAdminTest = (id, body) => patch(`/v1/admin/tests/${id}`, body)
