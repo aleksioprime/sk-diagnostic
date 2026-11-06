@@ -116,9 +116,8 @@ async def test_ranking_must_be_complete(db, client):
         await pupil.put(url, json={'ranking': list(reversed(ids))})
         assert (await pupil.post(f'/api/v1/my/attempts/{attempt_id}/submit')).status_code == 204
 
-    # Для этой методики нет расчёта — ошибка видна психологу, попытка завершена
     detail = (await client.get(f'/api/v1/attempts/{attempt_id}')).json()
-    assert detail['result_status'] == 'error' and 'нет расчёта' in detail['result_error']
+    assert detail['result_status'] == 'calculated' and detail['result'] == {'total': 1}
 
 
 async def test_new_students_and_removal(db, client):

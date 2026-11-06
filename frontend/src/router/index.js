@@ -19,6 +19,13 @@ export const routes = [
     props: true,
   },
   {
+    path: '/admin/tests/:id/preview',
+    name: 'admin-test-preview',
+    component: () => import('@/views/admin/TestPreviewView.vue'),
+    props: true,
+    meta: { admin: true },
+  },
+  {
     path: '/',
     component: AppLayout,
     children: [
@@ -45,6 +52,30 @@ export const routes = [
         meta: { psychologist: true },
       },
       { path: 'profile', name: 'profile', component: () => import('@/views/profile/ProfileView.vue') },
+      {
+        path: 'admin/tests',
+        name: 'admin-tests',
+        component: () => import('@/views/admin/TestsView.vue'),
+        meta: { admin: true },
+      },
+      {
+        path: 'admin/tests/:id/questions',
+        name: 'admin-test-questions',
+        component: () => import('@/views/admin/TestContentView.vue'),
+        meta: { admin: true },
+      },
+      {
+        path: 'admin/tests/:id/check',
+        name: 'admin-test-check',
+        component: () => import('@/views/admin/TestCheckView.vue'),
+        meta: { admin: true },
+      },
+      {
+        path: 'admin/tests/:id',
+        name: 'admin-test',
+        component: () => import('@/views/admin/TestEditorView.vue'),
+        meta: { admin: true },
+      },
       {
         path: 'admin/people',
         name: 'admin-people',
@@ -79,7 +110,7 @@ export function resolveAccess(to, auth) {
 
 router.afterEach((to) => {
   // Прохождение методики ставит заголовок вкладки само
-  if (to.name !== 'attempt-pass') document.title = pageTitle(to.meta.title)
+  if (!['attempt-pass', 'admin-test-preview'].includes(to.name)) document.title = pageTitle(to.meta.title)
 })
 
 router.beforeEach(async (to) => {

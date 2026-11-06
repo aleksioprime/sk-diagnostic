@@ -1,7 +1,7 @@
 <script setup>
 /**
  * Вход только через SkolStream: ученики и сотрудники гимназии там уже есть.
- * Вход по паролю — запасной, для администратора (пароль задаётся в самом сервисе,
+ * Вход по паролю — запасной, для администратора и участников не из SkolStream (пароль задаётся в самом сервисе,
  * пароль от SkolStream здесь не подходит); он спрятан за ссылкой внизу.
  */
 import { computed, onMounted, ref } from 'vue'
@@ -74,7 +74,7 @@ async function submitPassword() {
           </template>
 
           <form v-if="showPassword" class="mt-6 grid gap-4 border-t border-line pt-5" novalidate @submit.prevent="submitPassword">
-            <p class="text-sm text-ink-muted">Вход администратора по паролю этого сервиса. Пароль от SkolStream здесь не подходит.</p>
+            <p class="text-sm text-ink-muted">Вход по паролю этого сервиса: для администратора и участников не из SkolStream. Пароль от SkolStream здесь не подходит.</p>
             <UiInput v-model="email" label="Электронная почта" type="email" autocomplete="username" />
             <UiInput v-model="password" label="Пароль" type="password" autocomplete="current-password" />
             <UiButton type="submit" variant="primary" :loading="sending">Войти</UiButton>
@@ -87,7 +87,7 @@ async function submitPassword() {
           class="mt-4 w-full text-center text-xs text-ink-muted hover:text-ink"
           @click="showPassword = true"
         >
-          Вход для администратора
+          Вход по паролю
         </button>
       </div>
     </main>

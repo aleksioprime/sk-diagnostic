@@ -7,9 +7,9 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { myAttempt, saveAnswer, startAttempt, submitAttempt } from '@/api/diagnostic'
 import { BrandMark, errorMessage, SchoolFooter, SkeletonPage, UiButton, UiCard, UiInput } from 'sk-ui'
-import AnswerField from '@/components/questions/AnswerField.vue'
+import QuestionStep from '@/components/questions/QuestionStep.vue'
 import { pageTitle } from '@/brand'
-import { seededShuffle } from '@/utils/shuffle'
+import { emptyAnswer, isAnswered } from '@/utils/answers'
 
 const props = defineProps({ id: { type: String, required: true } })
 
@@ -25,27 +25,16 @@ let textTimer = null
 // Сохранения идут по очереди, последнее состояние ответа всегда уходит на сервер последним
 let queue = Promise.resolve(true)
 
-const empty = () => ({ option_id: null, scale_option_id: null, text: null, number: null, boolean: null, ranking: [] })
 const questions = computed(() => attempt.value?.questions || [])
 const question = computed(() => questions.value[index.value])
 const isLast = computed(() => index.value === questions.value.length - 1)
-const progress = computed(() => (questions.value.length ? Math.round((index.value * 100) / questions.value.length) : 0))
 
-function ordered(items, q) {
-  return q.is_random ? seededShuffle(items, `${attempt.value.id}${q.id}`) : items
-}
-
-function answered(q) {
-  const a = answers.value[q.id]
-  if (!a) return false
-  if (q.question_type === 'ranking') return (a.ranking || []).length >= (q.min_selections || q.options.length)
-  return [a.option_id, a.scale_option_id, a.number, a.boolean].some((v) => v != null) || !!a.text?.trim()
-}
+const answered = (q) => isAnswered(q, answers.value[q.id])
 
 function apply(data) {
   attempt.value = data
-  answers.value = Object.fromEntries(data.questions.map((q) => [q.id, empty()]))
-  for (const saved of data.answers) answers.value[saved.question_id] = { ...empty(), ...saved, ranking: saved.ranking_ids }
+  answers.value = Object.fromEntries(data.questions.map((q) => [q.id, emptyAnswer()]))
+  for (const saved of data.answers) answers.value[saved.question_id] = { ...emptyAnswer(), ...saved, ranking: saved.ranking_ids }
 }
 
 onMounted(async () => {
@@ -169,37 +158,21 @@ async function finish() {
           </UiButton>
         </UiCard>
 
-        <section v-else-if="stage === 'questions' && question" class="mt-6">
-          <div class="flex justify-between text-sm text-ink-muted">
-            <span>Вопрос {{ index + 1 }} из {{ questions.length }}</span>
-            <span aria-live="polite">{{ { saving: 'Сохраняем…', saved: 'Сохранено' }[saveState] || '' }}</span>
-          </div>
-          <div class="mt-2 h-2 overflow-hidden rounded-full bg-line" role="progressbar" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100">
-            <div class="h-full rounded-full bg-brand-500 transition-all" :style="{ width: `${progress}%` }" />
-          </div>
-
-          <UiCard class="mt-6 sm:p-6">
-            <h2 class="text-lg font-semibold">{{ question.text }}</h2>
-            <p v-if="question.description" class="mt-1 whitespace-pre-line text-sm text-ink-muted">{{ question.description }}</p>
-            <AnswerField
-              :key="question.id"
-              class="mt-5"
-              :model-value="answers[question.id]"
-              :question="question"
-              :options="ordered(question.options, question)"
-              :scale-options="ordered(question.scale_options, question)"
-              @update:model-value="onChange(question, $event)"
-            />
-          </UiCard>
-
-          <p v-if="error" role="alert" class="mt-4 rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ error }}</p>
-          <div class="mt-6 flex justify-between gap-3">
-            <UiButton :disabled="index === 0" @click="(index -= 1), (saveState = '')">Назад</UiButton>
-            <UiButton variant="primary" :loading="busy" :disabled="question.is_required && !answered(question)" @click="next">
-              {{ isLast ? 'Завершить' : 'Далее' }}
-            </UiButton>
-          </div>
-        </section>
+        <QuestionStep
+          v-else-if="stage === 'questions' && question"
+          class="mt-6"
+          :question="question"
+          :index="index"
+          :total="questions.length"
+          :answer="answers[question.id]"
+          :shuffle-seed="attempt.id"
+          :busy="busy"
+          :error="error"
+          :status="{ saving: 'Сохраняем…', saved: 'Сохранено' }[saveState] || ''"
+          @change="onChange(question, $event)"
+          @back="(index -= 1), (saveState = '')"
+          @next="next"
+        />
 
         <UiCard v-else-if="stage === 'done'" class="mt-6 p-6 text-center">
           <div class="mx-auto grid size-12 place-items-center rounded-full bg-brand-100 text-2xl text-brand-700" aria-hidden="true">✓</div>

@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from app.scoring import ScoringError, calculate, domiki
+from app.scoring import ScoringError, builtin_script, calculate, domiki
+from app.scoring.sandbox import run_script
 
 FIXTURES = Path(__file__).parent / 'fixtures'
 CASES = json.loads((FIXTURES / 'nocobase_results.json').read_text())
@@ -69,3 +70,16 @@ def test_to_fixed_rounds_half_up_like_javascript():
 
     assert to_fixed(0.125) == 0.13
     assert to_fixed(14 / 15) == 0.93
+
+
+@pytest.mark.parametrize('case', EXAMPLES, ids=lambda c: f'{c["input"]["test_code"]}-{c["input"]["attempt_id"]}')
+def test_js_script_of_builtin_matches_python(case):
+    """Копия встроенной методики получает JS-скрипт: он обязан считать так же, как встроенный расчёт."""
+    code = case['input']['test_code']
+    run = run_script(builtin_script(code), case['input'])
+    assert run.error is None
+    expected = calculate(code, case['input'])
+    for data in (run.output, expected):
+        (data.get('result') or {}).pop('calculated_at', None)
+        data.pop('calculated_at', None)
+    assert run.output == expected

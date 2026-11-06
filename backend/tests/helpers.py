@@ -21,7 +21,7 @@ async def motivation_test(db) -> Test:
 
 
 async def ranking_test(db) -> Test:
-    test = Test(title='Порядок цветов', code='colors_demo')
+    test = Test(title='Порядок цветов', code='colors_demo', scoring_script='return { total: data.answers.length }')
     question = Question(order=1, code='color_preference', text='Расположи цвета', question_type='ranking')
     question.options = [Option(label=c, value=c, order=n) for n, c in enumerate(['red', 'green', 'blue'], 1)]
     test.questions = [question]

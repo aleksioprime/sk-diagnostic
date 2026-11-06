@@ -1,5 +1,6 @@
 """Выдачи методик и результаты — для психологов."""
 
+import json
 import secrets
 import string
 from collections import Counter
@@ -14,6 +15,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.attempts.models import STATUS_ASSIGNED, Assignment, Attempt
+from app.modules.attempts.service import has_scoring
 from app.modules.tests.models import Test
 
 TOKEN_ALPHABET = string.ascii_lowercase + string.digits
@@ -43,6 +45,8 @@ async def create_assignment(db: AsyncSession, user: User, test_id: int, class_id
     test = await db.get(Test, test_id)
     if test is None or not test.is_active:
         raise not_found('Методика не найдена')
+    if not has_scoring(test):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'У методики нет расчёта: результаты учеников не посчитаются')
     study_class = await db.get(StudyClass, class_id)
     if study_class is None:
         raise not_found('Класс не найден')
@@ -115,6 +119,8 @@ def summary(data: dict | None) -> dict[str, str]:
     """Главные показатели результата одной строкой на ученика. Формат зависит от методики."""
     if not data:
         return {}
+    if isinstance(data.get('summary'), dict):  # скрипт расчёта сам задаёт колонки
+        return {str(key): _cell(value) for key, value in data['summary'].items()}
     result = data.get('result') or {}
     if 'level' in result:  # мотивация учения
         items = {
@@ -125,6 +131,8 @@ def summary(data: dict | None) -> dict[str, str]:
         for scale in data.get('scales') or []:
             items[scale['title']] = f'{scale["value"]} ({scale["level_label"]})'
         return items
+    if 'vegetative_coefficient' not in result:
+        return {}
     items = {
         'Вегетативный коэффициент': _value_label(result.get('vegetative_coefficient')),
         'Эмоциональный фон': _value_label(result.get('emotional_background'), 'title'),
@@ -134,6 +142,13 @@ def summary(data: dict | None) -> dict[str, str]:
     attention = [d['title'] for d in data.get('domains') or [] if d.get('status') == 'attention']
     items['Обратить внимание'] = ', '.join(attention) or 'нет'
     return items
+
+
+def _cell(value):
+    """В ячейку таблицы — только простое значение."""
+    if value is None or isinstance(value, str | int | float | bool):
+        return value
+    return json.dumps(value, ensure_ascii=False)
 
 
 def _value_label(item: dict | None, key: str = 'label') -> str | None:

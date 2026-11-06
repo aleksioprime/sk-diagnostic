@@ -7,7 +7,7 @@ from urllib.parse import quote
 from fastapi import APIRouter, HTTPException, Query, Response, status
 from sk_common.audit import record
 from sk_common.deps import AdminUser, Db
-from sk_common.people.models import AcademicYear, Person, StudyClass, User
+from sk_common.people.models import PERSON_SOURCE_SKOLSTREAM, AcademicYear, Person, StudyClass, User
 from sk_common.people.service import ensure_user
 from sqlalchemy import func, or_, select
 
@@ -25,6 +25,7 @@ from app.modules.assignments.schemas import (
     ClassOut,
     PsychologistOut,
     PsychologistsIn,
+    StudentFlagIn,
     StudentOut,
 )
 from app.modules.attempts import service as attempts_service
@@ -53,6 +54,7 @@ async def list_tests(db: Db, _: PsychologistUser) -> list[TestBrief]:
             }
         )
         for t in tests
+        if attempts_service.has_scoring(t)
     ]
 
 
@@ -106,6 +108,20 @@ async def search_students(
     return [_student(p) for p in rows.unique()]
 
 
+@router.put('/persons/{person_id}/student', response_model=StudentOut, summary='Отметить внешнего участника учеником')
+async def set_student(person_id: int, payload: StudentFlagIn, db: Db, user: AdminUser) -> StudentOut:
+    """Человека не из SkolStream иначе не найти при выдаче: у остальных признак приходит из синхронизации."""
+    person = await db.get(Person, person_id)
+    if person is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, 'Человек не найден')
+    if person.source == PERSON_SOURCE_SKOLSTREAM:
+        raise HTTPException(status.HTTP_409_CONFLICT, 'Ученика из SkolStream меняет синхронизация')
+    person.is_student = payload.is_student
+    record(db, 'person.student', 'person', person.id, user.id, is_student=payload.is_student)
+    await db.commit()
+    return _student(person)
+
+
 def _student(person: Person) -> StudentOut:
     return StudentOut(
         person_id=person.id,
@@ -139,6 +155,7 @@ def _assignment_out(assignment: Assignment, counts) -> AssignmentOut:
         test_id=assignment.test_id,
         test_title=assignment.test.title,
         test_code=assignment.test.code,
+        needs_birth_date=attempts_service.needs_birth_date(assignment.test),
         class_id=assignment.class_id,
         class_name=assignment.study_class.name if assignment.study_class else None,
         is_active=assignment.is_active,

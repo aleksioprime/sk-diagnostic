@@ -3,8 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getAttempt, recalculateAttempt, setBirthDate } from '@/api/diagnostic'
 import { errorMessage, UiButton, UiCard, UiInput } from 'sk-ui'
-import DomikiResult from '@/components/results/DomikiResult.vue'
-import MotivationResult from '@/components/results/MotivationResult.vue'
+import { resultComponent } from '@/components/results/resultComponent'
 import { formatDate, formatDateTime, formatDuration } from '@/utils/format'
 
 const props = defineProps({ id: { type: String, required: true } })
@@ -16,12 +15,7 @@ const busy = ref(false)
 const birthDate = ref('')
 const showAnswers = ref(false)
 
-const template = computed(() => {
-  const code = attempt.value?.test_code || ''
-  if (code === 'motivation_learning') return MotivationResult
-  if (code.startsWith('domiki')) return DomikiResult
-  return null
-})
+const template = computed(() => resultComponent(attempt.value?.result))
 
 onMounted(async () => {
   try {
@@ -70,7 +64,6 @@ async function saveBirthDateAndRecalculate() {
           <p class="mt-1 text-sm">{{ attempt.result_error }}</p>
         </div>
         <component :is="template" v-else-if="template && attempt.result" :data="attempt.result" />
-        <pre v-else-if="attempt.result" class="overflow-auto text-xs">{{ attempt.result }}</pre>
       </UiCard>
 
       <form class="mt-4 flex flex-wrap items-end gap-3" @submit.prevent="saveBirthDateAndRecalculate">
