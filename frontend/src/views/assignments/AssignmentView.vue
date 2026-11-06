@@ -96,7 +96,8 @@ watch(query, (value) => {
 
     <template v-if="assignment">
       <div class="mt-2 flex flex-wrap items-start gap-4">
-        <div class="min-w-0 flex-1">
+        <!-- Базовая ширина: на узком экране кнопки переносятся под заголовок, а не сжимают его -->
+        <div class="min-w-0 flex-1 basis-80">
           <p class="text-sm text-ink-muted">{{ assignment.test_title }}<template v-if="assignment.class_name"> · {{ assignment.class_name }}</template></p>
           <h1 class="text-2xl font-bold">{{ assignment.title }}</h1>
           <p class="mt-2 flex flex-wrap gap-2">
@@ -114,7 +115,7 @@ watch(query, (value) => {
       </div>
 
       <div class="mt-6 overflow-x-auto rounded-card border border-line bg-surface">
-        <table class="w-full min-w-[720px] text-sm">
+        <table class="w-full text-sm" :class="{ 'min-w-[720px]': columns.length }">
           <thead class="bg-canvas text-left text-ink-muted">
             <tr>
               <th class="px-4 py-3 font-medium">Ученик</th>
