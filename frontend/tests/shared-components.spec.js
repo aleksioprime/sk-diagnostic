@@ -5,7 +5,7 @@ import MotivationResult from '@/components/results/MotivationResult.vue'
 import AssignmentListView from '@/views/assignments/AssignmentListView.vue'
 
 const push = vi.fn()
-vi.mock('vue-router', () => ({ RouterLink: { template: '<a><slot /></a>' }, useRouter: () => ({ push }) }))
+vi.mock('vue-router', () => ({ RouterLink: { template: '<a><slot /></a>' }, useRoute: () => ({ query: {} }), useRouter: () => ({ push }) }))
 vi.mock('@/api/diagnostic', () => ({
   listAssignments: vi.fn(async () => []),
   listTests: vi.fn(async () => []),

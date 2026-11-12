@@ -1,12 +1,13 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { onBeforeRouteLeave, RouterLink, useRoute } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { onBeforeRouteLeave, RouterLink } from 'vue-router'
 import { getTestContent, saveTestContent } from '@/api/diagnostic'
 import { errorMessage, SkeletonPage, UiBadge, UiButton, UiCard, UiInput, UiSelect } from 'sk-ui'
 import OptionsEditor from '@/components/tests/OptionsEditor.vue'
 import ScaleCard from '@/components/tests/ScaleCard.vue'
 import TestTabs from '@/components/tests/TestTabs.vue'
 import { detailedError } from '@/utils/apiErrors'
+import { useUrlQuery } from '@/utils/useUrlQuery'
 import {
   answerSummary,
   contentBody,
@@ -22,7 +23,7 @@ import {
   withKeys,
 } from '@/utils/testDraft'
 
-const route = useRoute()
+const { route, setQuery } = useUrlQuery()
 const content = ref(null)
 const savedBody = ref('')
 const scales = ref([])
@@ -32,7 +33,11 @@ const error = ref('')
 const notice = ref('')
 const saving = ref(false)
 // Раскрыт один вопрос: в длинной методике остальные остаются одной строкой
-const openKey = ref(null)
+const draftOpenKey = ref(null)
+const openKey = computed(() => draftOpenKey.value ?? content.value?.questions.find(
+  (question) => question.id != null && String(question.id) === route.query.question,
+)?.key ?? null)
+watch(() => route.query.question, () => { draftOpenKey.value = null })
 const invalidKey = ref(null)
 const dragFrom = ref(null)
 const dragOver = ref(null)
@@ -58,20 +63,34 @@ onMounted(async () => {
   }
 })
 
+function openQuestion(question, options) {
+  draftOpenKey.value = question?.id == null ? question?.key ?? null : null
+  if (draftOpenKey.value == null) {
+    return setQuery({ question: question ? String(question.id) : undefined }, options)
+  }
+}
+
+function removeQuestion(index) {
+  const [question] = content.value.questions.splice(index, 1)
+  if (question.key === draftOpenKey.value || (question.id != null && String(question.id) === route.query.question)) {
+    openQuestion(null, { replace: true })
+  }
+}
+
 function addQuestion() {
   const question = newQuestion()
   content.value.questions.push(question)
-  openKey.value = question.key
+  openQuestion(question)
 }
 
 function toggleQuestion(question) {
-  openKey.value = openKey.value === question.key ? null : question.key
+  openQuestion(openKey.value === question.key ? null : question)
 }
 
 function duplicateQuestion(index) {
   const copy = copyQuestion(content.value.questions[index])
   content.value.questions.splice(index + 1, 0, copy)
-  openKey.value = copy.key
+  openQuestion(copy)
 }
 
 function startDrag(index, event) {
@@ -90,7 +109,10 @@ function dropOn(index) {
 
 function showProblem(number) {
   const question = content.value.questions[number - 1]
-  if (question) openKey.value = invalidKey.value = question.key
+  if (question) {
+    invalidKey.value = question.key
+    openQuestion(question, { replace: true })
+  }
 }
 
 function changeType(question, type) {
@@ -109,7 +131,9 @@ async function save() {
   saving.value = true
   try {
     const answer = await saveTestContent(route.params.id, contentBody(content.value))
+    const index = draftOpenKey.value == null ? -1 : content.value.questions.findIndex((q) => q.key === draftOpenKey.value)
     apply(answer)
+    if (index >= 0) await openQuestion(content.value.questions[index], { replace: true })
     notice.value = 'Сохранено.'
   } catch (e) {
     error.value = detailedError(e)
@@ -252,7 +276,7 @@ onBeforeRouteLeave(() => !anythingDirty.value || window.confirm('Есть нес
               <UiButton size="sm" variant="ghost" :disabled="index === 0" :aria-label="`Вопрос ${index + 1} выше`" @click="swap(content.questions, index, index - 1)">↑</UiButton>
               <UiButton size="sm" variant="ghost" :disabled="index === content.questions.length - 1" :aria-label="`Вопрос ${index + 1} ниже`" @click="swap(content.questions, index, index + 1)">↓</UiButton>
               <UiButton size="sm" @click="duplicateQuestion(index)">Дублировать</UiButton>
-              <UiButton size="sm" variant="ghost" class="ml-auto" @click="content.questions.splice(index, 1)">Удалить</UiButton>
+              <UiButton size="sm" variant="ghost" class="ml-auto" @click="removeQuestion(index)">Удалить</UiButton>
             </div>
           </div>
         </li>
