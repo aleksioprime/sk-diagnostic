@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { getAdminTest, getTestReadiness, patchAdminTest } from '@/api/diagnostic'
-import { errorMessage, SkeletonPage, UiBadge, UiButton, UiCard } from 'sk-ui'
+import { errorMessage, SkeletonPage, UiBadge, UiButton, UiCard, UiBreadcrumbs } from 'sk-ui'
 import TestTabs from '@/components/tests/TestTabs.vue'
 
 const TABS = { questions: 'admin-test-questions', scoring: 'admin-test' }
@@ -60,7 +60,13 @@ async function setActive(value) {
   <p v-if="loadError" role="alert" class="rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ loadError }}</p>
   <SkeletonPage v-else-if="!test" />
   <div v-else class="max-w-4xl">
-    <RouterLink :to="{ name: 'admin-tests' }" class="text-sm text-brand-700 hover:underline">← Все методики</RouterLink>
+    <UiBreadcrumbs
+      :items="[
+        { label: 'Методики', to: { name: 'admin-tests' } },
+        { label: test.title, to: { name: 'admin-test', params: { id: route.params.id } } },
+        { label: 'Проверка' },
+      ]"
+    />
     <h1 class="mt-2 text-2xl font-bold">{{ test.title }}</h1>
     <TestTabs :id="route.params.id" class="mt-4" />
 

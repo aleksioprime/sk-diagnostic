@@ -1,8 +1,8 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { onBeforeRouteLeave, RouterLink } from 'vue-router'
+import { onBeforeRouteLeave } from 'vue-router'
 import { getTestContent, saveTestContent } from '@/api/diagnostic'
-import { errorMessage, SkeletonPage, UiBadge, UiButton, UiCard, UiInput, UiSelect } from 'sk-ui'
+import { errorMessage, SkeletonPage, UiBadge, UiButton, UiCard, UiInput, UiSelect, UiBreadcrumbs } from 'sk-ui'
 import OptionsEditor from '@/components/tests/OptionsEditor.vue'
 import ScaleCard from '@/components/tests/ScaleCard.vue'
 import TestTabs from '@/components/tests/TestTabs.vue'
@@ -181,7 +181,13 @@ onBeforeRouteLeave(() => !anythingDirty.value || window.confirm('Есть нес
   <p v-if="loadError" role="alert" class="rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ loadError }}</p>
   <SkeletonPage v-else-if="!content" />
   <div v-else class="max-w-4xl">
-    <RouterLink :to="{ name: 'admin-tests' }" class="text-sm text-brand-700 hover:underline">← Все методики</RouterLink>
+    <UiBreadcrumbs
+      :items="[
+        { label: 'Методики', to: { name: 'admin-tests' } },
+        { label: content.title, to: { name: 'admin-test', params: { id: route.params.id } } },
+        { label: 'Вопросы' },
+      ]"
+    />
     <h1 class="mt-2 text-2xl font-bold">{{ content.title }}</h1>
     <TestTabs :id="route.params.id" class="mt-4" />
 
@@ -199,7 +205,7 @@ onBeforeRouteLeave(() => !anythingDirty.value || window.confirm('Есть нес
 
     <section class="mt-6">
       <h2 class="text-lg font-semibold">Вопросы ({{ content.questions.length }})</h2>
-      <ol class="mt-3 grid grid-cols-[minmax(0,1fr)] gap-2">
+      <ol aria-label="Вопросы методики" class="mt-3 grid grid-cols-[minmax(0,1fr)] gap-2">
         <li
           v-for="(question, index) in content.questions"
           :key="question.key"
@@ -276,7 +282,7 @@ onBeforeRouteLeave(() => !anythingDirty.value || window.confirm('Есть нес
               <UiButton size="sm" variant="ghost" :disabled="index === 0" :aria-label="`Вопрос ${index + 1} выше`" @click="swap(content.questions, index, index - 1)">↑</UiButton>
               <UiButton size="sm" variant="ghost" :disabled="index === content.questions.length - 1" :aria-label="`Вопрос ${index + 1} ниже`" @click="swap(content.questions, index, index + 1)">↓</UiButton>
               <UiButton size="sm" @click="duplicateQuestion(index)">Дублировать</UiButton>
-              <UiButton size="sm" variant="ghost" class="ml-auto" @click="removeQuestion(index)">Удалить</UiButton>
+              <UiButton size="sm" variant="danger-outline" class="ml-auto" @click="removeQuestion(index)">Удалить</UiButton>
             </div>
           </div>
         </li>

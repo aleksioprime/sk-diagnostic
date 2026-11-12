@@ -1,8 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink } from 'vue-router'
 import { getAttempt, recalculateAttempt, setBirthDate } from '@/api/diagnostic'
-import { errorMessage, UiButton, UiCard, UiInput } from 'sk-ui'
+import { errorMessage, UiButton, UiCard, UiInput, UiBreadcrumbs } from 'sk-ui'
 import { resultComponent } from '@/components/results/resultComponent'
 import { formatDate, formatDateTime, formatDuration } from '@/utils/format'
 
@@ -44,9 +43,13 @@ async function saveBirthDateAndRecalculate() {
 
 <template>
   <div>
-    <RouterLink v-if="attempt" :to="{ name: 'assignment', params: { id: attempt.assignment_id } }" class="text-sm text-ink-muted hover:text-ink">
-      ← {{ attempt.assignment_title }}
-    </RouterLink>
+    <UiBreadcrumbs
+      v-if="attempt" :items="[
+        { label: 'Диагностики', to: { name: 'assignments' } },
+        { label: attempt.assignment_title, to: { name: 'assignment', params: { id: attempt.assignment_id } } },
+        { label: 'Результат' },
+      ]"
+    />
     <p v-if="error" role="alert" class="mt-4 rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ error }}</p>
     <p v-if="notice" role="status" class="mt-4 rounded-control bg-brand-50 px-3 py-2 text-sm text-brand-700">{{ notice }}</p>
 

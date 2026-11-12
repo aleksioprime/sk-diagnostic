@@ -1,8 +1,8 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { onBeforeRouteLeave, RouterLink, useRoute } from 'vue-router'
+import { onBeforeRouteLeave, useRoute } from 'vue-router'
 import { getAdminTest, getSampleInput, patchAdminTest, runTestScript, saveTestScript } from '@/api/diagnostic'
-import { errorMessage, SkeletonPage, UiBadge, UiButton, UiSelect } from 'sk-ui'
+import { errorMessage, SkeletonPage, UiBadge, UiButton, UiSelect, UiBreadcrumbs } from 'sk-ui'
 import CodeEditor from '@/components/CodeEditor.vue'
 import TestTabs from '@/components/tests/TestTabs.vue'
 
@@ -144,7 +144,12 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm('Скрипт не со�
   <p v-if="loadError" role="alert" class="rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ loadError }}</p>
   <SkeletonPage v-else-if="!test" />
   <div v-else>
-    <RouterLink :to="{ name: 'admin-tests' }" class="text-sm text-brand-700 hover:underline">← Все методики</RouterLink>
+    <UiBreadcrumbs
+      :items="[
+        { label: 'Методики', to: { name: 'admin-tests' } },
+        { label: 'Настройки методики' },
+      ]"
+    />
     <h1 class="mt-2 text-2xl font-bold">{{ test.title }}</h1>
     <p class="mt-1 text-sm text-ink-muted">
       Вопросов: {{ test.questions_count }} · выдач: {{ test.assignments_count }}

@@ -206,7 +206,7 @@ async function remove() {
             <UiButton size="sm" @click="startNew(test)">Копировать</UiButton>
             <UiButton size="sm" @click="download(test)">Скачать JSON</UiButton>
             <UiButton size="sm" @click="toggle(test)">{{ test.is_active ? 'Отключить' : 'Включить' }}</UiButton>
-            <UiButton v-if="!test.assignments_count" size="sm" variant="ghost" @click="toDelete = test">Удалить</UiButton>
+            <UiButton v-if="!test.assignments_count" size="sm" variant="danger-outline" @click="toDelete = test">Удалить</UiButton>
           </div>
         </UiCard>
       </li>

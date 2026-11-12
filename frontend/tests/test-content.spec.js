@@ -124,7 +124,7 @@ describe('компактный список вопросов', () => {
 
   it('перетаскивание меняет порядок', async () => {
     const wrapper = await open()
-    const rows = wrapper.findAll('ol > li')
+    const rows = wrapper.get('ol[aria-label="Вопросы методики"]').findAll(':scope > li')
     await rows[1].find('[draggable="true"]').trigger('dragstart', { dataTransfer: { setData: () => {} } })
     await rows[0].trigger('drop')
     await button(wrapper, 'Сохранить вопросы').trigger('click')

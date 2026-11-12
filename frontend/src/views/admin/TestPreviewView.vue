@@ -1,9 +1,8 @@
 <script setup>
 /** Методика глазами ученика: те же экраны, что при прохождении. Ответы остаются в браузере, расчёт ничего не сохраняет. */
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink } from 'vue-router'
 import { getTestPreview, previewResult } from '@/api/diagnostic'
-import { BrandMark, errorMessage, SchoolFooter, SkeletonPage, UiButton, UiCard, UiInput } from 'sk-ui'
+import { BrandMark, errorMessage, SchoolFooter, SkeletonPage, UiButton, UiCard, UiInput, UiBreadcrumbs } from 'sk-ui'
 import QuestionStep from '@/components/questions/QuestionStep.vue'
 import { resultComponent } from '@/components/results/resultComponent'
 import { pageTitle } from '@/brand'
@@ -80,7 +79,13 @@ async function next() {
     <p class="bg-amber-100 px-4 py-2 text-center text-sm text-amber-900">Предпросмотр: так методику видит ученик. Ответы не сохраняются.</p>
     <div class="mx-auto w-full max-w-xl flex-1 px-4 py-8 sm:py-12">
       <BrandMark class="mb-6" />
-      <RouterLink :to="{ name: 'admin-test-check', params: { id } }" class="text-sm text-ink-muted hover:text-ink">← К проверке методики</RouterLink>
+      <UiBreadcrumbs
+        :items="[
+          { label: 'Методики', to: { name: 'admin-tests' } },
+          { label: 'Проверка методики', to: { name: 'admin-test-check', params: { id } } },
+          { label: 'Предпросмотр' },
+        ]"
+      />
 
       <UiCard v-if="loadError" class="mt-6 p-6">
         <h1 class="text-xl font-bold">Предпросмотр недоступен</h1>

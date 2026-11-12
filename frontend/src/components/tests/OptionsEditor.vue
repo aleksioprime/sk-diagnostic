@@ -28,7 +28,7 @@ function add() {
       <div v-if="canRestructure()" class="flex gap-1">
         <UiButton size="sm" variant="ghost" :disabled="index === 0" :aria-label="`Вариант ${index + 1} выше`" @click="swap(options, index, index - 1)">↑</UiButton>
         <UiButton size="sm" variant="ghost" :disabled="index === options.length - 1" :aria-label="`Вариант ${index + 1} ниже`" @click="swap(options, index, index + 1)">↓</UiButton>
-        <UiButton size="sm" variant="ghost" :aria-label="`Удалить вариант ${index + 1}`" @click="options.splice(index, 1)">✕</UiButton>
+        <UiButton size="sm" variant="danger-outline" :aria-label="`Удалить вариант ${index + 1}`" @click="options.splice(index, 1)">✕</UiButton>
       </div>
     </div>
     <UiButton v-if="canRestructure()" size="sm" class="justify-self-start" @click="add">Добавить вариант</UiButton>

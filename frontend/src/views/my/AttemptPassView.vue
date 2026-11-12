@@ -6,7 +6,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { myAttempt, saveAnswer, startAttempt, submitAttempt } from '@/api/diagnostic'
-import { BrandMark, errorMessage, SchoolFooter, SkeletonPage, UiButton, UiCard, UiInput } from 'sk-ui'
+import { BrandMark, errorMessage, SchoolFooter, SkeletonPage, UiButton, UiCard, UiInput, UiBreadcrumbs } from 'sk-ui'
 import QuestionStep from '@/components/questions/QuestionStep.vue'
 import { pageTitle } from '@/brand'
 import { emptyAnswer, isAnswered } from '@/utils/answers'
@@ -126,7 +126,12 @@ async function finish() {
   <div class="flex min-h-dvh flex-col">
     <div class="mx-auto w-full max-w-xl flex-1 px-4 py-8 sm:py-12">
       <BrandMark class="mb-6" />
-      <RouterLink :to="{ name: 'my' }" class="text-sm text-ink-muted hover:text-ink">← Мои диагностики</RouterLink>
+      <UiBreadcrumbs
+        :items="[
+          { label: 'Мои диагностики', to: { name: 'my' } },
+          { label: 'Прохождение' },
+        ]"
+      />
 
       <SkeletonPage v-if="stage === 'loading'" class="mt-6" />
 
