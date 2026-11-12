@@ -1,12 +1,20 @@
+import { reactive } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as api from '@/api/diagnostic'
 import TestContentView from '@/views/admin/TestContentView.vue'
 import { contentBody, contentProblem, newQuestion } from '@/utils/testDraft'
 
+const route = reactive({ params: { id: '5' }, path: '/admin/tests/5/questions', query: {}, hash: '' })
+function navigate({ query }) {
+  route.query = query
+  return Promise.resolve()
+}
+
 vi.mock('vue-router', () => ({
   RouterLink: { template: '<a><slot /></a>' },
-  useRoute: () => ({ params: { id: '5' } }),
+  useRoute: () => route,
+  useRouter: () => ({ push: navigate, replace: navigate }),
   onBeforeRouteLeave: vi.fn(),
 }))
 vi.mock('@/api/diagnostic', () => ({
@@ -20,7 +28,8 @@ const option = (id, label) => ({ id, label, description: '', value: String(id), 
 const question = (id, text) => ({ id, code: null, text, description: '', question_type: 'single_choice', is_required: true, is_random: false, scale_id: null, options: [option(1, 'А'), option(2, 'Б')] })
 const base = { id: 5, code: 'x', title: 'X', description: '', is_sequential: true, mode: 'full', lock_reason: null, scales: [], questions: [question(10, 'Первый'), question(11, 'Второй')] }
 
-async function open(content = base) {
+async function open(content = base, query = {}) {
+  route.query = query
   api.getTestContent.mockResolvedValue(structuredClone(content))
   const wrapper = mount(TestContentView, { attachTo: document.body })
   await flushPromises()
@@ -48,6 +57,7 @@ describe('редактор вопросов', () => {
     expect(body.questions.map((q) => q.text)).toEqual(['Второй', 'Первый', 'Третий'])
     expect(body.questions.map((q) => q.id)).toEqual([11, 10, null])
     expect(wrapper.text()).toContain('Сохранено')
+    expect(route.query.question).toBe('102')
   })
 
   it('не отправляет незаполненный вопрос', async () => {
@@ -71,6 +81,21 @@ describe('редактор вопросов', () => {
 })
 
 describe('компактный список вопросов', () => {
+  it('раскрывает вопрос по ссылке и реагирует на изменение адреса', async () => {
+    const wrapper = await open(base, { question: '11', source: 'share' })
+    const expanded = () => wrapper.find('button[aria-expanded="true"]')
+    expect(expanded().text()).toContain('Второй')
+    await openQuestion(wrapper, 'Первый')
+    expect(route.query).toEqual({ question: '10', source: 'share' })
+    route.query = { question: '11', source: 'share' }
+    await flushPromises()
+    expect(expanded().text()).toContain('Второй')
+    route.query = { question: ['10', '11'] }
+    await flushPromises()
+    expect(expanded().exists()).toBe(false)
+    wrapper.unmount()
+  })
+
   it('вопросы свёрнуты, раскрыт только один', async () => {
     const wrapper = await open()
     expect(wrapper.findAll('input[aria-label^="Подпись"]')).toHaveLength(0)

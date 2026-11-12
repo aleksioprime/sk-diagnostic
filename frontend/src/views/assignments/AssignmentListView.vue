@@ -4,6 +4,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import { createAssignment, listAssignments, listClasses, listTests } from '@/api/diagnostic'
 import { errorMessage, SkeletonTable, UiBadge, UiButton, UiInput, UiSelect } from 'sk-ui'
 import { formatDate } from '@/utils/format'
+import { useUrlQuery } from '@/utils/useUrlQuery'
 
 const router = useRouter()
 const assignments = ref([])
@@ -14,7 +15,11 @@ const error = ref('')
 const form = ref(null)
 const saving = ref(false)
 const missing = ref(false)
-const filter = ref('active')
+const { route, setQuery } = useUrlQuery()
+const filter = computed({
+  get: () => route.query.status === 'closed' ? route.query.status : 'active',
+  set: (value) => setQuery({ status: value === 'active' ? undefined : value }),
+})
 
 const shown = computed(() => assignments.value.filter((a) => (filter.value === 'active' ? a.is_active : !a.is_active)))
 

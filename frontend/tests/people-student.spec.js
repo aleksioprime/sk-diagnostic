@@ -5,6 +5,10 @@ import { updatePerson } from '@/api/diagnostic'
 import PersonEditCard from '@/components/PersonEditCard.vue'
 import PeopleView from '@/views/admin/PeopleView.vue'
 
+vi.mock('vue-router', () => ({
+  useRoute: () => ({ query: {} }),
+  useRouter: () => ({ push: vi.fn() }),
+}))
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => ({ user: { id: 1 } }) }))
 vi.mock('@/api/diagnostic', () => ({
   getPerson: vi.fn(async () => ({ id: 9, last_name: 'Гостева', first_name: '', middle_name: '', email: 'guest@example.org', gender: null, birth_date: null, class_id: null, is_student: true, is_employee: false, has_account: true, has_password: false })),
