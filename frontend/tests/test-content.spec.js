@@ -45,7 +45,7 @@ afterEach(() => vi.clearAllMocks())
 describe('редактор вопросов', () => {
   it('меняет порядок вопросов и добавляет новый', async () => {
     const wrapper = await open()
-    expect(button(wrapper, 'Сохранить вопросы').attributes('disabled')).toBeDefined()
+    expect(button(wrapper, 'Сохранить вопросы')).toBeUndefined()
     await openQuestion(wrapper, 'Второй')
     await byLabel(wrapper, 'Вопрос 2 выше').trigger('click')
     await button(wrapper, 'Добавить вопрос').trigger('click')

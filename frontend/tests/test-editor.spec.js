@@ -82,7 +82,7 @@ describe('страница скрипта расчёта', () => {
     const wrapper = await open()
     expect(wrapper.text()).toContain('Строка 7')
     await editor(wrapper, 'Скрипт расчёта').setValue('return {a: 1}')
-    await wrapper.findAll('button').find((b) => b.text() === 'Сохранить').trigger('click')
+    await wrapper.get('form').trigger('submit')
     await flushPromises()
     expect(api.saveTestScript).toHaveBeenCalledWith('5', 'return {a: 1}')
     expect(wrapper.text()).not.toContain('Не сохранён')

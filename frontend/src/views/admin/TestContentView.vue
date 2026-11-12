@@ -1,8 +1,8 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { getTestContent, saveTestContent } from '@/api/diagnostic'
-import { errorMessage, SkeletonPage, UiBadge, UiButton, UiCard, UiInput, UiSelect, UiBreadcrumbs } from 'sk-ui'
+import { errorMessage, SkeletonPage, UiButton, UiCard, UiFormActions, UiInput, UiSelect, UiBreadcrumbs } from 'sk-ui'
 import OptionsEditor from '@/components/tests/OptionsEditor.vue'
 import ScaleCard from '@/components/tests/ScaleCard.vue'
 import TestTabs from '@/components/tests/TestTabs.vue'
@@ -25,7 +25,7 @@ import {
 
 const { route, setQuery } = useUrlQuery()
 const content = ref(null)
-const savedBody = ref('')
+const savedContent = shallowRef(null)
 const scales = ref([])
 const dirtyScales = reactive(new Set())
 const loadError = ref('')
@@ -43,14 +43,24 @@ const dragFrom = ref(null)
 const dragOver = ref(null)
 
 const locked = computed(() => content.value?.mode === 'text')
-const dirty = computed(() => !!content.value && JSON.stringify(contentBody(content.value)) !== savedBody.value)
+const body = computed(() => content.value && contentBody(content.value))
+const savedBody = computed(() => savedContent.value && contentBody(savedContent.value))
+const dirty = computed(() => JSON.stringify(body.value) !== JSON.stringify(savedBody.value))
+const savedQuestions = computed(() => new Map(savedContent.value?.questions.map(({ key }, index) => [
+  key, { index, body: JSON.stringify(savedBody.value.questions[index]) },
+])))
+const changedQuestions = computed(() => new Set(content.value?.questions.filter(({ key }, index) => {
+  const saved = savedQuestions.value.get(key)
+  return !saved || saved.index !== index || saved.body !== JSON.stringify(body.value.questions[index])
+}).map(({ key }) => key)))
+const fieldChanged = (key) => body.value[key] !== savedBody.value[key]
 const anythingDirty = computed(() => dirty.value || dirtyScales.size > 0)
 // В вопросе можно выбрать только сохранённую шкалу
 const savedScales = computed(() => scales.value.filter((scale) => scale.id !== null))
 
 function apply(answer) {
-  content.value = { ...answer, questions: answer.questions.map(withKeys) }
-  savedBody.value = JSON.stringify(contentBody(content.value))
+  savedContent.value = { ...answer, questions: answer.questions.map(withKeys) }
+  content.value = structuredClone(savedContent.value)
 }
 
 onMounted(async () => {
@@ -120,7 +130,16 @@ function changeType(question, type) {
   if (hasOptions(type) && !question.options.length) question.options = starterOptions()
 }
 
+function cancelChanges() {
+  content.value = structuredClone(savedContent.value)
+  draftOpenKey.value = null
+  invalidKey.value = null
+  error.value = ''
+  notice.value = ''
+}
+
 async function save() {
+  if (!dirty.value || saving.value) return
   error.value = contentProblem(content.value)
   notice.value = ''
   invalidKey.value = null
@@ -130,7 +149,7 @@ async function save() {
   }
   saving.value = true
   try {
-    const answer = await saveTestContent(route.params.id, contentBody(content.value))
+    const answer = await saveTestContent(route.params.id, body.value)
     const index = draftOpenKey.value == null ? -1 : content.value.questions.findIndex((q) => q.key === draftOpenKey.value)
     apply(answer)
     if (index >= 0) await openQuestion(content.value.questions[index], { replace: true })
@@ -174,7 +193,7 @@ function warnOnClose(event) {
 }
 window.addEventListener('beforeunload', warnOnClose)
 onBeforeUnmount(() => window.removeEventListener('beforeunload', warnOnClose))
-onBeforeRouteLeave(() => !anythingDirty.value || window.confirm('Есть несохранённые изменения. Уйти со страницы?'))
+onBeforeRouteLeave(() => !saving.value && (!anythingDirty.value || window.confirm('Есть несохранённые изменения. Уйти со страницы?')))
 </script>
 
 <template>
@@ -195,108 +214,109 @@ onBeforeRouteLeave(() => !anythingDirty.value || window.confirm('Есть нес
       {{ content.lock_reason }} Чтобы изменить что-то ещё, сделайте копию методики на странице «Методики».
     </p>
 
-    <UiCard class="mt-4 grid gap-3">
-      <UiInput v-model="content.title" label="Название" />
-      <label class="grid gap-1 text-sm font-medium">
-        Описание
-        <textarea v-model="content.description" rows="3" class="rounded-control border border-line bg-surface p-3 font-normal"></textarea>
-      </label>
-    </UiCard>
+    <form @submit.prevent="save">
+      <fieldset :disabled="saving" class="min-w-0">
+        <UiCard class="mt-4 grid gap-3">
+          <UiInput v-model="content.title" label="Название" :class="{ 'ui-changed': fieldChanged('title') }" />
+          <label class="grid gap-1 text-sm font-medium" :class="{ 'ui-changed': fieldChanged('description') }">
+            Описание
+            <textarea v-model="content.description" rows="3" class="rounded-control border border-line bg-surface p-3 font-normal"></textarea>
+          </label>
+        </UiCard>
 
-    <section class="mt-6">
-      <h2 class="text-lg font-semibold">Вопросы ({{ content.questions.length }})</h2>
-      <ol aria-label="Вопросы методики" class="mt-3 grid grid-cols-[minmax(0,1fr)] gap-2">
-        <li
-          v-for="(question, index) in content.questions"
-          :key="question.key"
-          class="rounded-card border bg-surface"
-          :class="[invalidKey === question.key ? 'border-red-500' : 'border-line', { 'border-brand-500': dragOver === index && dragFrom !== index }]"
-          @dragover.prevent="dragFrom !== null && (dragOver = index)"
-          @drop.prevent="dropOn(index)"
-        >
-          <div class="flex items-center gap-1 pr-2">
-            <span
-              v-if="!locked"
-              class="cursor-grab select-none py-3 pl-2 text-ink-muted"
-              draggable="true"
-              title="Перетащить"
-              aria-hidden="true"
-              @dragstart="startDrag(index, $event)"
-              @dragend="dragFrom = dragOver = null"
-            >⠿</span>
-            <button
-              type="button"
-              class="flex min-w-0 flex-1 items-baseline gap-2 py-3 pl-2 text-left"
-              :aria-expanded="openKey === question.key"
-              @click="toggleQuestion(question)"
+        <section class="mt-6">
+          <h2 class="text-lg font-semibold">Вопросы ({{ content.questions.length }})</h2>
+          <ol aria-label="Вопросы методики" class="mt-3 grid grid-cols-[minmax(0,1fr)] gap-2">
+            <li
+              v-for="(question, index) in content.questions"
+              :key="question.key"
+              class="rounded-card border bg-surface"
+              :class="[invalidKey === question.key ? 'border-red-500' : 'border-line', { 'border-brand-500': dragOver === index && dragFrom !== index }]"
+              @dragover.prevent="dragFrom !== null && (dragOver = index)"
+              @drop.prevent="dropOn(index)"
             >
-              <span class="text-sm text-ink-muted">{{ index + 1 }}</span>
-              <span class="min-w-0 flex-1 truncate font-medium" :class="{ 'text-ink-muted': !question.text }">{{ question.text || 'Без текста' }}</span>
-              <span class="hidden shrink-0 text-sm text-ink-muted sm:inline">{{ answerSummary(question, savedScales) }}</span>
-              <span class="shrink-0 text-xs text-ink-muted" aria-hidden="true">{{ openKey === question.key ? '▲' : '▼' }}</span>
-            </button>
-          </div>
+              <div class="flex items-center gap-1 pr-2" :class="{ 'ui-changed': changedQuestions.has(question.key) }">
+                <span
+                  v-if="!locked"
+                  class="cursor-grab select-none py-3 pl-2 text-ink-muted"
+                  draggable="true"
+                  title="Перетащить"
+                  aria-hidden="true"
+                  @dragstart="startDrag(index, $event)"
+                  @dragend="dragFrom = dragOver = null"
+                >⠿</span>
+                <button
+                  type="button"
+                  class="flex min-w-0 flex-1 items-baseline gap-2 py-3 pl-2 text-left"
+                  :aria-expanded="openKey === question.key"
+                  @click="toggleQuestion(question)"
+                >
+                  <span class="text-sm text-ink-muted">{{ index + 1 }}</span>
+                  <span class="min-w-0 flex-1 truncate font-medium" :class="{ 'text-ink-muted': !question.text }">{{ question.text || 'Без текста' }}</span>
+                  <span class="hidden shrink-0 text-sm text-ink-muted sm:inline">{{ answerSummary(question, savedScales) }}</span>
+                  <span class="shrink-0 text-xs text-ink-muted" aria-hidden="true">{{ openKey === question.key ? '▲' : '▼' }}</span>
+                </button>
+              </div>
 
-          <div v-if="openKey === question.key" class="grid gap-3 border-t border-line p-4">
-            <label class="grid gap-1 text-sm font-medium">
-              Текст вопроса
-              <textarea v-model="question.text" rows="2" class="rounded-control border border-line bg-surface p-3 font-normal"></textarea>
-            </label>
-            <div class="grid gap-3 sm:grid-cols-2">
-              <div class="grid gap-1.5">
-                <span class="text-sm font-medium">Тип ответа</span>
-                <UiSelect :model-value="question.question_type" :disabled="locked" aria-label="Тип ответа" class="w-full" @update:model-value="changeType(question, $event)">
-                  <option v-for="type in QUESTION_TYPES" :key="type.value" :value="type.value">{{ type.label }}</option>
-                  <option v-if="!QUESTION_TYPES.some((t) => t.value === question.question_type)" :value="question.question_type">{{ question.question_type }}</option>
-                </UiSelect>
+              <div v-if="openKey === question.key" class="grid gap-3 border-t border-line p-4">
+                <label class="grid gap-1 text-sm font-medium">
+                  Текст вопроса
+                  <textarea v-model="question.text" rows="2" class="rounded-control border border-line bg-surface p-3 font-normal"></textarea>
+                </label>
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <div class="grid gap-1.5">
+                    <span class="text-sm font-medium">Тип ответа</span>
+                    <UiSelect :model-value="question.question_type" :disabled="locked" aria-label="Тип ответа" class="w-full" @update:model-value="changeType(question, $event)">
+                      <option v-for="type in QUESTION_TYPES" :key="type.value" :value="type.value">{{ type.label }}</option>
+                      <option v-if="!QUESTION_TYPES.some((t) => t.value === question.question_type)" :value="question.question_type">{{ question.question_type }}</option>
+                    </UiSelect>
+                  </div>
+                  <div v-if="question.question_type === 'scale'" class="grid gap-1.5">
+                    <span class="text-sm font-medium">Шкала</span>
+                    <UiSelect v-model="question.scale_id" :disabled="locked" aria-label="Шкала" class="w-full">
+                      <option :value="null" disabled>Выберите шкалу</option>
+                      <option v-for="scale in savedScales" :key="scale.id" :value="scale.id">{{ scale.title }}</option>
+                    </UiSelect>
+                  </div>
+                </div>
+                <OptionsEditor v-if="hasOptions(question.question_type)" v-model="question.options" :fixed="locked" />
+                <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+                  <label class="flex items-center gap-2"><input v-model="question.is_required" type="checkbox" :disabled="locked" class="size-4 accent-brand-600" /> Обязательный</label>
+                  <label v-if="hasOptions(question.question_type)" class="flex items-center gap-2">
+                    <input v-model="question.is_random" type="checkbox" :disabled="locked" class="size-4 accent-brand-600" /> Варианты в случайном порядке
+                  </label>
+                </div>
+                <details class="text-sm" :open="!!question.description">
+                  <summary class="cursor-pointer text-ink-muted">Дополнительно</summary>
+                  <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                    <UiInput v-model="question.description" label="Пояснение для ученика" />
+                    <UiInput
+                      v-model="question.code"
+                      label="Код для скрипта"
+                      hint="Необязательно. Не меняется при перестановке вопросов, в отличие от номера."
+                      :disabled="locked"
+                      class="[&_input:disabled]:bg-canvas [&_input:disabled]:text-ink-muted"
+                    />
+                  </div>
+                </details>
+                <div v-if="!locked" class="flex flex-wrap gap-1 border-t border-line pt-3">
+                  <UiButton size="sm" variant="ghost" :disabled="index === 0" :aria-label="`Вопрос ${index + 1} выше`" @click="swap(content.questions, index, index - 1)">↑</UiButton>
+                  <UiButton size="sm" variant="ghost" :disabled="index === content.questions.length - 1" :aria-label="`Вопрос ${index + 1} ниже`" @click="swap(content.questions, index, index + 1)">↓</UiButton>
+                  <UiButton size="sm" @click="duplicateQuestion(index)">Дублировать</UiButton>
+                  <UiButton size="sm" variant="danger-outline" class="ml-auto" @click="removeQuestion(index)">Удалить</UiButton>
+                </div>
               </div>
-              <div v-if="question.question_type === 'scale'" class="grid gap-1.5">
-                <span class="text-sm font-medium">Шкала</span>
-                <UiSelect v-model="question.scale_id" :disabled="locked" aria-label="Шкала" class="w-full">
-                  <option :value="null" disabled>Выберите шкалу</option>
-                  <option v-for="scale in savedScales" :key="scale.id" :value="scale.id">{{ scale.title }}</option>
-                </UiSelect>
-              </div>
-            </div>
-            <OptionsEditor v-if="hasOptions(question.question_type)" v-model="question.options" :fixed="locked" />
-            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-              <label class="flex items-center gap-2"><input v-model="question.is_required" type="checkbox" :disabled="locked" class="size-4 accent-brand-600" /> Обязательный</label>
-              <label v-if="hasOptions(question.question_type)" class="flex items-center gap-2">
-                <input v-model="question.is_random" type="checkbox" :disabled="locked" class="size-4 accent-brand-600" /> Варианты в случайном порядке
-              </label>
-            </div>
-            <details class="text-sm" :open="!!question.description">
-              <summary class="cursor-pointer text-ink-muted">Дополнительно</summary>
-              <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                <UiInput v-model="question.description" label="Пояснение для ученика" />
-                <UiInput
-                  v-model="question.code"
-                  label="Код для скрипта"
-                  hint="Необязательно. Не меняется при перестановке вопросов, в отличие от номера."
-                  :disabled="locked"
-                  class="[&_input:disabled]:bg-canvas [&_input:disabled]:text-ink-muted"
-                />
-              </div>
-            </details>
-            <div v-if="!locked" class="flex flex-wrap gap-1 border-t border-line pt-3">
-              <UiButton size="sm" variant="ghost" :disabled="index === 0" :aria-label="`Вопрос ${index + 1} выше`" @click="swap(content.questions, index, index - 1)">↑</UiButton>
-              <UiButton size="sm" variant="ghost" :disabled="index === content.questions.length - 1" :aria-label="`Вопрос ${index + 1} ниже`" @click="swap(content.questions, index, index + 1)">↓</UiButton>
-              <UiButton size="sm" @click="duplicateQuestion(index)">Дублировать</UiButton>
-              <UiButton size="sm" variant="danger-outline" class="ml-auto" @click="removeQuestion(index)">Удалить</UiButton>
-            </div>
-          </div>
-        </li>
-      </ol>
-      <p v-if="!content.questions.length" class="mt-3 text-ink-muted">Вопросов пока нет.</p>
-      <UiButton v-if="!locked" class="mt-3" @click="addQuestion">Добавить вопрос</UiButton>
-    </section>
+            </li>
+          </ol>
+          <p v-if="!content.questions.length" class="mt-3 text-ink-muted">Вопросов пока нет.</p>
+          <UiButton v-if="!locked" class="mt-3" @click="addQuestion">Добавить вопрос</UiButton>
+        </section>
+      </fieldset>
 
-    <div class="sticky bottom-0 z-10 mt-4 flex flex-wrap items-center gap-3 border-t border-line bg-canvas py-3">
-      <UiButton variant="primary" :loading="saving" :disabled="!dirty" @click="save">Сохранить вопросы</UiButton>
-      <UiBadge v-if="dirty" tone="warning">Не сохранено</UiBadge>
-      <p v-if="error" role="alert" class="whitespace-pre-line text-sm text-red-800">{{ error }}</p>
-      <p v-else-if="notice" role="status" class="text-sm text-brand-700">{{ notice }}</p>
-    </div>
+      <p v-if="error" role="alert" class="mt-4 whitespace-pre-line text-sm text-red-800">{{ error }}</p>
+      <p v-else-if="notice && !dirty" role="status" class="mt-4 text-sm text-brand-700">{{ notice }}</p>
+      <UiFormActions v-if="dirty" class="mt-4" save-label="Сохранить вопросы" :loading="saving" @cancel="cancelChanges" />
+    </form>
 
     <section class="mt-6">
       <h2 class="text-lg font-semibold">Шкалы</h2>

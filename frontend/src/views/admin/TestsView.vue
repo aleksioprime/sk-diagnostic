@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { copyTest, createTest, deleteAdminTest, exportTest, importTest, listAdminTests, patchAdminTest } from '@/api/diagnostic'
-import { errorMessage, SkeletonList, UiBadge, UiButton, UiCard, UiConfirm, UiInput } from 'sk-ui'
+import { errorMessage, SkeletonList, UiBadge, UiButton, UiCard, UiConfirm, UiDialog, UiInput } from 'sk-ui'
 import { detailedError } from '@/utils/apiErrors'
 import { saveJsonFile } from '@/utils/download'
 
@@ -81,6 +81,7 @@ function startNew(source = null) {
 }
 
 async function create() {
+  if (creating.value || !draft.value) return
   const { copyFrom, title } = draft.value
   if (!title.trim()) {
     createError.value = 'Заполните название'
@@ -91,7 +92,8 @@ async function create() {
   try {
     const body = { title: title.trim() }
     const test = copyFrom ? await copyTest(copyFrom.id, body) : await createTest(body)
-    router.push({ name: 'admin-test-questions', params: { id: test.id } })
+    draftOpen.value = false
+    await router.push({ name: 'admin-test-questions', params: { id: test.id } })
   } catch (e) {
     createError.value = detailedError(e)
   } finally {
@@ -242,21 +244,19 @@ async function remove() {
       </UiCard>
     </section>
 
-    <UiConfirm
-      v-model:open="draftOpen"
-      :title="draft?.copyFrom ? 'Копия методики' : 'Новая методика'"
-      :confirm-label="draft?.copyFrom ? 'Создать копию' : 'Создать'"
-      :loading="creating"
-      @confirm="create"
-    >
-      <div v-if="draft" class="grid gap-3">
+    <UiDialog v-model:open="draftOpen" :title="draft?.copyFrom ? 'Копия методики' : 'Новая методика'" :busy="creating">
+      <form v-if="draft" class="grid gap-4" @submit.prevent="create">
         <p v-if="draft.copyFrom" class="text-sm text-ink-muted">
           Копируются вопросы, ответы, шкалы и скрипт расчёта. Правки копии не затронут исходную методику. Копия будет отключена, пока вы её не включите.
         </p>
-        <UiInput v-model="draft.title" label="Название" />
+        <UiInput v-model="draft.title" label="Название" maxlength="500" :disabled="creating" required autofocus />
         <p v-if="createError" role="alert" class="whitespace-pre-line rounded-control bg-red-100 px-3 py-2 text-sm text-red-800">{{ createError }}</p>
-      </div>
-    </UiConfirm>
+        <div class="flex flex-wrap justify-end gap-2">
+          <UiButton :disabled="creating" @click="draftOpen = false">Отмена</UiButton>
+          <UiButton type="submit" variant="primary" :loading="creating">{{ draft.copyFrom ? 'Создать копию' : 'Создать' }}</UiButton>
+        </div>
+      </form>
+    </UiDialog>
 
     <UiConfirm v-model:open="confirmOpen" title="Удалить методику?" confirm-label="Удалить" variant="danger" :loading="deleting" @confirm="remove">
       «{{ toDelete?.title }}» и её вопросы будут удалены. Классам она ещё не выдавалась.

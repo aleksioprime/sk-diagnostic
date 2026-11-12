@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute } from 'vue-router'
 import { getAdminTest, getSampleInput, patchAdminTest, runTestScript, saveTestScript } from '@/api/diagnostic'
-import { errorMessage, SkeletonPage, UiBadge, UiButton, UiSelect, UiBreadcrumbs } from 'sk-ui'
+import { errorMessage, SkeletonPage, UiButton, UiFormActions, UiSelect, UiBreadcrumbs } from 'sk-ui'
 import CodeEditor from '@/components/CodeEditor.vue'
 import TestTabs from '@/components/tests/TestTabs.vue'
 
@@ -102,7 +102,14 @@ onMounted(async () => {
   }
 })
 
+function cancelChanges() {
+  script.value = savedScript.value
+  notice.value = ''
+  error.value = ''
+}
+
 async function save() {
+  if (!dirty.value || saving.value) return
   saving.value = true
   error.value = ''
   notice.value = ''
@@ -137,7 +144,7 @@ onBeforeUnmount(() => {
   clearTimeout(timer)
   window.removeEventListener('beforeunload', warnOnClose)
 })
-onBeforeRouteLeave(() => !dirty.value || window.confirm('Скрипт не сохранён. Уйти со страницы?'))
+onBeforeRouteLeave(() => !saving.value && (!dirty.value || window.confirm('Скрипт не сохранён. Уйти со страницы?')))
 </script>
 
 <template>
@@ -165,14 +172,13 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm('Скрипт не со�
 
     <div class="mt-6 grid gap-4 lg:grid-cols-2">
       <!-- Скрипт -->
-      <section class="grid min-w-0 grid-rows-[auto_34rem] gap-2">
-        <div class="flex min-h-8 flex-wrap items-center gap-2">
-          <h2 class="font-semibold">Скрипт расчёта (JavaScript)</h2>
-          <UiBadge v-if="dirty" tone="warning">Не сохранён</UiBadge>
-          <UiButton class="ml-auto" size="sm" variant="primary" :loading="saving" :disabled="!dirty" @click="save">Сохранить</UiButton>
+      <form class="grid min-w-0 content-start gap-2" @submit.prevent="save">
+        <h2 class="flex min-h-8 items-center font-semibold">Скрипт расчёта (JavaScript)</h2>
+        <div class="h-[34rem] min-w-0" :class="{ 'ui-changed p-1': dirty }">
+          <CodeEditor v-model="script" label="Скрипт расчёта" :readonly="saving" />
         </div>
-        <CodeEditor v-model="script" label="Скрипт расчёта" />
-      </section>
+        <UiFormActions v-if="dirty" :loading="saving" @cancel="cancelChanges" />
+      </form>
 
       <!-- Входные данные -->
       <section class="grid min-w-0 grid-rows-[auto_34rem] gap-2">
