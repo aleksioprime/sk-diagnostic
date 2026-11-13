@@ -174,7 +174,7 @@ onBeforeRouteLeave(() => !saving.value && (!dirty.value || window.confirm('Ск�
       <!-- Скрипт -->
       <form class="grid min-w-0 content-start gap-2" @submit.prevent="save">
         <h2 class="flex min-h-8 items-center font-semibold">Скрипт расчёта (JavaScript)</h2>
-        <div class="h-[34rem] min-w-0" :class="{ 'ui-changed p-1': dirty }">
+        <div class="h-[34rem] min-w-0 p-1" :class="{ 'ui-changed': dirty }">
           <CodeEditor v-model="script" label="Скрипт расчёта" :readonly="saving" />
         </div>
         <UiFormActions v-if="dirty" :loading="saving" @cancel="cancelChanges" />
