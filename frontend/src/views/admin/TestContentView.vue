@@ -2,12 +2,11 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { getTestContent, saveTestContent } from '@/api/diagnostic'
-import { errorMessage, SkeletonPage, UiButton, UiCard, UiFormActions, UiInput, UiSelect, UiBreadcrumbs } from 'sk-ui'
+import { errorMessage, SkeletonPage, UiButton, UiCard, UiFormActions, UiInput, UiSelect, UiBreadcrumbs, useUrlQuery } from 'sk-ui'
 import OptionsEditor from '@/components/tests/OptionsEditor.vue'
 import ScaleCard from '@/components/tests/ScaleCard.vue'
 import TestTabs from '@/components/tests/TestTabs.vue'
 import { detailedError } from '@/utils/apiErrors'
-import { useUrlQuery } from '@/utils/useUrlQuery'
 import {
   answerSummary,
   contentBody,

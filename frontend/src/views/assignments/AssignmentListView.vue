@@ -2,9 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { createAssignment, listAssignments, listClasses, listTests } from '@/api/diagnostic'
-import { errorMessage, SkeletonTable, UiBadge, UiButton, UiInput, UiSelect } from 'sk-ui'
+import { errorMessage, SkeletonTable, UiBadge, UiButton, UiInput, UiSelect, useUrlQuery } from 'sk-ui'
 import { formatDate } from '@/utils/format'
-import { useUrlQuery } from '@/utils/useUrlQuery'
 
 const router = useRouter()
 const assignments = ref([])

@@ -1,12 +1,11 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { errorMessage, SkeletonTable, UiBadge, UiButton, UiCard, UiInput, UiSelect } from 'sk-ui'
+import { errorMessage, SkeletonTable, UiBadge, UiButton, UiCard, UiInput, UiSelect, useUrlQuery } from 'sk-ui'
 import { createUser, fetchPersons, fetchSyncRuns, fetchUsers, setPersonAdmin, startSync, updateUser } from '@/api/people'
 import { updatePerson } from '@/api/diagnostic'
 import PersonEditCard from '@/components/PersonEditCard.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useListPage } from '@/utils/useListPage'
-import { useUrlQuery } from '@/utils/useUrlQuery'
 
 const auth = useAuthStore()
 const PAGE = 50
